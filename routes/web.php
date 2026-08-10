@@ -246,6 +246,10 @@ Route::prefix('canteen')->name('canteen.')->group(function () {
     Route::put('/rates/{id}', [\App\Http\Controllers\App\CanteenController::class, 'ratesUpdate'])->name('rates.update');
     Route::delete('/rates/{id}', [\App\Http\Controllers\App\CanteenController::class, 'ratesDestroy'])->name('rates.destroy');
 
+    // Routes AJAX pour le formulaire d'inscription dynamique
+    Route::get('/classes-by-cycle', [\App\Http\Controllers\App\CanteenController::class, 'getClassesByCycle'])->name('classes-by-cycle');
+    Route::get('/students-by-class', [\App\Http\Controllers\App\CanteenController::class, 'getStudentsByClass'])->name('students-by-class');
+    Route::get('/subscriptions-by-class', [\App\Http\Controllers\App\CanteenController::class, 'getSubscriptionsByClass'])->name('subscriptions-by-class');
     // Inscriptions des élèves
     Route::get('/subscriptions', [\App\Http\Controllers\App\CanteenController::class, 'subscriptionsIndex'])->name('subscriptions.index');
     Route::post('/subscriptions', [\App\Http\Controllers\App\CanteenController::class, 'subscriptionsStore'])->name('subscriptions.store');
@@ -259,6 +263,7 @@ Route::prefix('canteen')->name('canteen.')->group(function () {
     Route::get('/reports/unpaid-by-class', [\App\Http\Controllers\App\CanteenController::class, 'unpaidByClass'])->name('reports.unpaid_by_class');
     Route::get('/reports/class-detail/{classId}', [\App\Http\Controllers\App\CanteenController::class, 'classDetail'])->name('reports.class_detail');
     Route::get('/reports/student-detail/{studentId}', [\App\Http\Controllers\App\CanteenController::class, 'studentDetail'])->name('reports.student_detail');
+
 });
 
 

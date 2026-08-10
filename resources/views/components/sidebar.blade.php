@@ -131,8 +131,8 @@
                 </svg>
             </button>
             <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
-                <a href="{{ route('app.enrollments.index') }}" title="Inscriptions" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.enrollments.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">📝 Inscriptions</a>
-                <a href="{{ route('app.payments.index') }}" title="Paiements" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.payments.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">💳 Paiements</a>
+                <a href="{{ route('app.enrollments.index') }}" title="Inscriptions" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.enrollments.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Inscriptions</a>
+                <a href="{{ route('app.payments.index') }}" title="Paiements" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.payments.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Paiements</a>
             </div>
         </div>
 
@@ -149,9 +149,9 @@
                 </svg>
             </button>
             <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
-                <a href="{{ route('app.students.index') }}" title="Liste des Élèves" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.students.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">👨‍🎓 Élèves</a>
-                <a href="{{ route('app.attendances.index') }}" title="Présences" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.attendances.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">✅ Présences</a>
-                <a href="{{ route('app.report-cards.index') }}" title="Bulletins" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.report-cards.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">📄 Bulletins</a>
+                <a href="{{ route('app.students.index') }}" title="Liste des Élèves" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.students.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Élèves</a>
+                <a href="{{ route('app.attendances.index') }}" title="Présences" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.attendances.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Présences</a>
+                <a href="{{ route('app.report-cards.index') }}" title="Bulletins" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.report-cards.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Bulletins</a>
             </div>
         </div>
 
@@ -169,8 +169,87 @@
                 </svg>
             </button>
             <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
-                <a href="{{ route('app.teachers.index') }}" title="Liste des Enseignants" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.teachers.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">👨‍🏫 Enseignants</a>
-                <a href="{{ route('app.teacher-assignments.index') }}" title="Assignations" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.teacher-assignments.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">📋 Assignations</a>
+                <a href="{{ route('app.teachers.index') }}" title="Liste des Enseignants" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.teachers.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Enseignants</a>
+                <a href="{{ route('app.teacher-assignments.index') }}" title="Assignations" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.teacher-assignments.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Assignations</a>
+            </div>
+        </div>
+
+         <!-- ✅ GROUPE : RAPPORTS (Basé sur vos routes réelles web.php) -->
+        <div x-data="{ open: {{ request()->routeIs('app.report-cards.*') || request()->routeIs('app.financial.*') || (request()->routeIs('app.students.index') && request()->has('export')) ? 'true' : 'false' }} }" class="space-y-1">
+            <button @click="if(!sidebarOpen) sidebarOpen = true; open = !open" title="Rapports"
+                class="w-full flex items-center justify-between px-3 py-3 rounded-lg transition text-gray-700 hover:bg-gray-100 focus:outline-none">
+                <div class="flex items-center">
+                    <span class="text-xl min-w-[24px] text-center">📈</span>
+                    <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Rapports</span>
+                </div>
+                <svg x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
+                
+                <!-- 1. Bulletins de notes -->
+                <a href="{{ route('app.report-cards.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.report-cards.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
+                    Bulletins de notes
+                </a>
+                
+                <!-- 2. États de scolarité (Impayés par classe & Détails élève) -->
+                <a href="{{ route('app.financial.unpaid_by_class') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.financial.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
+                    États de scolarité
+                </a>
+                
+                <!-- 3. Listes de classe (La vue index contient vos boutons d'export Excel/PDF) -->
+                <a href="{{ route('app.students.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.students.index') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
+                    Listes de classe & Exports
+                </a>
+
+                <!-- 4. Rapport de présences (Historique et exports) -->
+                <a href="{{ route('app.attendances.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.attendances.index') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
+                    Rapport Présences/Absences
+                </a>
+
+            </div>
+        </div>
+
+                <!-- ========================================== -->
+        <!-- GROUPE : CANTINE SCOLAIRE                  -->
+        <!-- ========================================== -->
+        <div x-data="{ open: {{ request()->routeIs('canteen.*') ? 'true' : 'false' }} }" class="space-y-1">
+            <button @click="if(!sidebarOpen) sidebarOpen = true; open = !open" title="Cantine Scolaire"
+                class="w-full flex items-center justify-between px-3 py-3 rounded-lg transition text-gray-700 hover:bg-gray-100 focus:outline-none">
+                <div class="flex items-center">
+                    <span class="text-xl min-w-[24px] text-center">🍽️</span>
+                    <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Cantine Scolaire</span>
+                </div>
+                <svg x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            
+            <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
+                <!-- 1. Configuration des Tarifs -->
+                <a href="{{ route('canteen.rates.index') }}" 
+                   class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('canteen.rates.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
+                    Configuration des Tarifs
+                </a>
+                
+                <!-- 2. Inscriptions des Élèves -->
+                <a href="{{ route('canteen.subscriptions.index') }}" 
+                   class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('canteen.subscriptions.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
+                    Inscriptions des Élèves
+                </a>
+                
+                <!-- 3. Paiements Cantine -->
+                <a href="{{ route('canteen.payments.index') }}" 
+                   class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('canteen.payments.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
+                    Paiements Cantine
+                </a>
+                
+                <!-- 4. Rapports Cantine (Impayés par classe, etc.) -->
+                <a href="{{ route('canteen.reports.unpaid_by_class') }}" 
+                   class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('canteen.reports.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
+                    Rapports Cantine
+                </a>
             </div>
         </div>
 
@@ -187,10 +266,10 @@
                 </svg>
             </button>
             <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
-                <a href="{{ route('app.school-years.index') }}" title="Années Scolaires" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.school-years.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">📅 Années</a>
-                <a href="{{ route('app.class-fees.index') }}" title="Configuration des Frais" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.class-fees.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">💰 Frais</a>
-                <a href="{{ route('app.classes.index') }}" title="Classes" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.classes.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">🏫 Classes</a>
-                <a href="{{ route('app.subjects.index') }}" title="Matières" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.subjects.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">📚 Matières</a>
+                <a href="{{ route('app.school-years.index') }}" title="Années Scolaires" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.school-years.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Années</a>
+                <a href="{{ route('app.class-fees.index') }}" title="Configuration des Frais" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.class-fees.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Frais</a>
+                <a href="{{ route('app.classes.index') }}" title="Classes" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.classes.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Classes</a>
+                <a href="{{ route('app.subjects.index') }}" title="Matières" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.subjects.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Matières</a>
             </div>
         </div>
         @endif

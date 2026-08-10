@@ -12,33 +12,6 @@ use Illuminate\Support\Facades\Schema;
 
 class AttendanceController extends Controller
 {
-    // public function index(Request $request)
-    // {
-    //     $schoolId = session('current_school_id');
-        
-    //     $query = Attendance::where('school_id', $schoolId)
-    //         ->with(['student', 'markedBy'])
-    //         ->select('date', DB::raw('count(*) as total'))
-    //         ->groupBy('date')
-    //         ->orderBy('date', 'desc');
-
-    //     $dates = $query->paginate(15);
-
-    //     // Récupérer les stats pour chaque date
-    //     $attendanceSummary = [];
-    //     foreach ($dates as $record) {
-    //         $date = $record->date;
-    //         $stats = Attendance::where('school_id', $schoolId)
-    //             ->where('date', $date)
-    //             ->select('status', DB::raw('count(*) as count'))
-    //             ->groupBy('status')
-    //             ->pluck('count', 'status');
-                
-    //         $attendanceSummary[$date] = $stats;
-    //     }
-
-    //     return view('app.attendances.index', compact('dates', 'attendanceSummary'));
-    // }
 
         public function index(Request $request)
     {

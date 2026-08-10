@@ -437,6 +437,7 @@ class StudentController extends Controller
         return Excel::download(new StudentsExport($schoolId, $classId), $filename . '.xlsx');
     }
 
+
     // public function exportPdf(\Illuminate\Http\Request $request)
     // {
     //     $schoolId = session('current_school_id');
@@ -461,12 +462,13 @@ class StudentController extends Controller
     //     return $pdf->download($filename . '.pdf');
     // }
 
-
-    public function exportPdf(\Illuminate\Http\Request $request)
+        public function exportPdf(\Illuminate\Http\Request $request)
     {
         $schoolId = session('current_school_id');
         $classId = $request->get('class_id');
+        $user = auth()->user();
 
+        // 1. Récupération des élèves
         $query = \App\Models\Student::where('school_id', $schoolId);
 
         $className = 'Toutes les classes';
@@ -480,9 +482,48 @@ class StudentController extends Controller
 
         $students = $query->orderBy('last_name')->orderBy('first_name')->get();
 
-        $pdf = Pdf::loadView('app.exports.students_pdf', compact('students', 'className'));
+        // 2. Calcul des statistiques (Masculin / Féminin)
+        $totalStudents = $students->count();
+        $maleCount = $students->where('gender', 'M')->count();
+        $femaleCount = $students->where('gender', 'F')->count();
+        
+        $maleRate = $totalStudents > 0 ? round(($maleCount / $totalStudents) * 100) : 0;
+        $femaleRate = $totalStudents > 0 ? round(($femaleCount / $totalStudents) * 100) : 0;
 
-        $filename = $classId ? 'eleves_classe_' . $classId . '_' . date('Y-m-d') : 'tous_les_eleves_' . date('Y-m-d');
+        // 3. Nom de l'utilisateur connecté
+        $userName = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: ($user->name ?? 'Non spécifié');
+
+        // 4. Année scolaire et Logo
+        $schoolYear = '2025-2026'; // Adaptez si vous avez une relation dynamique
+        
+        $schoolLogoPath = null;
+        // Adaptez 'school->logo' selon votre modèle réel (ex: $user->school->logo)
+        if (isset($user->school) && $user->school->logo) {
+            $schoolLogoPath = public_path('storage/' . $user->school->logo);
+        }
+        if (!$schoolLogoPath || !file_exists($schoolLogoPath)) {
+            $schoolLogoPath = public_path('images/default-logo.png'); // Fallback
+        }
+
+        // 5. Génération du PDF
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('app.exports.students_pdf', compact(
+            'students',
+            'className',
+            'totalStudents',
+            'maleCount',
+            'femaleCount',
+            'maleRate',
+            'femaleRate',
+            'userName',
+            'schoolYear',
+            'schoolLogoPath'
+        ));
+
+        $pdf->setPaper('a4', 'portrait');
+        
+        $filename = $classId ? 'liste_classe_' . $classId . '_' . date('Y-m-d') : 'tous_les_eleves_' . date('Y-m-d');
         return $pdf->download($filename . '.pdf');
     }
+
+
 }

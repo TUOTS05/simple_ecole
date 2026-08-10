@@ -7,8 +7,10 @@
 <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-        <form action="{{ route('app.canteen.rates.update', $rate->id) }}" method="POST">
-            @csrf @method('PUT')
+        {{-- ✅ CORRECTION ICI : canteen.rates.update au lieu de app.canteen.rates.update --}}
+        <form action="{{ route('canteen.rates.update', $rate->id) }}" method="POST">
+            @csrf 
+            @method('PUT')
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
@@ -53,7 +55,8 @@
             </div>
 
             <div class="flex justify-end gap-3">
-                <a href="{{ route('app.canteen.rates.index', ['school_year_id' => $rate->school_year_id]) }}" 
+                {{-- ✅ CORRECTION ICI AUSSI : canteen.rates.index au lieu de app.canteen.rates.index --}}
+                <a href="{{ route('canteen.rates.index', ['school_year_id' => $rate->school_year_id]) }}" 
                    class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition">
                     Annuler
                 </a>

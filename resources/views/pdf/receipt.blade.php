@@ -45,7 +45,7 @@
 
         .header-info {
             width: 80%;
-            text-align: right;
+            text-align: center;
             vertical-align: top;
         }
 
@@ -62,7 +62,7 @@
         }
 
         .title-section {
-            text-align: center;
+            text-align: left;
             margin: 15px 0 10px 0;
         }
 
@@ -164,8 +164,7 @@
 
         <!-- 2. TITRE -->
         <div class="title-section">
-            <div class="title-main">REÇU DE PAIEMENT N°:</div>
-            <div class="title-number">{{ str_pad($payment->id, 6, '0', STR_PAD_LEFT) }}</div>
+            <div class="title-main">REÇU DE PAIEMENT N°: {{ str_pad($payment->id, 6, '0', STR_PAD_LEFT) }}</div><hr>
         </div>
 
         <!-- 3. CHAMPS FORMULAIRE (sans soulignement) -->

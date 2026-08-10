@@ -1,27 +1,33 @@
 <!-- Header -->
 <!-- Header -->
 <header class="h-16 bg-white shadow-md border-b-4 border-primary flex items-center justify-between px-6">
-    
+
     <!-- Titre de la page -->
     <div>
         <h2 class="text-xl font-semibold text-gray-800">
             @yield('page_title', 'Dashboard')
         </h2>
     </div>
-    
+
     <!-- Infos utilisateur -->
     <div class="flex items-center space-x-4">
-        
+
+        {{-- AFFICHAGE DU NOM DE L'ÉCOLE --}}
         @if(session('current_school'))
-            <!-- Nom de l'école (pour Admin École) -->
-            <div class="flex items-center space-x-2">
-                <span class="text-sm text-gray-600">École :</span>
-                <span class="font-semibold text-primary">
-                    {{ session('current_school')->name }}
-                </span>
-            </div>
+        @php
+        // On vérifie si c'est un objet ou un tableau pour éviter l'erreur "Attempt to read property on array"
+        $school = session('current_school');
+        $schoolName = is_object($school) ? $school->name : ($school['name'] ?? 'École inconnue');
+        @endphp
+
+        <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-600">École :</span>
+            <span class="font-semibold text-primary">
+                {{ $schoolName }}
+            </span>
+        </div>
         @endif
-        
+
         <!-- Avatar + Nom -->
         <div class="flex items-center space-x-3">
             <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold">
@@ -33,14 +39,14 @@
                 </div>
                 <div class="text-xs text-gray-500">
                     @if(auth()->user()->isSuperAdmin())
-                        Super Admin
+                    Super Admin
                     @else
-                        Admin École
+                    Admin École
                     @endif
                 </div>
             </div>
         </div>
-        
+
     </div>
-    
+
 </header>

@@ -1,116 +1,199 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="utf-8">
-    <title>Détail - {{ $class->name }}</title>
+    <title>Détail des paiements par classe</title>
     <style>
-        body {
-            font-family: DejaVu Sans, sans-serif;
-            font-size: 11px;
-            margin: 20px;
+        @page {
+            margin: 60px 40px 40px 80px;
         }
-
-        h2 {
-            text-align: center;
-            color: #2563eb;
-            margin-bottom: 5px;
+        
+        body { 
+            font-family: DejaVu Sans, sans-serif; 
+            font-size: 11px; 
+            color: #000;
         }
-
-        .subtitle {
-            text-align: center;
-            color: #666;
-            font-size: 10px;
-            margin-bottom: 20px;
-        }
-
-        .info {
-            margin-bottom: 15px;
-            font-size: 10px;
-            color: #555;
-            border-bottom: 2px solid #2563eb;
+        
+        /* HEADER */
+        .header { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            margin-bottom: 15px; 
+            border-bottom: 2px solid #171717;
             padding-bottom: 10px;
         }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .logo { 
+            width: 60px; 
+            height: 60px; 
+            object-fit: contain;
+        }
+        .header-title h2 { 
+            color: #131313; 
+            font-size: 16px; 
+            margin: 0; 
+            text-transform: uppercase;
+            text-align: center;
+        }
+        .school-year { 
+            font-size: 12px; 
+            font-weight: bold; 
+            color: #555;
+            margin-top: 4px;
+        }
 
-        table {
+        /* Infos alignées gauche / droite */
+        .info-table {
+            width: 100%;
+            border: none;
+            margin-bottom: 15px;
+        }
+        .info-table td {
+            border: none;
+            padding: 0;
+            font-size: 11px;
+            color: #333;
+            vertical-align: top;
+        }
+        .text-right { text-align: right; }
+
+        /* ✅ NOUVEAU : TABLEAU DES STATISTIQUES GLOBALES */
+        .stats-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-bottom: 20px;
+            font-size: 11px;
         }
-
-        th,
-        td {
-            border: 1px solid #ddd;
-            padding: 6px;
-            text-align: left;
-            font-size: 10px;
-        }
-
-        th {
-            background-color: #f3f4f6;
-            font-weight: bold;
-        }
-
-        .text-right {
-            text-align: right;
-        }
-
-        .text-center {
+        .stats-table td {
+            border: 1px solid #000;
+            padding: 10px 5px;
             text-align: center;
+            vertical-align: middle;
+            background-color: #f9fafb;
+            width: 25%;
         }
-
-        .green {
-            color: #16a34a;
-            font-weight: bold;
-        }
-
-        .red {
-            color: #dc2626;
-            font-weight: bold;
-        }
-
-        .footer {
-            margin-top: 30px;
-            text-align: center;
+        .stats-label {
             font-size: 9px;
-            color: #999;
-            border-top: 1px solid #ddd;
-            padding-top: 10px;
+            color: #666;
+            margin-bottom: 5px;
+            display: block;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .stats-value {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .text-green { color: #16a34a; }
+        .text-red { color: #dc2626; }
+        .text-blue { color: #2563eb; }
+
+        /* TABLEAU PRINCIPAL DES ÉLÈVES */
+        .data-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 10px; 
+            font-size: 10px; 
+        }
+        .data-table th, .data-table td { 
+            border: 1px solid #000; 
+            padding: 6px; 
+        }
+        .data-table th { 
+            background-color: #f3f4f6; 
+            font-weight: bold; 
+            text-align: center; 
+        }
+        .text-center { text-align: center; }
+        
+        /* FOOTER FIXE */
+        .footer { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            right: 0;
+            text-align: center; 
+            font-size: 10px; 
+            color: #666; 
+            border-top: 1px solid #ccc;
+            padding-top: 8px;
+            height: 30px;
         }
     </style>
 </head>
-
 <body>
-    <h2>Détail des Paiements - {{ $class->name }}</h2>
-    <div class="subtitle">Année Scolaire {{ $schoolYear->name ?? 'N/A' }}</div>
-
-    <div class="info">
-        <strong>Classe :</strong> {{ $class->name }} |
-        <strong>Date d'export :</strong> {{ now()->format('d/m/Y à H:i') }} |
-        <strong>Nombre d'élèves :</strong> {{ $students->count() }}
+    <div class="header">
+        <div class="header-left">
+            <img src="{{ $schoolLogoPath ?? public_path('images/default-logo.png') }}" alt="Logo École" class="logo">
+            <div class="header-title">
+                <h2>Détail des paiements par classe</h2>
+                <div class="school-year">Année Scolaire {{ $schoolYear->name ?? 'N/A' }}</div>
+            </div>
+        </div>
     </div>
 
-    <table>
+    <!-- Infos alignées gauche / droite -->
+    <table class="info-table">
+        <tr>
+            <td style="width: 50%;">
+                <strong>Classe :</strong> {{ $class->name }} &nbsp;|&nbsp; 
+                <strong>Nombre d'élèves :</strong> {{ $students->count() }}
+            </td>
+            <td style="width: 50%;" class="text-right">
+                <strong>Date d'export :</strong> {{ now()->format('d/m/Y à H:i') }}<br>
+                <strong>Édité par :</strong> {{ $userName ?? 'Non spécifié' }}
+            </td>
+        </tr>
+    </table>
+
+    <!-- ✅ NOUVEAU : Tableau des statistiques globales de la classe -->
+    <table class="stats-table">
+        <tr>
+            <td>
+                <span class="stats-label">Total Dû</span>
+                <span class="stats-value">{{ number_format($classStats->total_du, 0, ',', ' ') }} FCFA</span>
+            </td>
+            <td>
+                <span class="stats-label">Total Encaissé</span>
+                <span class="stats-value text-green">{{ number_format($classStats->total_paye, 0, ',', ' ') }} FCFA</span>
+            </td>
+            <td>
+                <span class="stats-label">Total Impayé</span>
+                <span class="stats-value text-red">{{ number_format($classStats->total_reste, 0, ',', ' ') }} FCFA</span>
+            </td>
+            <td>
+                <span class="stats-label">Taux de Recouvrement</span>
+                <span class="stats-value text-blue">{{ $classStats->recovery_rate }}%</span>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Tableau des élèves (structure inchangée) -->
+    <table class="data-table">
         <thead>
             <tr>
-                <th style="width: 5%;">#</th>
-                <th style="width: 15%;">Matricule</th>
-                <th style="width: 25%;">Nom et Prénom</th>
-                <th style="width: 18%;" class="text-right">Total Dû</th>
-                <th style="width: 18%;" class="text-right">Payé</th>
-                <th style="width: 18%;" class="text-right">Reste</th>
+                <th style="width: 5%;">N°</th>
+                <th style="width: 20%;">Matricule</th>
+                <th style="width: 35%;">Nom et Prénom</th>
+                <th style="width: 13%;" class="text-right">Total Dû</th>
+                <th style="width: 13%;" class="text-right">Payé</th>
+                <th style="width: 14%;" class="text-right">Reste</th>
             </tr>
         </thead>
-                <tbody>
+        <tbody>
             @foreach($students as $index => $student)
             <tr>
-                <td>{{ $index + 1 }}</td>
+                <td class="text-center">{{ $index + 1 }}</td>
                 <td>{{ $student->matricule ?? 'N/A' }}</td>
-                <!-- Ici, on affiche juste le nom en texte brut pour le PDF -->
-                <td>{{ strtoupper($student->last_name) }} {{ ucfirst($student->first_name) }}</td>
+                <td>{{ strtoupper($student->last_name ?? 'N/A') }} {{ ucfirst($student->first_name ?? 'N/A') }}</td>
                 <td class="text-right">{{ number_format($student->total_du, 0, ',', ' ') }} FCFA</td>
-                <td class="text-right green">{{ number_format($student->total_paye, 0, ',', ' ') }} FCFA</td>
-                <td class="text-right red">{{ number_format($student->total_reste, 0, ',', ' ') }} FCFA</td>
+                <td class="text-right text-green">{{ number_format($student->total_paye, 0, ',', ' ') }} FCFA</td>
+                <td class="text-right text-red">{{ number_format($student->total_reste, 0, ',', ' ') }} FCFA</td>
             </tr>
             @endforeach
         </tbody>
@@ -120,5 +203,4 @@
         Document généré automatiquement par le système de gestion scolaire
     </div>
 </body>
-
 </html>

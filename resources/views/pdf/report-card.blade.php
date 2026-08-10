@@ -46,7 +46,7 @@
         }
         .info-cell {
             width: 70%;
-            text-align: right;
+            text-align: center;
             padding-left: 15px;
         }
 
@@ -133,21 +133,24 @@
 
         /* Signatures */
         .signatures {
-            margin-top: 20px;
+            margin-top: 15px;
         }
         .signature-row {
             display: table;
             width: 100%;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
         .signature-cell {
             display: table-cell;
             width: 50%;
             padding: 5px;
         }
+        .signature-cell.full-width {
+            width: 100%;
+        }
         .signature-box {
             border: 1px solid #000;
-            min-height: 50px;
+            min-height: 45px;
             padding: 5px;
             font-size: 9px;
         }
@@ -160,7 +163,7 @@
 
         /* Pied de page */
         .footer {
-            margin-top: 20px;
+            margin-top: 15px;
             font-size: 9px;
             text-align: right;
         }
@@ -313,21 +316,36 @@
             </div>
         </div>
 
-        <!-- Signatures -->
+        <!-- Signatures (MODIFIÉ POUR INCLURE L'ENSEIGNANT) -->
         <div class="signatures">
+            <!-- Ligne 1 : Enseignant et Direction -->
             <div class="signature-row">
                 <div class="signature-cell">
-                    <div class="signature-title">APPRÉCIATION GÉNÉRALE & OBSERVATIONS</div>
-                    <div class="signature-box">
-                        {{ $reportCard->teacher_comment ?? '' }}
+                    <div class="signature-title">L'ENSEIGNANT(E) TITULAIRE</div>
+                    <div class="signature-box" style="text-align: center; padding-top: 12px;">
+                        @if(isset($schoolClass->teacher))
+                            {{ $schoolClass->teacher->name ?? ($schoolClass->teacher->first_name . ' ' . $schoolClass->teacher->last_name) }}
+                        @else
+                            Non assigné(e)
+                        @endif
                     </div>
                 </div>
                 <div class="signature-cell">
-                    <div class="signature-title">LA DIRECTION/ CACHET & SIGNATURE</div>
+                    <div class="signature-title">LA DIRECTION / CACHET & SIGNATURE</div>
                     <div class="signature-box"></div>
                 </div>
             </div>
-        </div> <br>
+            
+            <!-- Ligne 2 : Appréciation générale (pleine largeur) -->
+            <div class="signature-row">
+                <div class="signature-cell full-width">
+                    <div class="signature-title">APPRÉCIATION GÉNÉRALE & OBSERVATIONS DU CONSEIL DE CLASSE</div>
+                    <div class="signature-box" style="min-height: 40px;">
+                        {{ $reportCard->teacher_comment ?? 'Aucune appréciation globale renseignée.' }}
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Pied de page -->
         <div class="footer">

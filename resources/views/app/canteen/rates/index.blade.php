@@ -14,7 +14,8 @@
 
     <!-- Filtres et Actions -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <form method="GET" action="{{ route('app.canteen.rates.index') }}" class="flex gap-4 items-end">
+        <!-- ✅ CORRECTION ICI : canteen.rates.index au lieu de app.canteen.rates.index -->
+        <form method="GET" action="{{ route('canteen.rates.index') }}" class="flex gap-4 items-end">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Année Scolaire</label>
                 <select name="school_year_id" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary bg-white">
@@ -29,7 +30,9 @@
                 🔍 Filtrer
             </button>
         </form>
-        <a href="{{ route('app.canteen.rates.create', ['school_year_id' => $schoolYearId]) }}" 
+        
+        <!-- ✅ CORRECTION ICI : canteen.rates.create -->
+        <a href="{{ route('canteen.rates.create', ['school_year_id' => $schoolYearId]) }}" 
            class="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg font-semibold transition">
             + Nouveau Tarif
         </a>
@@ -60,8 +63,9 @@
                         {{ \Carbon\Carbon::parse($rate->end_month . '-01')->format('M Y') }}
                     </td>
                     <td class="py-3 px-4 text-center">
-                        <a href="{{ route('app.canteen.rates.edit', $rate->id) }}" class="text-primary hover:text-primary-dark mr-3">✏️ Modifier</a>
-                        <form action="{{ route('app.canteen.rates.destroy', $rate->id) }}" method="POST" class="inline" onsubmit="return confirm('Supprimer ce tarif ?')">
+                        <!-- ✅ CORRECTIONS ICI : canteen.rates.edit et canteen.rates.destroy -->
+                        <a href="{{ route('canteen.rates.edit', $rate->id) }}" class="text-primary hover:text-primary-dark mr-3">✏️ Modifier</a>
+                        <form action="{{ route('canteen.rates.destroy', $rate->id) }}" method="POST" class="inline" onsubmit="return confirm('Supprimer ce tarif ?')">
                             @csrf @method('DELETE')
                             <button type="submit" class="text-red-600 hover:text-red-800">🗑️ Supprimer</button>
                         </form>

@@ -65,7 +65,7 @@ class SchoolClass extends Model
         return ($this->students()->count() / $this->capacity) * 100;
     }
 
-        public function teacherAssignments()
+    public function teacherAssignments()
     {
         return $this->hasMany(TeacherAssignment::class, 'school_class_id');
     }
@@ -73,11 +73,15 @@ class SchoolClass extends Model
     public function teachers()
     {
         return $this->belongsToMany(User::class, 'teacher_assignments', 'school_class_id', 'user_id')
-                    ->withPivot('is_main_teacher', 'school_year_id')
-                    ->wherePivot('school_year_id', function($query) {
-                        // Optionnel : filtrer par l'année en cours si nécessaire
-                    });
+            ->withPivot('is_main_teacher', 'school_year_id')
+            ->wherePivot('school_year_id', function ($query) {
+                // Optionnel : filtrer par l'année en cours si nécessaire
+            });
     }
 
 
+    public function teacher()
+    {
+        return $this->belongsTo(\App\Models\Teacher::class, 'teacher_id');
+    }
 }

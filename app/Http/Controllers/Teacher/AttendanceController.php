@@ -218,7 +218,94 @@ class AttendanceController extends Controller
         );
     }
 
-    public function exportAttendancePdf(Request $request)
+    // public function exportAttendancePdf(Request $request)
+    // {
+    //     $teacher = auth()->user();
+    //     $assignedClassIds = $teacher->teacherAssignments()->pluck('school_class_id')->toArray();
+
+    //     $classId = $request->get('class_id');
+    //     $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
+    //     $endDate = $request->get('end_date', now()->format('Y-m-d'));
+
+    //     // On réutilise la même logique de requête que pour l'Excel
+    //     $query = \App\Models\Attendance::query()
+    //         ->select(
+    //             'attendances.date',
+    //             'attendances.period',
+    //             'school_classes.name as class_name',
+    //             DB::raw("CONCAT(students.last_name, ' ', students.first_name) as student_name"),
+    //             'attendances.status',
+    //             'attendances.notes'
+    //         )
+    //         ->join('students', 'attendances.student_id', '=', 'students.id')
+    //         ->join('school_classes', 'attendances.school_class_id', '=', 'school_classes.id')
+    //         ->whereIn('attendances.school_class_id', $assignedClassIds)
+    //         ->whereBetween('attendances.date', [$startDate, $endDate])
+    //         ->orderBy('attendances.date', 'desc');
+
+    //     if ($classId) $query->where('attendances.school_class_id', $classId);
+
+    //     $attendances = $query->get();
+    //     $className = $classId ? \App\Models\SchoolClass::find($classId)->name : 'Toutes mes classes';
+
+    //     $pdf = Pdf::loadView('teacher.exports.attendance_pdf', compact('attendances', 'className', 'startDate', 'endDate'));
+    //     return $pdf->download('presences_' . date('Y-m-d') . '.pdf');
+    // }
+
+    //     public function exportAttendancePdf(Request $request)
+    // {
+    //     $teacher = auth()->user();
+    //     $assignedClassIds = $teacher->teacherAssignments()->pluck('school_class_id')->toArray();
+
+    //     $classId = $request->get('class_id');
+    //     $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
+    //     $endDate = $request->get('end_date', now()->format('Y-m-d'));
+
+    //     // ✅ 1. Récupérer le nom complet de l'enseignant connecté
+    //     $teacherName = trim(($teacher->first_name ?? '') . ' ' . ($teacher->last_name ?? '')) ?: ($teacher->name ?? 'Enseignant non spécifié');
+
+    //     // 2. Requête pour les données du tableau
+    //     $query = \App\Models\Attendance::query()
+    //         ->select(
+    //             'attendances.date',
+    //             'attendances.period',
+    //             'school_classes.name as class_name',
+    //             DB::raw("CONCAT(students.last_name, ' ', students.first_name) as student_name"),
+    //             'attendances.status',
+    //             'attendances.notes'
+    //         )
+    //         ->join('students', 'attendances.student_id', '=', 'students.id')
+    //         ->join('school_classes', 'attendances.school_class_id', '=', 'school_classes.id')
+    //         ->whereIn('attendances.school_class_id', $assignedClassIds)
+    //         ->whereBetween('attendances.date', [$startDate, $endDate])
+    //         ->orderBy('attendances.date', 'desc')
+    //         ->orderBy('attendances.period', 'desc'); // Tri cohérent
+
+    //     if ($classId) {
+    //         $query->where('attendances.school_class_id', $classId);
+    //     }
+
+    //     $attendances = $query->get();
+        
+    //     $className = $classId ? \App\Models\SchoolClass::find($classId)->name : 'Toutes mes classes';
+        
+    //     // ✅ 3. Année scolaire (à adapter si vous avez une relation school_year sur la classe)
+    //     $schoolYear = '2025-2026'; 
+
+    //     // ✅ 4. Passage de toutes les variables à la vue, y compris teacherName
+    //     $pdf = Pdf::loadView('teacher.exports.attendance_pdf', compact(
+    //         'attendances', 
+    //         'className', 
+    //         'startDate', 
+    //         'endDate',
+    //         'teacherName',
+    //         'schoolYear'
+    //     ));
+        
+    //     return $pdf->download('rapport_presences_absences_' . date('Y-m-d') . '.pdf');
+    // }
+
+        public function exportAttendancePdf(Request $request)
     {
         $teacher = auth()->user();
         $assignedClassIds = $teacher->teacherAssignments()->pluck('school_class_id')->toArray();
@@ -227,7 +314,25 @@ class AttendanceController extends Controller
         $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->get('end_date', now()->format('Y-m-d'));
 
-        // On réutilise la même logique de requête que pour l'Excel
+        $teacherName = trim(($teacher->first_name ?? '') . ' ' . ($teacher->last_name ?? '')) ?: ($teacher->name ?? 'Enseignant non spécifié');
+        $schoolYear = '2025-2026'; // Adaptez si vous avez une relation school_year
+
+        // ✅ 1. Récupération du chemin absolu du logo de l'école
+        // Adaptez 'school.logo' selon votre modèle réel (ex: $teacher->school->logo)
+        $schoolLogoPath = null;
+        if (isset($teacher->school) && $teacher->school->logo) {
+            // Si le logo est stocké dans storage/app/public
+            $schoolLogoPath = public_path('storage/' . $teacher->school->logo);
+            
+            // OU si le logo est directement dans public/images/
+            // $schoolLogoPath = public_path('images/' . $teacher->school->logo);
+        }
+        
+        // Fallback vers un logo par défaut si aucun n'est trouvé
+        if (!$schoolLogoPath || !file_exists($schoolLogoPath)) {
+            $schoolLogoPath = public_path('images/default-logo.png'); // Créez ce fichier dans public/images/
+        }
+
         $query = \App\Models\Attendance::query()
             ->select(
                 'attendances.date',
@@ -241,14 +346,29 @@ class AttendanceController extends Controller
             ->join('school_classes', 'attendances.school_class_id', '=', 'school_classes.id')
             ->whereIn('attendances.school_class_id', $assignedClassIds)
             ->whereBetween('attendances.date', [$startDate, $endDate])
-            ->orderBy('attendances.date', 'desc');
+            ->orderBy('attendances.date', 'desc')
+            ->orderBy('attendances.period', 'desc');
 
-        if ($classId) $query->where('attendances.school_class_id', $classId);
+        if ($classId) {
+            $query->where('attendances.school_class_id', $classId);
+        }
 
         $attendances = $query->get();
         $className = $classId ? \App\Models\SchoolClass::find($classId)->name : 'Toutes mes classes';
 
-        $pdf = Pdf::loadView('teacher.exports.attendance_pdf', compact('attendances', 'className', 'startDate', 'endDate'));
-        return $pdf->download('presences_' . date('Y-m-d') . '.pdf');
+        $pdf = Pdf::loadView('teacher.exports.attendance_pdf', compact(
+            'attendances', 
+            'className', 
+            'startDate', 
+            'endDate',
+            'teacherName',
+            'schoolYear',
+            'schoolLogoPath' // ✅ 2. Passage du chemin absolu à la vue
+        ));
+        
+        // Optionnel : pour forcer le format A4 et l'orientation
+        $pdf->setPaper('a4', 'portrait');
+        
+        return $pdf->download('rapport_presences_absences_' . date('Y-m-d') . '.pdf');
     }
 }

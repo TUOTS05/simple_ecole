@@ -749,62 +749,6 @@ class ReportCardController extends Controller
     /**
      * Télécharger le bulletin en PDF
      */
-    // public function downloadPdf(ReportCard $reportCard)
-    // {
-    //     // Sécurité : vérifier que le bulletin appartient à l'école connectée
-    //     if ($reportCard->school_id !== session('current_school_id')) {
-    //         abort(403);
-    //     }
-
-    //     // 1. Charger les relations de base
-    //     $reportCard->load([
-    //         'student',
-    //         'schoolClass',
-    //         'schoolYear',
-    //         'createdBy'
-    //     ]);
-
-    //     $student = $reportCard->student;
-    //     $school = $student->school ?? $reportCard->school;
-    //     $schoolYear = $reportCard->schoolYear;
-    //     $schoolClass = $reportCard->schoolClass;
-
-    //     // 2. Charger les notes manuellement selon les critères (EXACTEMENT comme dans show())
-    //     $gradesQuery = Grade::where('school_id', $reportCard->school_id)
-    //         ->where('student_id', $reportCard->student_id)
-    //         ->where('school_year_id', $reportCard->school_year_id)
-    //         ->where('period', $reportCard->period)
-    //         ->with('subject');
-
-    //     if ($reportCard->period === 'mensuel') {
-    //         $gradesQuery->where('month', $reportCard->month);
-    //     } else {
-    //         $gradesQuery->where('quarter', $reportCard->quarter);
-    //     }
-
-    //     $grades = $gradesQuery->get();
-
-    //     // Attacher les notes au bulletin pour que la vue PDF puisse les lire
-    //     $reportCard->setRelation('grades', $grades);
-
-    //     // 3. Charger la vue PDF avec TOUTES les variables nécessaires
-    //     $pdf = Pdf::loadView('pdf.report-card', compact(
-    //         'reportCard',
-    //         'student',
-    //         'school',
-    //         'schoolYear',
-    //         'schoolClass'
-    //     ));
-
-    //     // 4. Configurer le format du PDF (A4, portrait)
-    //     $pdf->setPaper('a4', 'portrait');
-
-    //     // 5. Générer le téléchargement avec un nom de fichier propre
-    //     $fileName = 'Bulletin_' . $student->last_name . '_' . $student->first_name . '_' . $reportCard->period . '.pdf';
-
-    //     return $pdf->download($fileName);
-    // }
-
 
     public function downloadPdf(ReportCard $reportCard)
     {
@@ -812,7 +756,7 @@ class ReportCardController extends Controller
             abort(403);
         }
 
-        $reportCard->load(['student', 'schoolClass', 'schoolYear', 'createdBy']);
+        $reportCard->load(['student', 'schoolClass.teacher', 'schoolYear', 'createdBy']);
         $student = $reportCard->student;
         $school = $student->school ?? $reportCard->school;
         $schoolYear = $reportCard->schoolYear;
@@ -877,7 +821,7 @@ class ReportCardController extends Controller
         // 1. Construire la requête avec les mêmes filtres que la page index
         $query = \App\Models\ReportCard::where('school_id', $schoolId)
             ->where('school_year_id', $currentYear->id)
-            ->with(['student', 'schoolClass', 'schoolYear']);
+            ->with(['student', 'schoolClass.teacher', 'schoolYear']);
 
         // 2. Appliquer les filtres (identiques à la méthode index)
         if ($request->filled('period')) {
