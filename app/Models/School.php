@@ -4,29 +4,32 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Carbon\Carbon; // Ajouté pour la gestion des dates
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\SoftDeletes; 
 
 class School extends Model
 {
     use SoftDeletes; 
-        protected $fillable = [
+
+    protected $fillable = [
         'name', 'slug', 'logo', 'settings', 'status', 'school_type',
         'subscription_plan', 'subscription_start_date', 'subscription_end_date', 'max_students',
-        'email', 'phone', 'address','sms_enabled',
-    'orange_sms_api_url',
-    'orange_sms_client_id',
-    'orange_sms_client_secret',
-    'orange_sms_sender_name',
-    'sms_absence_template',
+        'email', 'phone', 'address', 'sms_enabled',
+        'orange_sms_api_url', 'orange_sms_client_id', 'orange_sms_client_secret', 
+        'orange_sms_sender_name', 'sms_absence_template',
+        // ✅ Ajouts pour l'essai gratuit et le SaaS
+        'plan', 'trial_ends_at', 'is_active', 'type', 'subscription_ends_at', 'email',
     ];
 
     protected $casts = [
         'settings' => 'array',
-        // NOUVEAUX CASTS POUR LES DATES
         'subscription_start_date' => 'date',
         'subscription_end_date' => 'date',
         'sms_enabled' => 'boolean',
+        // ✅ Ajouts pour que les dates d'essai fonctionnent avec isFuture()
+        'trial_ends_at' => 'date',
+        'subscription_ends_at' => 'date',
+        'is_active' => 'boolean',
     ];
 
     // Relations
@@ -34,16 +37,45 @@ class School extends Model
     public function students(): HasMany { return $this->hasMany(Student::class); }
     public function classes(): HasMany { return $this->hasMany(SchoolClass::class); }
     public function attendances(): HasMany { return $this->hasMany(Attendance::class); }
+    public function schoolYears(): HasMany { return $this->hasMany(SchoolYear::class); }
 
-    // Helpers pour le type d'école
+    // ==========================================
+    // ✅ HELPERS POUR L'ESSAI GRATUIT (CEUX QUI MANQUAIENT)
+    // ==========================================
+    
+    public function isTrialActive(): bool
+    {
+        return $this->trial_ends_at && $this->trial_ends_at->isFuture();
+    }
+
+    public function trialDaysRemaining(): int
+    {
+        if (!$this->isTrialActive()) {
+            return 0;
+        }
+        return (int) now()->diffInDays($this->trial_ends_at, false);
+    }
+
+    public function hasActiveSubscription(): bool
+    {
+        // Essai actif OU abonnement payant actif (supporte les deux noms de colonnes possibles)
+        return $this->isTrialActive() 
+            || ($this->subscription_ends_at && $this->subscription_ends_at->isFuture())
+            || ($this->subscription_end_date && $this->subscription_end_date->isFuture());
+    }
+
+    // ==========================================
+    // HELPERS POUR LE TYPE D'ÉCOLE
+    // ==========================================
+
     public function isMaternelle(): bool
     {
-        return $this->school_type === 'maternelle';
+        return in_array($this->school_type, ['maternelle', 'both']);
     }
 
     public function isPrimaire(): bool
     {
-        return $this->school_type === 'primaire';
+        return in_array($this->school_type, ['primaire', 'both']);
     }
 
     public function isBoth(): bool
@@ -51,7 +83,6 @@ class School extends Model
         return $this->school_type === 'both';
     }
 
-    // Retourne les niveaux autorisés selon le type d'école
     public function getAllowedLevels(): array
     {
         $maternelleLevels = ['TPS', 'PS', 'MS', 'GS'];
@@ -66,47 +97,23 @@ class School extends Model
     }
 
     // ==========================================
-    // NOUVEAUX HELPERS POUR LA GESTION SAAS
+    // HELPERS POUR LA GESTION SAAS
     // ==========================================
 
-    /**
-     * Vérifie si l'abonnement de l'école est expiré
-     */
     public function isExpired(): bool
     {
         return $this->subscription_end_date && Carbon::today()->greaterThan($this->subscription_end_date);
     }
 
-    /**
-     * Vérifie si l'école est active (statut actif ET non expiré)
-     */
-        /**
-     * Vérifie si l'école est active (statut actif ET abonnement valide)
-     */
     public function isActive(): bool
     {
-        // L'école doit avoir un plan d'abonnement
-        if (!$this->subscription_plan) {
-            return false;
-        }
-
-        // L'école doit avoir une date de début et une date de fin
-        if (!$this->subscription_start_date || !$this->subscription_end_date) {
-            return false;
-        }
-
-        // L'école ne doit pas être expirée
-        if ($this->isExpired()) {
-            return false;
-        }
-
-        // Le statut doit être 'active'
+        if (!$this->subscription_plan) return false;
+        if (!$this->subscription_start_date || !$this->subscription_end_date) return false;
+        if ($this->isExpired()) return false;
+        
         return $this->status === 'active';
     }
 
-    /**
-     * Accesseur pour obtenir un badge HTML de statut (à utiliser en Blade avec {!! $school->status_badge !!})
-     */
     public function getStatusBadgeAttribute(): string
     {
         if ($this->isExpired() || $this->status === 'expired') {

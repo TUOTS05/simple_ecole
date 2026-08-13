@@ -6,6 +6,9 @@ use App\Http\Controllers\App\DashboardController as AppDashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Models\Message;
 
+use App\Http\Controllers\DemoController;
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -14,9 +17,9 @@ use App\Models\Message;
 */
 
 // Page d'accueil - Toujours afficher la page de connexion
-Route::get('/', function () {
-    return view('auth.login');
-});
+// Route::get('/', function () {
+//     return view('auth.login');
+// });
 
 // ═══════════════════════════════════════════════════════════════
 // ROUTES PUBLIQUES - VALIDATION DU CONTRAT ÉCOLE
@@ -47,6 +50,10 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
     Route::post('/subscriptions', [\App\Http\Controllers\SuperAdmin\SubscriptionController::class, 'store'])->name('subscriptions.store');
     Route::get('/subscriptions/{id}/renew', [\App\Http\Controllers\SuperAdmin\SubscriptionController::class, 'renew'])->name('subscriptions.renew');
     Route::post('/subscriptions/{id}/renew', [\App\Http\Controllers\SuperAdmin\SubscriptionController::class, 'storeRenewal'])->name('subscriptions.store-renewal');
+
+    Route::get('/subscriptions/pending', [\App\Http\Controllers\SuperAdmin\SubscriptionController::class, 'pendingRequests'])->name('subscriptions.pending');
+    Route::post('/subscriptions/requests/{subRequest}/approve', [\App\Http\Controllers\SuperAdmin\SubscriptionController::class, 'approveRequest'])->name('subscriptions.requests.approve');
+    Route::post('/subscriptions/requests/{subRequest}/reject', [\App\Http\Controllers\SuperAdmin\SubscriptionController::class, 'rejectRequest'])->name('subscriptions.requests.reject');
 });
 
 #--------------------------------------------------------------------------
@@ -68,8 +75,6 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent', 
         ->name('students.by-class');
 
     // Élèves
-    // Inscriptions
-    // ✅ 1. D'ABORD la route spécifique d'export (avant le resource !)
     Route::get('/enrollments/export', [\App\Http\Controllers\App\EnrollmentController::class, 'export'])->name('enrollments.export');
     
     Route::resource('/students', \App\Http\Controllers\App\StudentController::class);
@@ -170,6 +175,12 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent', 
         ->name('financial.export.student_detail.excel');
     Route::get('/financial/export/student-detail/{studentId}/pdf', [\App\Http\Controllers\App\FinancialReportController::class, 'exportStudentDetailPdf'])
         ->name('financial.export.student_detail.pdf');
+
+    Route::get('/subscription/request', [\App\Http\Controllers\App\SubscriptionRequestController::class, 'create'])->name('subscription.request');
+    Route::post('/subscription/request', [\App\Http\Controllers\App\SubscriptionRequestController::class, 'store'])->name('subscription.request.store');
+
+    Route::get('/notifications', [App\Http\Controllers\App\NotificationLogController::class, 'index'])
+    ->name('notifications.index');
 });
 
 /*
@@ -286,6 +297,31 @@ Route::middleware('auth')->group(function () {
 Route::get('/logout-form', function () {
     return view('logout-form');
 });
+
+
+// Route publique pour demander un compte depuis la démo
+Route::get('/demande-compte', function () {
+    return view('auth.request-account');
+})->name('request-account');
+
+Route::post('/demande-compte', [App\Http\Controllers\SchoolOnboardingController::class, 'storeRequest'])
+    ->name('request-account.store');
+
+// Route publique pour la demande de création d'école (accessible depuis la démo ou la landing page)
+Route::get('/demande-compte', [App\Http\Controllers\SchoolOnboardingController::class, 'showRequestForm'])
+    ->name('request-account');
+
+Route::post('/demande-compte', [App\Http\Controllers\SchoolOnboardingController::class, 'storeRequest'])
+    ->name('request-account.store');
+
+
+
+// Route pour la connexion en un clic à la démo
+Route::get('/demo-login', [DemoController::class, 'login'])->name('demo.login');
+
+Route::get('/', function () {
+    return view('landing');
+})->name('landing');
 
 /*
 |--------------------------------------------------------------------------

@@ -31,11 +31,13 @@
 <body class="bg-gray-50">
     <div class="flex h-screen overflow-hidden">
         
+        
         <!-- SIDEBAR -->
         @include('components.sidebar')
         
         <!-- CONTENU PRINCIPAL -->
         <div class="flex-1 flex flex-col overflow-hidden">
+            @include('components.trial-banner')
             
             <!-- HEADER -->
             @include('components.header')

@@ -46,6 +46,15 @@ return new class extends Migration
             $table->text('permanent_address')->nullable()->after('current_address');
             $table->string('previous_school', 255)->nullable()->after('permanent_address');
             $table->text('remarks')->nullable()->after('previous_school');
+
+                        // Adresses et Divers
+            $table->text('current_address')->nullable()->after('guardian_address');
+            $table->text('permanent_address')->nullable()->after('current_address');
+            $table->string('previous_school', 255)->nullable()->after('permanent_address');
+            $table->text('remarks')->nullable()->after('previous_school');
+            
+            // ✅ NOUVEAU : Stockage des 4 documents administratifs (JSON)
+            $table->json('documents')->nullable()->after('remarks');
         });
     }
 
@@ -62,7 +71,8 @@ return new class extends Migration
                 'mother_name', 'mother_phone', 'mother_occupation',
                 'guardian_type', 'guardian_name', 'guardian_phone', 
                 'guardian_relation', 'guardian_email', 'guardian_occupation', 'guardian_address',
-                'current_address', 'permanent_address', 'previous_school', 'remarks'
+                'current_address', 'permanent_address', 'previous_school', 'remarks',
+                'documents'
             ]);
         });
     }

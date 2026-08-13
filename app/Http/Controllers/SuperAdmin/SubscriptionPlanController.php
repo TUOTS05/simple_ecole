@@ -29,35 +29,6 @@ class SubscriptionPlanController extends Controller
     /**
      * Sauvegarder un nouveau plan
      */
-    // public function store(Request $request)
-    // {
-    //     $validated = $request->validate([
-    //         'name' => 'required|string|max:255',
-    //         'slug' => 'nullable|string|max:255|unique:subscription_plans,slug',
-    //         'description' => 'nullable|string',
-    //         'max_students' => 'required|integer|min:1',
-    //         'max_teachers' => 'required|integer|min:1',
-    //         'max_classes' => 'required|integer|min:1',
-    //         'monthly_price' => 'required|numeric|min:0',
-    //         'yearly_price' => 'required|numeric|min:0',
-    //         'is_active' => 'boolean',
-    //         'sort_order' => 'integer',
-    //     ]);
-
-    //     // Générer le slug automatiquement
-    //     $validated['slug'] = $validated['slug'] ?? Str::slug($validated['name']);
-    //     $validated['is_active'] = $request->has('is_active');
-
-    //     SubscriptionPlan::create($validated);
-
-    //     return redirect()->route('superadmin.plans.index')
-    //         ->with('success', '✅ Plan d\'abonnement créé avec succès !');
-    // }
-
-
-        /**
-     * Sauvegarder un nouveau plan
-     */
         public function store(Request $request)
     {
         // 1. Validation (Notez que 'is_active' et 'sort_order' sont gérés après)

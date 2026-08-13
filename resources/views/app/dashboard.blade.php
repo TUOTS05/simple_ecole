@@ -307,7 +307,6 @@
     // ═══════════════════════════════════════════════════════════════
     // GRAPHIQUE 1 : Paiements par mois
     // ═══════════════════════════════════════════════════════════════
-    
     const paymentLabels = @json($paymentLabels);
     const paymentData = @json($paymentData);
     
@@ -327,117 +326,19 @@
         options: {
             responsive: true,
             maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
+            plugins: { legend: { display: false } },
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return (value / 1000) + 'K';
-                        }
-                    }
+                    ticks: { callback: function(value) { return (value / 1000) + 'K'; } }
                 }
             }
         }
     });
 
     // ═══════════════════════════════════════════════════════════════
-    // GRAPHIQUE 2 : Répartition des statuts de paiement
+    // GRAPHIQUE 2 : Répartition des statuts de paiement (CORRIGÉ)
     // ═══════════════════════════════════════════════════════════════
-    
-    const paymentStatusCounts = @json($paymentStatusCounts);
-    
-    new Chart(document.getElementById('paymentStatusChart'), {
-        type: 'doughnut',
-        data: {
-            labels: ['En attente', 'Partiel', 'Complet'],
-            datasets: [{
-                data: [
-                    paymentStatusCounts.pending || 0,
-                    paymentStatusCounts.partial || 0,
-                    paymentStatusCounts.completed || 0
-                ],
-                backgroundColor: [
-                    'rgba(239, 154, 154, 0.8)',
-                    'rgba(255, 249, 196, 0.8)',
-                    'rgba(165, 214, 167, 0.8)'
-                ],
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
-        }
-    });
-
-    // ═══════════════════════════════════════════════════════════════
-    // GRAPHIQUE 3 : Présences par jour
-    // ═══════════════════════════════════════════════════════════════
-    
-    const attendanceLabels = @json($attendanceLabels);
-    const attendancePresent = @json($attendancePresent);
-    const attendanceAbsent = @json($attendanceAbsent);
-    const attendanceLate = @json($attendanceLate);
-    
-    new Chart(document.getElementById('attendanceChart'), {
-        type: 'line',
-        data: {
-            labels: attendanceLabels,
-            datasets: [
-                {
-                    label: 'Présents',
-                    data: attendancePresent,
-                    borderColor: 'rgba(165, 214, 167, 1)',
-                    backgroundColor: 'rgba(165, 214, 167, 0.2)',
-                    tension: 0.4,
-                    fill: true
-                },
-                {
-                    label: 'Absents',
-                    data: attendanceAbsent,
-                    borderColor: 'rgba(239, 154, 154, 1)',
-                    backgroundColor: 'rgba(239, 154, 154, 0.2)',
-                    tension: 0.4,
-                    fill: true
-                },
-                {
-                    label: 'Retards',
-                    data: attendanceLate,
-                    borderColor: 'rgba(255, 249, 196, 1)',
-                    backgroundColor: 'rgba(255, 249, 196, 0.2)',
-                    tension: 0.4,
-                    fill: true
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    stacked: false
-                }
-            }
-        }
-    });
-
-
-        // GRAPHIQUE 2 : Répartition des statuts de paiement
     const paymentStatusCounts = @json($paymentStatusCounts);
     
     new Chart(document.getElementById('paymentStatusChart'), {
@@ -462,11 +363,33 @@
         },
         options: {
             responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    // GRAPHIQUE 3 : Présences par jour
+    // ═══════════════════════════════════════════════════════════════
+    const attendanceLabels = @json($attendanceLabels);
+    const attendancePresent = @json($attendancePresent);
+    const attendanceAbsent = @json($attendanceAbsent);
+    const attendanceLate = @json($attendanceLate);
+    
+    new Chart(document.getElementById('attendanceChart'), {
+        type: 'line',
+        data: {
+            labels: attendanceLabels,
+            datasets: [
+                { label: 'Présents', data: attendancePresent, borderColor: 'rgba(165, 214, 167, 1)', backgroundColor: 'rgba(165, 214, 167, 0.2)', tension: 0.4, fill: true },
+                { label: 'Absents', data: attendanceAbsent, borderColor: 'rgba(239, 154, 154, 1)', backgroundColor: 'rgba(239, 154, 154, 0.2)', tension: 0.4, fill: true },
+                { label: 'Retards', data: attendanceLate, borderColor: 'rgba(255, 249, 196, 1)', backgroundColor: 'rgba(255, 249, 196, 0.2)', tension: 0.4, fill: true }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { position: 'bottom' } },
+            scales: { y: { beginAtZero: true, stacked: false } }
         }
     });
 </script>

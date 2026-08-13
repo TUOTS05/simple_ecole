@@ -49,13 +49,16 @@ class Student extends Model
     'previous_school',
     'remarks',
     'id_card_path', // ✅ Ajouté précédemment
+    'documents',
     // ... vos autres colonnes
 ];
 
     protected $casts = [
         'birth_date' => 'date',
+        'admission_date' => 'date',
         'large_family' => 'boolean',
         'staff_child' => 'boolean',
+        'documents' => 'array',
     ];
 
     // Relations

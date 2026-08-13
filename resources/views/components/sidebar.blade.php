@@ -3,13 +3,12 @@
     x-data="{ sidebarOpen: localStorage.getItem('sidebarOpen') !== 'false' }"
     x-init="$watch('sidebarOpen', val => localStorage.setItem('sidebarOpen', val))"
     :class="sidebarOpen ? 'w-64' : 'w-20'"
-    class="bg-white shadow-lg flex flex-col h-screen sticky top-0 transition-all duration-300 ease-in-out overflow-hidden"
->
+    class="bg-white shadow-lg flex flex-col h-screen sticky top-0 transition-all duration-300 ease-in-out overflow-hidden">
 
     <!-- Logo & Bouton de réduction -->
     <div class="h-16 flex items-center justify-between px-4 border-b border-gray-200 flex-shrink-0">
         <h1 x-show="sidebarOpen" x-transition class="text-xl font-bold text-primary tracking-tight whitespace-nowrap">
-            SaaS_Ecole
+            Simple School
         </h1>
         <button @click="sidebarOpen = !sidebarOpen" class="p-2 rounded-lg hover:bg-gray-100 text-gray-600 focus:outline-none transition-colors" title="Réduire/Agrandir le menu">
             <svg x-show="sidebarOpen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -42,6 +41,16 @@
         <a href="{{ route('superadmin.subscriptions.index') }}" title="Abonnements" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('superadmin.subscriptions.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
             <span class="text-xl min-w-[24px] text-center">📅</span>
             <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Abonnements</span>
+        </a>
+        @php
+        $pendingRequestsCount = \App\Models\SubscriptionRequest::where('status', 'pending')->count();
+        @endphp
+        <a href="{{ route('superadmin.subscriptions.pending') }}" title="Demandes d'abonnement" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('superadmin.subscriptions.pending') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+            <span class="text-xl min-w-[24px] text-center">📩</span>
+            <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Demandes d'abonnement</span>
+            @if($pendingRequestsCount > 0)
+            <span x-show="sidebarOpen" class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $pendingRequestsCount }}</span>
+            @endif
         </a>
         <a href="{{ route('superadmin.users.index') }}" title="Utilisateurs" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('superadmin.users.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
             <span class="text-xl min-w-[24px] text-center">👥</span>
@@ -86,22 +95,22 @@
         </a>
 
         @php
-            $firstChild = auth()->user()->children->first();
+        $firstChild = auth()->user()->children->first();
         @endphp
 
         @if($firstChild)
-            <a href="{{ route('parent.grades.index', $firstChild->id) }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('parent.grades.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
-                <span class="text-xl min-w-[24px] text-center">📄</span>
-                <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Bulletins & Notes</span>
-            </a>
-            <a href="{{ route('parent.attendance.index', $firstChild->id) }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('parent.attendance.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
-                <span class="text-xl min-w-[24px] text-center">✅</span>
-                <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Présences</span>
-            </a>
-            <a href="{{ route('parent.payments.index', $firstChild->id) }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('parent.payments.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
-                <span class="text-xl min-w-[24px] text-center">💳</span>
-                <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Paiements</span>
-            </a>
+        <a href="{{ route('parent.grades.index', $firstChild->id) }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('parent.grades.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+            <span class="text-xl min-w-[24px] text-center">📄</span>
+            <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Bulletins & Notes</span>
+        </a>
+        <a href="{{ route('parent.attendance.index', $firstChild->id) }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('parent.attendance.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+            <span class="text-xl min-w-[24px] text-center">✅</span>
+            <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Présences</span>
+        </a>
+        <a href="{{ route('parent.payments.index', $firstChild->id) }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('parent.payments.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+            <span class="text-xl min-w-[24px] text-center">💳</span>
+            <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Paiements</span>
+        </a>
         @endif
 
         <a href="{{ route('parent.messages.index') }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('parent.messages.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
@@ -174,7 +183,7 @@
             </div>
         </div>
 
-         <!-- ✅ GROUPE : RAPPORTS (Basé sur vos routes réelles web.php) -->
+        <!-- ✅ GROUPE : RAPPORTS (Basé sur vos routes réelles web.php) -->
         <div x-data="{ open: {{ request()->routeIs('app.report-cards.*') || request()->routeIs('app.financial.*') || (request()->routeIs('app.students.index') && request()->has('export')) ? 'true' : 'false' }} }" class="space-y-1">
             <button @click="if(!sidebarOpen) sidebarOpen = true; open = !open" title="Rapports"
                 class="w-full flex items-center justify-between px-3 py-3 rounded-lg transition text-gray-700 hover:bg-gray-100 focus:outline-none">
@@ -187,17 +196,17 @@
                 </svg>
             </button>
             <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
-                
+
                 <!-- 1. Bulletins de notes -->
                 <a href="{{ route('app.report-cards.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.report-cards.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
                     Bulletins de notes
                 </a>
-                
+
                 <!-- 2. États de scolarité (Impayés par classe & Détails élève) -->
                 <a href="{{ route('app.financial.unpaid_by_class') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.financial.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
                     États de scolarité
                 </a>
-                
+
                 <!-- 3. Listes de classe (La vue index contient vos boutons d'export Excel/PDF) -->
                 <a href="{{ route('app.students.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.students.index') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
                     Listes de classe & Exports
@@ -208,10 +217,15 @@
                     Rapport Présences/Absences
                 </a>
 
+                <a href="{{ route('app.notifications.index') }}"
+                    class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('app.notifications.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+                    <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Notifications SMS</span>
+                </a>
+
             </div>
         </div>
 
-                <!-- ========================================== -->
+        <!-- ========================================== -->
         <!-- GROUPE : CANTINE SCOLAIRE                  -->
         <!-- ========================================== -->
         <div x-data="{ open: {{ request()->routeIs('canteen.*') ? 'true' : 'false' }} }" class="space-y-1">
@@ -225,29 +239,29 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
             </button>
-            
+
             <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
                 <!-- 1. Configuration des Tarifs -->
-                <a href="{{ route('canteen.rates.index') }}" 
-                   class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('canteen.rates.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
+                <a href="{{ route('canteen.rates.index') }}"
+                    class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('canteen.rates.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
                     Configuration des Tarifs
                 </a>
-                
+
                 <!-- 2. Inscriptions des Élèves -->
-                <a href="{{ route('canteen.subscriptions.index') }}" 
-                   class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('canteen.subscriptions.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
+                <a href="{{ route('canteen.subscriptions.index') }}"
+                    class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('canteen.subscriptions.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
                     Inscriptions des Élèves
                 </a>
-                
+
                 <!-- 3. Paiements Cantine -->
-                <a href="{{ route('canteen.payments.index') }}" 
-                   class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('canteen.payments.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
+                <a href="{{ route('canteen.payments.index') }}"
+                    class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('canteen.payments.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
                     Paiements Cantine
                 </a>
-                
+
                 <!-- 4. Rapports Cantine (Impayés par classe, etc.) -->
-                <a href="{{ route('canteen.reports.unpaid_by_class') }}" 
-                   class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('canteen.reports.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
+                <a href="{{ route('canteen.reports.unpaid_by_class') }}"
+                    class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('canteen.reports.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
                     Rapports Cantine
                 </a>
             </div>
@@ -270,6 +284,10 @@
                 <a href="{{ route('app.class-fees.index') }}" title="Configuration des Frais" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.class-fees.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Frais</a>
                 <a href="{{ route('app.classes.index') }}" title="Classes" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.classes.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Classes</a>
                 <a href="{{ route('app.subjects.index') }}" title="Matières" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.subjects.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Matières</a>
+                <!-- ✨ NOUVEAU : Configuration SMS -->
+                <a href="{{ route('app.settings.sms') }}" title="Configuration SMS" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.settings.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
+                    Configuration SMS
+                </a>
             </div>
         </div>
         @endif
@@ -310,9 +328,11 @@
     .custom-scrollbar::-webkit-scrollbar {
         width: 4px;
     }
+
     .custom-scrollbar::-webkit-scrollbar-track {
         background: transparent;
     }
+
     .custom-scrollbar::-webkit-scrollbar-thumb {
         background-color: #cbd5e1;
         border-radius: 20px;

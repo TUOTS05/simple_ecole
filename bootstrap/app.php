@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Console\Scheduling\Schedule;
 
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -51,6 +52,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'role:parent',
             'tenant',
         ]);
+    })
+    ->withSchedule(function (Schedule $schedule) {
+        // Exécuter tous les jours à 9h du matin
+        $schedule->command('notifications:late-payments')
+                ->dailyAt('09:00')
+             ->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Rendre JSON les erreurs pour l'API

@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="max-w-6xl mx-auto">
-    
+
     <!-- En-tête -->
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -13,7 +13,9 @@
             <p class="text-sm text-gray-500 mt-1">Matricule : <span class="font-mono font-semibold">{{ $student->matricule ?? 'N/A' }}</span></p>
         </div>
         <a href="{{ route('app.students.show', $student->id) }}" class="inline-flex items-center text-sm font-medium text-gray-600 hover:text-primary transition">
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
             Retour au profil
         </a>
     </div>
@@ -21,7 +23,7 @@
     <form action="{{ route('app.students.update', $student->id) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
         @csrf
         @method('PUT')
-        
+
         <!-- Section 1: Informations de l'élève -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
@@ -30,7 +32,7 @@
                     Informations de l'élève
                 </h2>
             </div>
-            
+
             <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">Numéro Admission</label>
@@ -47,9 +49,9 @@
                     <select name="class_id" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary @error('class_id') border-red-500 @enderror">
                         <option value="">Sélectionner</option>
                         @foreach($classes as $class)
-                            <option value="{{ $class->id }}" {{ old('class_id', $student->classes->first()?->id) == $class->id ? 'selected' : '' }}>
-                                {{ $class->name }}
-                            </option>
+                        <option value="{{ $class->id }}" {{ old('class_id', $student->classes->first()?->id) == $class->id ? 'selected' : '' }}>
+                            {{ $class->name }}
+                        </option>
                         @endforeach
                     </select>
                 </div>
@@ -137,19 +139,22 @@
 
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">Date d'admission</label>
-                    <input type="date" name="admission_date" value="{{ old('admission_date', $student->admission_date ? $student->admission_date->format('Y-m-d') : '') }}" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                    <input type="date" name="admission_date" value="{{ old('admission_date', is_string($student->admission_date) ? $student->admission_date : ($student->admission_date ? $student->admission_date->format('Y-m-d') : '')) }}" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
                 </div>
 
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">Photo de l'élève</label>
                     @if($student->photo)
-                        <div class="mb-2 flex items-center gap-2">
-                            <img src="{{ asset('storage/' . $student->photo) }}" class="w-10 h-10 rounded-full object-cover border">
-                            <a href="{{ asset('storage/' . $student->photo) }}" target="_blank" class="text-xs text-blue-600 hover:underline flex items-center">
-                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                Voir l'actuelle
-                            </a>
-                        </div>
+                    <div class="mb-2 flex items-center gap-2">
+                        <img src="{{ asset('storage/' . $student->photo) }}" class="w-10 h-10 rounded-full object-cover border">
+                        <a href="{{ asset('storage/' . $student->photo) }}" target="_blank" class="text-xs text-blue-600 hover:underline flex items-center">
+                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            Voir l'actuelle
+                        </a>
+                    </div>
                     @endif
                     <input type="file" name="student_photo" accept="image/*" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
                     <p class="text-xs text-gray-500 mt-1">Laissez vide pour conserver l'actuelle.</p>
@@ -223,9 +228,38 @@
                     </div>
                 </div>
 
+                <!-- Prénom du tuteur -->
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">Nom du gardien</label>
-                    <input type="text" name="guardian_name" value="{{ old('guardian_name', $student->guardian_name ?? '') }}" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+                        Prénom du tuteur <span class="text-red-500">*</span>
+                    </label>
+                    @php
+                    // Astuce : on essaie de séparer l'ancien champ guardian_name s'il existe, pour pré-remplir proprement
+                    $gName = old('guardian_first_name', $student->guardian_name ?? '');
+                    $gParts = explode(' ', trim($gName), 2);
+                    $gFirst = $gParts[0] ?? '';
+                    @endphp
+                    <input type="text" name="guardian_first_name" value="{{ old('guardian_first_name', $gFirst) }}" required
+                        class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
+                </div>
+
+                <!-- Nom du tuteur -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+                        Nom du tuteur <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="guardian_last_name" value="{{ old('guardian_last_name', $gParts[1] ?? '') }}" required
+                        class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
+                </div>
+
+                <!-- Courriel du tuteur (Ajout du required et de l'astérisque) -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+                        Courriel du tuteur <span class="text-red-500">*</span>
+                    </label>
+                    <input type="email" name="guardian_email" value="{{ old('guardian_email', $student->guardian_email ?? '') }}" required
+                        class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
+                    <p class="text-xs text-gray-500 mt-1">Sert d'identifiant de connexion pour l'espace parent.</p>
                 </div>
 
                 <div>
@@ -299,55 +333,96 @@
             </div>
         </div>
 
-        <!-- Section 5: Documents (Explication sur les fichiers) -->
+        <!-- Section 5: Documents administratifs -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
                 <h2 class="text-lg font-semibold text-gray-800 flex items-center">
                     <span class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center mr-3 text-sm font-bold">5</span>
-                    Documents
+                    Documents administratifs
                 </h2>
             </div>
             <div class="p-6">
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                     <p class="text-sm text-blue-800 flex items-start">
-                        <svg class="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <svg class="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
                         <span>
-                            <strong>Note importante :</strong> Pour des raisons de sécurité, les navigateurs interdisent de pré-remplir les champs de fichiers. 
-                            Si vous souhaitez modifier un document, sélectionnez simplement le nouveau fichier ci-dessous. Il remplacera l'ancien.
+                            <strong>Info :</strong> Cliquez ou glissez-déposez un fichier pour remplacer l'actuel. Formats acceptés : PDF, JPG, PNG, DOC.
                         </span>
                     </p>
                 </div>
-                
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     @for($i = 1; $i <= 4; $i++)
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Document {{ $i }}</label>
-                        <div class="flex items-center justify-center w-full">
-                            <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
-                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <svg class="w-8 h-8 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                                    <p class="text-xs text-gray-500">Cliquer pour remplacer le document {{ $i }}</p>
+                       @php
+                            // Récupère le chemin du fichier dans le JSON, et extrait juste le nom du fichier
+                            $docPath = $student->documents["doc_$i"] ?? null;
+                            $currentDocName = $docPath ? basename($docPath) : null;
+                        @endphp
+
+                        <div class="relative group">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Document {{ $i }}</label>
+
+                            <!-- Zone de Drop / Clic interactive -->
+                            <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-blue-50 hover:border-blue-400 transition-all duration-200" id="drop-zone-{{ $i }}">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
+                                    <svg class="w-8 h-8 mb-2 text-gray-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                    </svg>
+
+                                    <!-- Ce texte changera dynamiquement via JS -->
+                                    <p class="text-xs font-medium text-gray-500" id="file-label-{{ $i }}">
+                                        Cliquer ou glisser un fichier ici
+                                    </p>
+
+                                    @if($currentDocName)
+                                    <p class="text-xs text-green-600 mt-1 font-semibold bg-green-50 px-2 py-0.5 rounded">
+                                        ✓ Actuel : {{ $currentDocName }}
+                                    </p>
+                                    @endif
                                 </div>
-                                <input type="file" name="documents[{{ $i }}]" accept=".pdf,.doc,.docx,.jpg,.png" class="hidden">
+                                <input type="file" name="documents[{{ $i }}]" accept=".pdf,.doc,.docx,.jpg,.png" class="hidden" onchange="updateFileName(this, {$i})">
                             </label>
                         </div>
-                    </div>
-                    @endfor
-                </div>
+                        @endfor
+                </div> <!-- FIN DE LA GRILLE -->
             </div>
         </div>
+</div>
 
-        <!-- Boutons d'action -->
-        <div class="flex flex-col sm:flex-row justify-end gap-3 sticky bottom-4">
-            <a href="{{ route('app.students.show', $student->id) }}" class="inline-flex justify-center items-center px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition shadow-sm">
-                Annuler
-            </a>
-            <button type="submit" class="inline-flex justify-center items-center px-8 py-3 text-sm font-semibold text-white bg-primary rounded-lg hover:bg-primary-dark focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-lg transition transform hover:-translate-y-0.5">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                Mettre à jour
-            </button>
-        </div>
+<!-- Boutons d'action -->
+<div class="flex flex-col sm:flex-row justify-end gap-3 sticky bottom-4">
+    <a href="{{ route('app.students.show', $student->id) }}" class="inline-flex justify-center items-center px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition shadow-sm">
+        Annuler
+    </a>
+    <button type="submit" class="inline-flex justify-center items-center px-8 py-3 text-sm font-semibold text-white bg-primary rounded-lg hover:bg-primary-dark focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-lg transition transform hover:-translate-y-0.5">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        Mettre à jour
+    </button>
+</div>
 
-    </form>
+</form>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function updateFileName(input, index) {
+    const label = document.getElementById(`file-label-${index}`);
+    if (input.files && input.files.length > 0) {
+        // Affiche le nom du fichier sélectionné
+        label.textContent = input.files[0].name;
+        label.classList.remove('text-gray-500');
+        label.classList.add('text-blue-600', 'font-bold');
+    } else {
+        // Revient à l'état initial si annulé
+        label.textContent = 'Cliquer ou glisser un fichier ici';
+        label.classList.add('text-gray-500');
+        label.classList.remove('text-blue-600', 'font-bold');
+    }
+}
+</script>
+@endpush
