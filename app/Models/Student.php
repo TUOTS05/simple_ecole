@@ -69,7 +69,9 @@ class Student extends Model
 
     public function classes(): BelongsToMany
     {
-        return $this->belongsToMany(SchoolClass::class, 'student_school_class', 'student_id', 'school_class_id');
+        return $this->belongsToMany(SchoolClass::class, 'student_school_class', 'student_id', 'school_class_id')
+                    ->withPivot('school_year_id')
+                    ->withTimestamps();
     }
 
     public function attendances(): HasMany
@@ -81,6 +83,12 @@ class Student extends Model
     {
         return $this->hasMany(Enrollment::class);
     }
+
+     public function reportCards(): HasMany
+    {
+        return $this->hasMany(ReportCard::class);
+    }
+
 
     public function parents(): BelongsToMany
     {
@@ -136,6 +144,18 @@ class Student extends Model
     public function currentCanteenSubscription()
     {
         return $this->hasOne(CanteenSubscription::class)
+            ->where('school_year_id', SchoolYear::where('is_active', true)->value('id'))
+            ->where('status', 'active');
+    }
+
+    public function gouterSubscriptions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(GouterSubscription::class);
+    }
+
+    public function currentGouterSubscription()
+    {
+        return $this->hasOne(GouterSubscription::class)
             ->where('school_year_id', SchoolYear::where('is_active', true)->value('id'))
             ->where('status', 'active');
     }

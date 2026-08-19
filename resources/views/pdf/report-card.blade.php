@@ -317,35 +317,72 @@
         </div>
 
         <!-- Signatures (MODIFIÉ POUR INCLURE L'ENSEIGNANT) -->
+                <!-- Signatures & Décision de fin d'année -->
         <div class="signatures">
-            <!-- Ligne 1 : Enseignant et Direction -->
+            @php
+                // Vérifie si c'est le 3ème trimestre (insensible à la casse)
+                $isThirdTrimester = (strtolower($reportCard->period ?? '') === 'trimestriel' && $reportCard->quarter == 3);
+            @endphp
+
+            @if($isThirdTrimester)
+                <!-- ✅ BLOC DÉCISION DU CONSEIL DE CLASSE (Uniquement au 3ème trimestre) -->
+                <div style="border: 2px solid #000; padding: 12px; margin-bottom: 15px; background-color: #f9fafb; text-align: center;">
+                    <div style="font-weight: bold; text-transform: uppercase; margin-bottom: 10px; font-size: 12px; letter-spacing: 1px;">
+                        DÉCISION DU CONSEIL DE CLASSE
+                    </div>
+                    
+                    @if(isset($reportCard->end_of_year_decision) && $reportCard->end_of_year_decision !== 'en_attente')
+                        @if($reportCard->end_of_year_decision === 'admis')
+                            <div style="font-size: 16px; font-weight: bold; color: #166534; margin-bottom: 5px;">
+                                ✅ ADMIS(E) EN {{ $reportCard->nextSchoolClass ? strtoupper($reportCard->nextSchoolClass->name) : 'CLASSE SUPÉRIEURE' }}
+                            </div>
+                        @elseif($reportCard->end_of_year_decision === 'redouble')
+                            <div style="font-size: 16px; font-weight: bold; color: #9a3412; margin-bottom: 5px;">
+                                🔁 REDOUBLEMENT
+                            </div>
+                        @elseif($reportCard->end_of_year_decision === 'saut_classe')
+                            <div style="font-size: 16px; font-weight: bold; color: #1e40af; margin-bottom: 5px;">
+                                ⚡ SAUT DE CLASSE VERS {{ $reportCard->nextSchoolClass ? strtoupper($reportCard->nextSchoolClass->name) : 'CLASSE SUPÉRIEURE' }}
+                            </div>
+                        @endif
+
+                        @if(!empty($reportCard->director_comment))
+                            <div style="margin-top: 10px; font-size: 10px; font-style: italic; color: #333; border-top: 1px dashed #ccc; padding-top: 8px;">
+                                "{{ $reportCard->director_comment }}"
+                            </div>
+                        @endif
+                    @else
+                        <div style="font-size: 11px; color: #666; font-style: italic;">
+                            En attente de la décision finale du conseil de classe.
+                        </div>
+                    @endif
+                </div>
+            @else
+                <!-- ✅ COMPORTEMENT NORMAL POUR 1er et 2ème TRIMESTRE -->
+                <div style="margin-bottom: 15px;">
+                    <div style="font-weight: bold; text-transform: uppercase; margin-bottom: 5px; font-size: 10px;">
+                        APPRÉCIATION DU CONSEIL DE CLASSE
+                    </div>
+                    <div style="border: 1px solid #000; padding: 8px; min-height: 40px; font-size: 10px;">
+                        {{ $reportCard->director_comment ?: 'Aucune appréciation globale renseignée.' }}
+                    </div>
+                </div>
+            @endif
+
+            <!-- Ligne des signatures (Toujours présente) -->
             <div class="signature-row">
                 <div class="signature-cell">
-                    <div class="signature-title">L'ENSEIGNANT(E) TITULAIRE</div>
-                    <div class="signature-box" style="text-align: center; padding-top: 12px;">
-                        @if(isset($schoolClass->teacher))
-                            {{ $schoolClass->teacher->name ?? ($schoolClass->teacher->first_name . ' ' . $schoolClass->teacher->last_name) }}
-                        @else
-                            Non assigné(e)
-                        @endif
+                    <div class="signature-title">APPRÉCIATION GÉNÉRALE & OBSERVATIONS</div>
+                    <div class="signature-box">
+                        {{ $reportCard->teacher_comment ?? '' }}
                     </div>
                 </div>
                 <div class="signature-cell">
-                    <div class="signature-title">LA DIRECTION / CACHET & SIGNATURE</div>
+                    <div class="signature-title">LA DIRECTION/ CACHET & SIGNATURE</div>
                     <div class="signature-box"></div>
                 </div>
             </div>
-            
-            <!-- Ligne 2 : Appréciation générale (pleine largeur) -->
-            <div class="signature-row">
-                <div class="signature-cell full-width">
-                    <div class="signature-title">APPRÉCIATION GÉNÉRALE & OBSERVATIONS DU CONSEIL DE CLASSE</div>
-                    <div class="signature-box" style="min-height: 40px;">
-                        {{ $reportCard->teacher_comment ?? 'Aucune appréciation globale renseignée.' }}
-                    </div>
-                </div>
-            </div>
-        </div>
+        </div><br>
 
         <!-- Pied de page -->
         <div class="footer">

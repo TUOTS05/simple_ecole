@@ -13,12 +13,14 @@ class MessageController extends Controller
         $schoolId = session('current_school_id') ?? auth()->user()->school_id;
         
         $messages = Message::where('school_id', $schoolId)
+            ->receivedFromParents()
             ->with('sender')
             ->orderBy('is_read', 'asc')
             ->orderBy('created_at', 'desc')
             ->paginate(15);
-        
+
         $unreadCount = Message::where('school_id', $schoolId)
+            ->receivedFromParents()
             ->where('is_read', false)
             ->count();
         

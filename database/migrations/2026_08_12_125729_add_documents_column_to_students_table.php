@@ -9,15 +9,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('students', function (Blueprint $table) {
-            // Ajoute la colonne JSON pour les 4 documents
-            $table->json('documents')->nullable()->after('remarks');
+            // Ajoute la colonne JSON pour les 4 documents (déjà créée par une migration précédente sur certains environnements)
+            if (!Schema::hasColumn('students', 'documents')) {
+                $table->json('documents')->nullable()->after('remarks');
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('students', function (Blueprint $table) {
-            $table->dropColumn('documents');
+            if (Schema::hasColumn('students', 'documents')) {
+                $table->dropColumn('documents');
+            }
         });
     }
 };

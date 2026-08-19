@@ -1,84 +1,73 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nouveau message</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 min-h-screen">
-    <div class="max-w-2xl mx-auto bg-white min-h-screen shadow-lg">
-        <!-- Header -->
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 flex items-center">
-            <a href="{{ route('parent.messages.index') }}" class="mr-4">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-            </a>
-            <h1 class="text-lg font-bold">Nouveau message</h1>
-        </div>
+@extends('layouts.app')
 
-        <div class="p-6">
-            @if($errors->any())
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
-                    <ul class="list-disc list-inside">
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
+@section('title', 'Nouveau message - Espace Parent')
+@section('page_title', 'Nouveau message')
 
-            <form method="POST" action="{{ route('parent.messages.store') }}">
-                @csrf
-                
-                <!-- Sélection de l'école -->
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">École destinataire</label>
-                    @if($schools->count() > 1)
-                        <select name="school_id" required 
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">-- Choisir une école --</option>
-                            @foreach($schools as $school)
-                                <option value="{{ $school->id }}" {{ old('school_id') == $school->id ? 'selected' : '' }}>
-                                    {{ $school->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    @elseif($schools->count() == 1)
-                        <input type="hidden" name="school_id" value="{{ $schools->first()->id }}">
-                        <div class="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
-                            {{ $schools->first()->name }}
-                        </div>
-                    @else
-                        <div class="text-red-600 text-sm">Aucune école disponible</div>
-                    @endif
-                </div>
-
-                <!-- Sujet -->
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">Sujet</label>
-                    <input type="text" name="subject" value="{{ old('subject') }}" required 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           placeholder="Ex: Question sur les frais de scolarité">
-                </div>
-
-                <!-- Message -->
-                <div class="mb-6">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">Message</label>
-                    <textarea name="message" rows="8" required 
-                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              placeholder="Votre message (minimum 10 caractères)...">{{ old('message') }}</textarea>
-                </div>
-
-                <div class="flex gap-3">
-                    <a href="{{ route('parent.messages.index') }}" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg font-medium text-center hover:bg-gray-200 transition">
-                        Annuler
-                    </a>
-                    <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">
-                        Envoyer
-                    </button>
-                </div>
-            </form>
-        </div>
+@section('content')
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="mb-6">
+        <a href="{{ route('parent.messages.index') }}" class="inline-flex items-center text-sm text-gray-500 hover:text-primary transition mb-4">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            Retour à la messagerie
+        </a>
+        <h1 class="text-2xl font-bold text-gray-800">✉️ Nouveau message</h1>
+        <p class="text-sm text-gray-500">Envoyez une communication à l'établissement scolaire</p>
     </div>
-</body>
-</html>
+
+    @if($errors->any())
+        <div class="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-start shadow-sm">
+            <svg class="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <ul class="list-disc list-inside text-sm">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <form method="POST" action="{{ route('parent.messages.store') }}">
+            @csrf
+            
+            <div class="mb-5">
+                <label class="block text-gray-700 text-sm font-semibold mb-2">École destinataire <span class="text-red-500">*</span></label>
+                @if($schools->count() > 1)
+                    <select name="school_id" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition">
+                        <option value="">-- Choisir une école --</option>
+                        @foreach($schools as $school)
+                            <option value="{{ $school->id }}" {{ old('school_id') == $school->id ? 'selected' : '' }}>{{ $school->name }}</option>
+                        @endforeach
+                    </select>
+                @elseif($schools->count() == 1)
+                    <input type="hidden" name="school_id" value="{{ $schools->first()->id }}">
+                    <div class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-700 font-medium">{{ $schools->first()->name }}</div>
+                @else
+                    <div class="text-red-600 text-sm bg-red-50 p-3 rounded-lg">Aucune école associée à vos enfants.</div>
+                @endif
+            </div>
+
+            <div class="mb-5">
+                <label class="block text-gray-700 text-sm font-semibold mb-2">Sujet <span class="text-red-500">*</span></label>
+                <input type="text" name="subject" value="{{ old('subject') }}" required 
+                       class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                       placeholder="Ex: Question sur les frais de scolarité, Absence prévue...">
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-semibold mb-2">Message <span class="text-red-500">*</span></label>
+                <textarea name="message" rows="6" required 
+                          class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                          placeholder="Décrivez votre demande ou votre question en détail (minimum 10 caractères)...">{{ old('message') }}</textarea>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-100">
+                <a href="{{ route('parent.messages.index') }}" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg font-semibold text-center hover:bg-gray-200 transition">Annuler</a>
+                <button type="submit" class="flex-1 bg-primary text-white py-3 rounded-lg font-semibold hover:bg-primary-dark transition shadow-sm flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                    Envoyer le message
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+@endsection

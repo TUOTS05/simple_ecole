@@ -27,7 +27,7 @@ return new class extends Migration
             $table->foreignId('created_by')->constrained('users')->onDelete('restrict');
             $table->timestamps();
 
-            $table->unique(['student_id', 'school_year_id', 'period', 'month', 'quarter']);
+            $table->unique(['student_id', 'school_year_id', 'period', 'month', 'quarter'], 'report_cards_unique');
         });
     }
 

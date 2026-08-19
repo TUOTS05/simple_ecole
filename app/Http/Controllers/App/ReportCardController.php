@@ -15,21 +15,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportCardController extends Controller
 {
-    // public function index(Request $request)
-    // {
-    //     $schoolId = session('current_school_id');
-    //     $currentYear = \App\Models\SchoolYear::where('school_id', $schoolId)
-    //         ->where('is_active', true)
-    //         ->first();
-
-    //     $reportCards = ReportCard::where('school_id', $schoolId)
-    //         ->where('school_year_id', $currentYear?->id)
-    //         ->with(['student', 'schoolClass'])
-    //         ->orderBy('created_at', 'desc')
-    //         ->paginate(15);
-
-    //     return view('app.report-cards.index', compact('reportCards'));
-    // }
+    
 
         public function index(Request $request)
     {
@@ -63,131 +49,6 @@ class ReportCardController extends Controller
     }
 
 
-    // public function create(Request $request)
-    // {
-    //     $schoolId = session('current_school_id');
-    //     $currentYear = \App\Models\SchoolYear::where('school_id', $schoolId)
-    //         ->where('is_active', true)
-    //         ->first();
-
-    //     $classes = SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
-    //     $selectedClassId = $request->get('class_id');
-    //     $period = $request->get('period', 'mensuel');
-    //     $month = $request->get('month', now()->format('F'));
-    //     $quarter = $request->get('quarter', 1);
-
-    //     $students = collect();
-    //     $subjects = collect();
-    //     $levelMismatch = false;
-
-    //     if ($selectedClassId) {
-    //         $class = SchoolClass::find($selectedClassId);
-    //         $students = $class->students()->where('status', 'active')->orderBy('last_name')->get();
-
-    //         // Recherche EXACTE des matières pour ce cycle et ce niveau
-    //         $subjects = Subject::where('school_id', $schoolId)
-    //             ->where('school_year_id', $currentYear?->id)
-    //             ->where('cycle', $class->cycle)
-    //             ->where('level', $class->level) // Doit correspondre exactement à la casse
-    //             ->where('is_active', true)
-    //             ->orderBy('name')
-    //             ->get();
-
-    //         // Diagnostic : si aucune matière n'est trouvée, vérifier pourquoi
-    //         if ($subjects->isEmpty() && $students->isNotEmpty()) {
-    //             $subjectExistsForCycle = Subject::where('school_id', $schoolId)
-    //                 ->where('school_year_id', $currentYear?->id)
-    //                 ->where('cycle', $class->cycle)
-    //                 ->exists();
-
-    //             $levelMismatch = !$subjectExistsForCycle;
-    //         }
-    //     }
-
-    //     return view('app.report-cards.create', compact(
-    //         'classes',
-    //         'students',
-    //         'subjects',
-    //         'selectedClassId',
-    //         'period',
-    //         'month',
-    //         'quarter',
-    //         'levelMismatch'
-    //     ));
-    // }
-
-
-    // public function store(Request $request)
-    // {
-    //     $validated = $request->validate([
-    //         'class_id' => 'required|exists:school_classes,id',
-    //         'period' => 'required|in:mensuel,trimestriel',
-    //         'month' => 'nullable|string',
-    //         'quarter' => 'nullable|integer|min:1|max:3',
-    //         'coefficients' => 'required|array',
-    //         'coefficients.*' => 'required|numeric|min:1|max:10',
-    //         'grades' => 'required|array',
-    //         'grades.*.*.score' => 'required|numeric|min:0|max:100',
-    //         'grades.*.*.max_score' => 'required|numeric|min:1',
-    //         'grades.*.*.remarks' => 'nullable|string|max:255',
-    //     ]);
-
-    //     $schoolId = session('current_school_id');
-    //     $currentYear = \App\Models\SchoolYear::where('school_id', $schoolId)
-    //         ->where('is_active', true)
-    //         ->first();
-
-    //     $class = SchoolClass::find($validated['class_id']);
-
-    //     DB::beginTransaction();
-    //     try {
-    //         foreach ($validated['grades'] as $studentId => $subjectsData) {
-
-    //             foreach ($subjectsData as $subjectId => $data) {
-    //                 Grade::updateOrCreate(
-    //                     [
-    //                         'school_id' => $schoolId,
-    //                         'student_id' => $studentId,
-    //                         'subject_id' => $subjectId,
-    //                         'school_class_id' => $validated['class_id'],
-    //                         'school_year_id' => $currentYear?->id,
-    //                         'period' => $validated['period'],
-    //                         'month' => $validated['period'] === 'mensuel' ? $validated['month'] : null,
-    //                         'quarter' => $validated['period'] === 'trimestriel' ? $validated['quarter'] : null,
-    //                     ],
-    //                     [
-    //                         'score' => $data['score'],
-    //                         'max_score' => $data['max_score'],
-    //                         'coefficient_used' => $validated['coefficients'][$subjectId] ?? 1,
-    //                         'remarks' => $data['remarks'] ?? null,
-    //                         'marked_by' => auth()->id(),
-    //                     ]
-    //                 );
-    //             }
-
-    //             $student = Student::find($studentId);
-    //             $this->calculateAndCreateReportCard(
-    //                 $schoolId,
-    //                 $student,
-    //                 $validated['class_id'],
-    //                 $currentYear?->id,
-    //                 $validated['period'],
-    //                 $validated['month'] ?? null,
-    //                 $validated['quarter'] ?? null
-    //             );
-    //         }
-
-    //         DB::commit();
-
-    //         return redirect()->route('app.report-cards.index')
-    //             ->with('success', 'Notes enregistrées et bulletins générés avec succès !');
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         return back()->withErrors(['error' => 'Erreur lors de l\'enregistrement: ' . $e->getMessage()]);
-    //     }
-    // }
-
-
     public function create(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -203,7 +64,6 @@ class ReportCardController extends Controller
 
         $students = collect();
         $subjects = collect();
-        $levelMismatch = false;
         $existingGrades = collect();
 
         if ($selectedClassId) {
@@ -243,7 +103,6 @@ class ReportCardController extends Controller
             'period',
             'month',
             'quarter',
-            'levelMismatch',
             'existingGrades'
         ));
     }
@@ -324,114 +183,6 @@ class ReportCardController extends Controller
             return back()->withErrors(['error' => 'Erreur : ' . $e->getMessage()]);
         }
     }
-
-    // private function calculateAndCreateReportCard($schoolId, $student, $classId, $yearId, $period, $month, $quarter)
-    // {
-    //     $gradesQuery = Grade::where('school_id', $schoolId)
-    //         ->where('student_id', $student->id)
-    //         ->where('school_class_id', $classId)
-    //         ->where('school_year_id', $yearId)
-    //         ->where('period', $period);
-
-    //     if ($period === 'mensuel') {
-    //         $gradesQuery->where('month', $month);
-    //     } else {
-    //         $gradesQuery->where('quarter', $quarter);
-    //     }
-
-    //     $grades = $gradesQuery->with('subject')->get();
-
-    //     if ($grades->isEmpty()) {
-    //         return;
-    //     }
-
-    //     $totalWeightedScore = 0;
-    //     $totalCoefficients = 0;
-
-    //     foreach ($grades as $grade) {
-    //         $score = $grade->score;
-    //         $maxScore = $grade->subject->max_score ?? $grade->max_score ?? 20;
-    //         $scoreOutOf20 = ($score / $maxScore) * 20;
-    //         $coefficient = $grade->coefficient_used ?? $grade->subject->coefficient ?? 1;
-
-    //         $totalWeightedScore += ($scoreOutOf20 * $coefficient);
-    //         $totalCoefficients += $coefficient;
-    //     }
-
-    //     $average = $totalCoefficients > 0 ? $totalWeightedScore / $totalCoefficients : 0;
-
-    //     $allAverages = $this->getAllStudentAverages($schoolId, $classId, $yearId, $period, $month, $quarter);
-    //     $rank = 1;
-    //     foreach ($allAverages as $avg) {
-    //         if ($avg > $average) {
-    //             $rank++;
-    //         }
-    //     }
-
-    //     ReportCard::updateOrCreate(
-    //         [
-    //             'school_id' => $schoolId,
-    //             'student_id' => $student->id,
-    //             'school_year_id' => $yearId,
-    //             'school_class_id' => $classId,
-    //             'period' => $period,
-    //             'month' => $period === 'mensuel' ? $month : null,
-    //             'quarter' => $period === 'trimestriel' ? $quarter : null,
-    //         ],
-    //         [
-    //             'average' => round($average, 2),
-    //             'rank' => $rank,
-    //             'total_students' => count($allAverages),
-    //             'created_by' => auth()->id(),
-    //         ]
-    //     );
-    // }
-
-    // private function getAllStudentAverages($schoolId, $classId, $yearId, $period, $month, $quarter)
-    // {
-    //     $averages = [];
-
-    //     $students = Student::where('school_id', $schoolId)
-    //         ->where('status', 'active')
-    //         ->whereHas('classes', fn($q) => $q->where('school_classes.id', $classId))
-    //         ->get();
-
-    //     foreach ($students as $student) {
-    //         $grades = Grade::where('school_id', $schoolId)
-    //             ->where('student_id', $student->id)
-    //             ->where('school_class_id', $classId)
-    //             ->where('school_year_id', $yearId)
-    //             ->where('period', $period);
-
-    //         if ($period === 'mensuel') {
-    //             $grades->where('month', $month);
-    //         } else {
-    //             $grades->where('quarter', $quarter);
-    //         }
-
-    //         $grades = $grades->with('subject')->get();
-
-    //         if ($grades->isEmpty()) {
-    //             continue;
-    //         }
-
-    //         $totalWeightedScore = 0;
-    //         $totalCoefficients = 0;
-
-    //         foreach ($grades as $grade) {
-    //             $scoreOutOf20 = $grade->score_out_of_20;
-    //             $coefficient = $grade->subject->coefficient ?? 1;
-    //             $totalWeightedScore += ($scoreOutOf20 * $coefficient);
-    //             $totalCoefficients += $coefficient;
-    //         }
-
-    //         if ($totalCoefficients > 0) {
-    //             $averages[] = $totalWeightedScore / $totalCoefficients;
-    //         }
-    //     }
-
-    //     return $averages;
-    // }
 
 
     private function calculateAndCreateReportCard($schoolId, $student, $classId, $yearId, $period, $month, $quarter)
@@ -589,7 +340,7 @@ class ReportCardController extends Controller
             abort(403);
         }
 
-        $reportCard->load(['student', 'schoolClass', 'schoolYear', 'createdBy']);
+        $reportCard->load(['student', 'schoolClass', 'schoolYear', 'createdBy', 'nextSchoolClass']);
         $schoolClass = $reportCard->schoolClass;
 
         // Charger les notes
@@ -756,7 +507,7 @@ class ReportCardController extends Controller
             abort(403);
         }
 
-        $reportCard->load(['student', 'schoolClass.teacher', 'schoolYear', 'createdBy']);
+        $reportCard->load(['student', 'schoolClass.teacher', 'schoolYear', 'createdBy', 'nextSchoolClass']);
         $student = $reportCard->student;
         $school = $student->school ?? $reportCard->school;
         $schoolYear = $reportCard->schoolYear;

@@ -11,13 +11,18 @@ class MessageController extends Controller
     public function index()
     {
         $parent = auth()->user();
-        
-        $messages = Message::where('sender_id', $parent->id)
+
+        // Le parent voit les messages qu'il a envoyés, ceux reçus personnellement, et les
+        // diffusions de son école qui ciblent "tous les parents" ou la classe d'un de ses enfants.
+        $messages = Message::visibleToParent($parent)
             ->with('school')
             ->orderBy('created_at', 'desc')
             ->paginate(15);
-        
-        return view('parent.messages.index', compact('messages'));
+
+        // Seuls les messages personnels entrent dans le badge de notification (voir Message::scopeUnreadForParent).
+        $unreadCount = Message::unreadForParent($parent)->count();
+
+        return view('parent.messages.index', compact('messages', 'unreadCount'));
     }
     
     public function create()
@@ -43,7 +48,6 @@ class MessageController extends Controller
         
         $parent = auth()->user();
         
-        // ✅ CORRECTION : Préciser la table 'students'
         $hasChildInSchool = $parent->children()
             ->where('students.school_id', $validated['school_id'])
             ->exists();
@@ -56,8 +60,10 @@ class MessageController extends Controller
         Message::create([
             'school_id' => $validated['school_id'],
             'sender_id' => $parent->id,
+            'receiver_id' => null, // L'école reçoit globalement
             'subject' => $validated['subject'],
             'message' => $validated['message'],
+            'is_read' => false,
         ]);
         
         return redirect()->route('parent.messages.index')
@@ -67,12 +73,18 @@ class MessageController extends Controller
     public function show(Message $message)
     {
         $parent = auth()->user();
-        
-        if ($message->sender_id !== $parent->id) {
-            abort(403);
+
+        // Sécurité : le parent ne peut voir que ses propres messages et les diffusions qui le concernent
+        if (!Message::visibleToParent($parent)->where('id', $message->id)->exists()) {
+            abort(403, 'Vous n\'êtes pas autorisé à voir ce message.');
         }
-        
+
         $message->load('school');
+        
+        // Marquer automatiquement comme lu si le parent est le destinataire
+        if ($message->receiver_id === $parent->id && !$message->is_read) {
+            $message->update(['is_read' => true]);
+        }
         
         return view('parent.messages.show', compact('message'));
     }

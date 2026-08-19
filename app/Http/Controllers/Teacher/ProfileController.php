@@ -5,23 +5,16 @@ namespace App\Http\Controllers\Teacher;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
 {
-    /**
-     * Afficher le formulaire de profil
-     */
     public function index()
     {
         $user = Auth::user();
         return view('teacher.profile.index', compact('user'));
     }
 
-    /**
-     * Mettre à jour les informations du profil
-     */
     public function update(Request $request)
     {
         $user = Auth::user();
@@ -39,9 +32,6 @@ class ProfileController extends Controller
         return back()->with('success', '✅ Vos informations ont été mises à jour avec succès.');
     }
 
-    /**
-     * Mettre à jour le mot de passe
-     */
     public function updatePassword(Request $request)
     {
         $user = Auth::user();
@@ -52,7 +42,7 @@ class ProfileController extends Controller
         ]);
 
         $user->update([
-            'password' => Hash::make($validated['password']),
+            'password' => $validated['password'],
         ]);
 
         return back()->with('success_password', '✅ Votre mot de passe a été changé avec succès.');

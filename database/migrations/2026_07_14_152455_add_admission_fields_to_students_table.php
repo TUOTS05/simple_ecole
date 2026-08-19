@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('students', function (Blueprint $table) {
             // Informations d'admission
             $table->string('admission_number', 50)->nullable()->after('matricule');
-            $table->string('section', 10)->nullable()->after('class_id'); // Si class_id existe, sinon après gender
+            $table->string('section', 10)->nullable()->after('gender');
             $table->boolean('large_family')->default(false)->after('status');
             $table->boolean('staff_child')->default(false)->after('large_family');
             $table->string('religion', 50)->nullable()->after('staff_child');
@@ -47,12 +47,6 @@ return new class extends Migration
             $table->string('previous_school', 255)->nullable()->after('permanent_address');
             $table->text('remarks')->nullable()->after('previous_school');
 
-                        // Adresses et Divers
-            $table->text('current_address')->nullable()->after('guardian_address');
-            $table->text('permanent_address')->nullable()->after('current_address');
-            $table->string('previous_school', 255)->nullable()->after('permanent_address');
-            $table->text('remarks')->nullable()->after('previous_school');
-            
             // ✅ NOUVEAU : Stockage des 4 documents administratifs (JSON)
             $table->json('documents')->nullable()->after('remarks');
         });

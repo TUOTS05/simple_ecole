@@ -24,12 +24,15 @@ class ReportCard extends Model
         'director_signed',
         'parent_signed',
         'created_by',
+        'end_of_year_decision',
+        'next_school_class_id',
     ];
 
     protected $casts = [
         'average' => 'decimal:2',
         'director_signed' => 'boolean',
         'parent_signed' => 'boolean',
+        'end_of_year_decision' => 'string',
     ];
 
     public function school(): BelongsTo
@@ -74,5 +77,11 @@ class ReportCard extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    // Ajoutez cette relation
+    public function nextSchoolClass(): BelongsTo
+    {
+        return $this->belongsTo(SchoolClass::class, 'next_school_class_id');
     }
 }
