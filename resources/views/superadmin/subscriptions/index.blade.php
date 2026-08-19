@@ -153,20 +153,19 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @php
+                                    // Seuls active/expired/renewed sont réellement produits par le
+                                    // code (SubscriptionController) ; le repli générique ci-dessous
+                                    // couvre tout statut inattendu sans avoir à lister des valeurs mortes.
                                     $statusClass = [
-                                        'pending' => 'bg-yellow-100 text-yellow-800',
                                         'active' => 'bg-green-100 text-green-800',
                                         'expired' => 'bg-red-100 text-red-800',
                                         'renewed' => 'bg-blue-100 text-blue-800',
-                                        'cancelled' => 'bg-gray-100 text-gray-800',
                                     ][$contract->status] ?? 'bg-gray-100 text-gray-800';
-                                    
+
                                     $statusLabel = [
-                                        'pending' => 'En attente',
                                         'active' => 'Actif',
                                         'expired' => 'Expiré',
                                         'renewed' => 'Renouvelé',
-                                        'cancelled' => 'Annulé',
                                     ][$contract->status] ?? $contract->status;
                                 @endphp
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusClass }}">

@@ -39,10 +39,14 @@ class SubscriptionController extends Controller
         $plan = SubscriptionPlan::findOrFail($validated['plan_id']);
         $school = School::findOrFail($validated['school_id']);
 
+        // 🛡️ SÉCURITÉ : Empêcher l'activation d'un abonnement pour l'école de démonstration
+        // (garde déjà présente dans approveRequest(), manquante ici et dans storeRenewal()).
+        if (str_contains(strtolower($school->name), 'démo') || str_contains(strtolower($school->email ?? ''), 'demo')) {
+            return back()->withErrors(['school_id' => '⚠️ Impossible d\'activer un abonnement pour l\'école de démonstration.']);
+        }
+
         // 1. Générer un numéro de contrat unique
         $contractNumber = 'CTR-' . date('Y') . '-' . strtoupper(Str::random(6));
-
-        $school = School::findOrFail($validated['school_id']);
 
         // ✅ RÈGLE MÉTIER : Désactiver tout contrat "actif" existant pour cette école
         Contract::where('school_id', $school->id)
@@ -150,12 +154,20 @@ class SubscriptionController extends Controller
         $oldContract = \App\Models\Contract::findOrFail($id);
 
         $validated = $request->validate([
-            'start_date' => 'required|date',
+            // Interdit un chevauchement avec la période en cours (l'écran de renouvellement
+            // pré-remplit déjà la bonne date, mais rien n'empêchait de la modifier avant ce correctif).
+            'start_date' => ['required', 'date', 'after_or_equal:' . $oldContract->end_date->format('Y-m-d')],
             'end_date' => 'required|date|after:start_date',
             'amount' => 'required|numeric|min:0',
         ]);
 
         $school = \App\Models\School::findOrFail($oldContract->school_id);
+
+        // 🛡️ SÉCURITÉ : Empêcher le renouvellement d'un abonnement pour l'école de démonstration
+        // (garde déjà présente dans approveRequest()).
+        if (str_contains(strtolower($school->name), 'démo') || str_contains(strtolower($school->email ?? ''), 'demo')) {
+            return back()->withErrors(['error' => '⚠️ Impossible de renouveler un abonnement pour l\'école de démonstration.']);
+        }
         $planName = $oldContract->plan_name;
 
         // 1. Marquer l'ancien contrat comme renouvelé
