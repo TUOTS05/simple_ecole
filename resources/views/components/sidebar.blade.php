@@ -94,9 +94,15 @@
             <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Tableau de bord</span>
         </a>
 
-        @php
-        $firstChild = auth()->user()->children->first();
-        @endphp
+                        @php
+                        // 1. Définition de $firstChild (indispensable pour les liens Bulletins, Présences, Paiements)
+                        $firstChild = auth()->user()->children->first();
+                        
+                        // 2. Calcul des messages non lus (voir Message::scopeUnreadForParent)
+                        $parentUnreadMessages = auth()->user()->isParent()
+                            ? \App\Models\Message::unreadForParent(auth()->user())->count()
+                            : 0;
+                        @endphp
 
         @if($firstChild)
         <a href="{{ route('parent.grades.index', $firstChild->id) }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('parent.grades.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
@@ -113,9 +119,17 @@
         </a>
         @endif
 
-        <a href="{{ route('parent.messages.index') }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('parent.messages.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
-            <span class="text-xl min-w-[24px] text-center">✉️</span>
-            <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Messages</span>
+        <!-- ✅ LIEN MESSAGES PARENT AVEC BADGE DE NOTIFICATION -->
+        <a href="{{ route('parent.messages.index') }}" class="flex items-center justify-between px-3 py-3 rounded-lg transition {{ request()->routeIs('parent.messages.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+            <div class="flex items-center">
+                <span class="text-xl min-w-[24px] text-center">✉️</span>
+                <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Messages</span>
+            </div>
+            @if($parentUnreadMessages > 0)
+            <span x-show="sidebarOpen" class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
+                {{ $parentUnreadMessages }}
+            </span>
+            @endif
         </a>
 
         @else
@@ -161,6 +175,7 @@
                 <a href="{{ route('app.students.index') }}" title="Liste des Élèves" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.students.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Élèves</a>
                 <a href="{{ route('app.attendances.index') }}" title="Présences" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.attendances.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Présences</a>
                 <a href="{{ route('app.report-cards.index') }}" title="Bulletins" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.report-cards.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Bulletins</a>
+                <a href="{{ route('app.end-of-year.index') }}" title="Fin d'année & Passage" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.end-of-year.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Fin d'année & Passage</a>
             </div>
         </div>
 
@@ -183,7 +198,7 @@
             </div>
         </div>
 
-        <!-- ✅ GROUPE : RAPPORTS (Basé sur vos routes réelles web.php) -->
+        <!-- ✅ GROUPE : RAPPORTS -->
         <div x-data="{ open: {{ request()->routeIs('app.report-cards.*') || request()->routeIs('app.financial.*') || (request()->routeIs('app.students.index') && request()->has('export')) ? 'true' : 'false' }} }" class="space-y-1">
             <button @click="if(!sidebarOpen) sidebarOpen = true; open = !open" title="Rapports"
                 class="w-full flex items-center justify-between px-3 py-3 rounded-lg transition text-gray-700 hover:bg-gray-100 focus:outline-none">
@@ -196,32 +211,13 @@
                 </svg>
             </button>
             <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
-
-                <!-- 1. Bulletins de notes -->
-                <a href="{{ route('app.report-cards.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.report-cards.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
-                    Bulletins de notes
-                </a>
-
-                <!-- 2. États de scolarité (Impayés par classe & Détails élève) -->
-                <a href="{{ route('app.financial.unpaid_by_class') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.financial.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
-                    États de scolarité
-                </a>
-
-                <!-- 3. Listes de classe (La vue index contient vos boutons d'export Excel/PDF) -->
-                <a href="{{ route('app.students.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.students.index') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
-                    Listes de classe & Exports
-                </a>
-
-                <!-- 4. Rapport de présences (Historique et exports) -->
-                <a href="{{ route('app.attendances.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.attendances.index') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
-                    Rapport Présences/Absences
-                </a>
-
-                <a href="{{ route('app.notifications.index') }}"
-                    class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('app.notifications.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+                <a href="{{ route('app.report-cards.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.report-cards.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Bulletins de notes</a>
+                <a href="{{ route('app.financial.unpaid_by_class') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.financial.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">États de scolarité</a>
+                <a href="{{ route('app.students.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.students.index') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Listes de classe & Exports</a>
+                <a href="{{ route('app.attendances.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.attendances.index') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Rapport Présences/Absences</a>
+                <a href="{{ route('app.notifications.index') }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('app.notifications.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
                     <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Notifications SMS</span>
                 </a>
-
             </div>
         </div>
 
@@ -241,29 +237,33 @@
             </button>
 
             <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
-                <!-- 1. Configuration des Tarifs -->
-                <a href="{{ route('canteen.rates.index') }}"
-                    class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('canteen.rates.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
-                    Configuration des Tarifs
-                </a>
+                <a href="{{ route('canteen.rates.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('canteen.rates.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Configuration des Tarifs</a>
+                <a href="{{ route('canteen.subscriptions.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('canteen.subscriptions.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Inscriptions des Élèves</a>
+                <a href="{{ route('canteen.payments.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('canteen.payments.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Paiements Cantine</a>
+                <a href="{{ route('canteen.reports.unpaid_by_class') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('canteen.reports.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Rapports Cantine</a>
+            </div>
+        </div>
 
-                <!-- 2. Inscriptions des Élèves -->
-                <a href="{{ route('canteen.subscriptions.index') }}"
-                    class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('canteen.subscriptions.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
-                    Inscriptions des Élèves
-                </a>
+        <!-- ========================================== -->
+        <!-- GROUPE : GOÛTER MATERNELLE                 -->
+        <!-- ========================================== -->
+        <div x-data="{ open: {{ request()->routeIs('gouter.*') ? 'true' : 'false' }} }" class="space-y-1">
+            <button @click="if(!sidebarOpen) sidebarOpen = true; open = !open" title="Goûter Maternelle"
+                class="w-full flex items-center justify-between px-3 py-3 rounded-lg transition text-gray-700 hover:bg-gray-100 focus:outline-none">
+                <div class="flex items-center">
+                    <span class="text-xl min-w-[24px] text-center">🍪</span>
+                    <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Goûter Maternelle</span>
+                </div>
+                <svg x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
 
-                <!-- 3. Paiements Cantine -->
-                <a href="{{ route('canteen.payments.index') }}"
-                    class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('canteen.payments.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
-                    Paiements Cantine
-                </a>
-
-                <!-- 4. Rapports Cantine (Impayés par classe, etc.) -->
-                <a href="{{ route('canteen.reports.unpaid_by_class') }}"
-                    class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('canteen.reports.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
-                    Rapports Cantine
-                </a>
+            <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
+                <a href="{{ route('gouter.rates.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('gouter.rates.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Configuration des Tarifs</a>
+                <a href="{{ route('gouter.subscriptions.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('gouter.subscriptions.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Inscriptions des Élèves</a>
+                <a href="{{ route('gouter.payments.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('gouter.payments.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Paiements Goûter</a>
+                <a href="{{ route('gouter.reports.unpaid_by_class') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('gouter.reports.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Rapports Goûter</a>
             </div>
         </div>
 
@@ -284,33 +284,83 @@
                 <a href="{{ route('app.class-fees.index') }}" title="Configuration des Frais" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.class-fees.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Frais</a>
                 <a href="{{ route('app.classes.index') }}" title="Classes" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.classes.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Classes</a>
                 <a href="{{ route('app.subjects.index') }}" title="Matières" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.subjects.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Matières</a>
-                <!-- ✨ NOUVEAU : Configuration SMS -->
-                <a href="{{ route('app.settings.sms') }}" title="Configuration SMS" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.settings.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
-                    Configuration SMS
-                </a>
+                <a href="{{ route('app.settings.sms') }}" title="Configuration SMS" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.settings.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Configuration SMS</a>
             </div>
         </div>
         @endif
 
-        <!-- Communication (Visible par Admin École et Parent) -->
-        <a href="{{ route('app.messages.index') }}" title="Messages"
-            class="flex items-center justify-between px-3 py-3 rounded-lg transition mt-2 {{ request()->routeIs('app.messages.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
-            <div class="flex items-center">
-                <span class="text-xl min-w-[24px] text-center">✉️</span>
-                <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Messages</span>
+        <!-- ✅ Menu déroulant Communication (Admin) -->
+        <div x-data="{ open: {{ request()->routeIs('app.messages.*') ? 'true' : 'false' }} }" class="space-y-1">
+            <button @click="if(!sidebarOpen) sidebarOpen = true; open = !open" title="Communication"
+                class="w-full flex items-center justify-between px-3 py-3 rounded-lg transition text-gray-700 hover:bg-gray-100 focus:outline-none {{ request()->routeIs('app.messages.*') ? 'bg-primary/10 text-primary font-semibold' : '' }}">
+                <div class="flex items-center">
+                    <span class="text-xl min-w-[24px] text-center">💬</span>
+                    <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Communication</span>
+                </div>
+                <svg x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+
+            <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
+                @if(auth()->user()->isSchoolAdmin())
+                <a href="{{ route('app.messages.broadcast') }}" title="Ecole parents" 
+                   class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.messages.broadcast') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
+                    Ecole parents
+                </a>
+                @endif
+
+                <a href="{{ route('app.messages.index') }}" title="Parents école" 
+                   class="block px-4 py-2 text-sm rounded-md transition flex items-center justify-between {{ request()->routeIs('app.messages.index') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
+                    <span>Parents école</span>
+                    
+                    @php
+                    $currentSchoolId = session('current_school_id') ?? auth()->user()->school_id;
+                    // Messages reçus des parents uniquement (exclut les diffusions envoyées par l'école elle-même)
+                    $adminUnreadMessages = \App\Models\Message::where('school_id', $currentSchoolId)
+                        ->receivedFromParents()
+                        ->where('is_read', false)
+                        ->count();
+                    @endphp
+                    
+                    @if($adminUnreadMessages > 0)
+                    <span class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold shadow-sm">{{ $adminUnreadMessages }}</span>
+                    @endif
+                </a>
             </div>
-            @php
-            $currentSchoolId = session('current_school_id') ?? auth()->user()->school_id;
-            $unreadMessages = \App\Models\Message::where('school_id', $currentSchoolId)->where('is_read', false)->count();
-            @endphp
-            <span x-show="sidebarOpen && {{ $unreadMessages }} > 0" class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold shadow-sm">{{ $unreadMessages }}</span>
-        </a>
-        @endif
+        </div>
 
     </nav>
-
     <!-- Footer Sidebar -->
-    <div class="p-3 border-t border-gray-200 flex-shrink-0">
+    <div class="p-3 border-t border-gray-200 flex-shrink-0 space-y-2">
+        
+        @if(auth()->user()->isSchoolAdmin())
+            <a href="{{ route('app.profile.edit') }}" title="Mon Profil" class="flex items-center justify-center px-3 py-2 rounded-lg hover:bg-gray-100 transition text-gray-700 text-sm font-medium">
+                <svg class="w-5 h-5 min-w-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                <span x-show="sidebarOpen" class="ml-2 whitespace-nowrap">Mon Profil</span>
+            </a>
+
+        @elseif(auth()->user()->isTeacher())
+            <a href="{{ route('teacher.profile.index') }}" title="Mon Profil" class="flex items-center justify-center px-3 py-2 rounded-lg hover:bg-gray-100 transition text-gray-700 text-sm font-medium">
+                <svg class="w-5 h-5 min-w-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                <span x-show="sidebarOpen" class="ml-2 whitespace-nowrap">Mon Profil</span>
+            </a>
+
+        {{-- ✅ SOLUTION ULTIME : Vérifie le rôle OU la présence d'enfants --}}
+        @elseif(auth()->user()->isParent() || (method_exists(auth()->user(), 'children') && auth()->user()->children->isNotEmpty()))
+            <a href="{{ route('parent.profile.edit') }}" title="Mon Profil" class="flex items-center justify-center px-3 py-2 rounded-lg hover:bg-gray-100 transition text-gray-700 text-sm font-medium">
+                <svg class="w-5 h-5 min-w-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                <span x-show="sidebarOpen" class="ml-2 whitespace-nowrap">Mon Profil</span>
+            </a>
+        @endif
+
+        <!-- Bouton Déconnexion -->
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit" title="Déconnexion" class="w-full flex items-center justify-center px-3 py-2.5 rounded-lg bg-gray-100 hover:bg-red-50 hover:text-red-600 transition text-gray-700 text-sm font-medium">
@@ -321,18 +371,16 @@
             </button>
         </form>
     </div>
-
+@endif
 </aside>
 
 <style>
     .custom-scrollbar::-webkit-scrollbar {
         width: 4px;
     }
-
     .custom-scrollbar::-webkit-scrollbar-track {
         background: transparent;
     }
-
     .custom-scrollbar::-webkit-scrollbar-thumb {
         background-color: #cbd5e1;
         border-radius: 20px;

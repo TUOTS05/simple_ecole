@@ -144,16 +144,27 @@ class PaymentController extends Controller
         $student = Student::findOrFail($validatedData['student_id']);
         $enrollment = Enrollment::findOrFail($validatedData['enrollment_id']);
         $installment = StudentInstallment::findOrFail($validatedData['student_installment_id']);
-        
+
         // Récupération de l'école et de l'utilisateur (Nettoyé des doublons)
         $school = $enrollment->school ?? $student->school;
         $user = auth()->user();
         $userName = $user->name ?? trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?? $user->email ?? 'Administrateur';
 
         // 3. Mise à jour de l'échéance (Montant payé et Statut)
-        $newPaidAmount = ($installment->paid_amount ?? 0) + $validatedData['amount'];
         $totalAmount = $installment->amount;
-        
+        $remainingBeforePayment = $totalAmount - ($installment->paid_amount ?? 0);
+
+        // Un paiement ne peut pas dépasser le solde de l'échéance sélectionnée : au-delà, l'excédent
+        // était jusqu'ici absorbé silencieusement dans cette échéance sans être reporté sur les
+        // suivantes, ce qui faussait leur statut. On demande un paiement séparé par échéance.
+        if ($validatedData['amount'] > $remainingBeforePayment) {
+            return back()->withErrors([
+                'amount' => 'Le montant saisi (' . number_format($validatedData['amount'], 0, ',', ' ') . ' FCFA) dépasse le solde restant de cette échéance (' . number_format($remainingBeforePayment, 0, ',', ' ') . ' FCFA). Enregistrez un paiement séparé pour chaque échéance.',
+            ])->withInput();
+        }
+
+        $newPaidAmount = ($installment->paid_amount ?? 0) + $validatedData['amount'];
+
         $installmentStatus = 'pending';
         if ($newPaidAmount >= $totalAmount) {
             $installmentStatus = 'paid';
@@ -390,46 +401,10 @@ class PaymentController extends Controller
                     $schoolClass = \App\Models\SchoolClass::find($enrollment->school_class_id);
                     
                     if ($schoolClass && $schoolClass->total_tuition > 0) {
-                        $startDate = \Carbon\Carbon::parse($enrollment->enrollment_date);
-
-                        // A. Créer les frais d'inscription
-                        \App\Models\StudentInstallment::create([
-                            'school_id' => $enrollment->school_id,
-                            'enrollment_id' => $enrollment->id,
-                            'type' => 'registration', // <-- Type défini ici
-                            'description' => 'Frais d\'inscription',
-                            'amount' => $schoolClass->registration_fee ?? 0,
-                            'paid_amount' => 0,
-                            'due_date' => $startDate,
-                            'status' => 'pending'
-                        ]);
-
-                        // B. Créer les échéances de scolarité
-                        $modality = $schoolClass->payment_modality ?? 'unique';
-                        $count = $schoolClass->number_of_installments ?? 1;
-                        $installmentAmount = $schoolClass->installment_amount ?? 0;
-                        $currentDate = clone $startDate;
-                        $ordinals = ['1ère', '2ème', '3ème', '4ème', '5ème', '6ème', '7ème', '8ème', '9ème', '10ème', '11ème', '12ème'];
-
-                        for ($i = 1; $i <= $count; $i++) {
-                            if ($modality === 'mensuel') $currentDate->addMonth();
-                            elseif ($modality === 'trimestriel') $currentDate->addMonths(3);
-                            elseif ($modality === 'semestriel') $currentDate->addMonths(6);
-                            else $currentDate->addMonth();
-
-                            $ordinal = $ordinals[$i - 1] ?? "{$i}ème";
-
-                            \App\Models\StudentInstallment::create([
-                                'school_id' => $enrollment->school_id,
-                                'enrollment_id' => $enrollment->id,
-                                'type' => 'installment', // <-- Type défini ici
-                                'description' => "{$ordinal} échéance",
-                                'amount' => $installmentAmount,
-                                'paid_amount' => 0,
-                                'due_date' => $currentDate,
-                                'status' => 'pending'
-                            ]);
-                        }
+                        // Même générateur que StudentController::generateFeeSchedule() — voir
+                        // StudentInstallment::generateScheduleFor() pour ne jamais faire diverger
+                        // ancrage de date et calcul des échéances entre les deux appelants.
+                        \App\Models\StudentInstallment::generateScheduleFor($enrollment, $schoolClass, $enrollment->enrollment_date);
 
                         // Recharger les échéances fraîchement générées
                         $installments = \App\Models\StudentInstallment::where('enrollment_id', $enrollment->id)

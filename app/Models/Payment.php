@@ -59,15 +59,31 @@ class Payment extends Model
         return number_format($this->amount, 0, ',', ' ') . ' FCFA';
     }
 
-    // Boot : après création d'un paiement, recalculer les montants de l'enrollment
+    // Boot : après création OU suppression d'un paiement, recalculer les montants de l'enrollment
     protected static function booted()
     {
         static::created(function ($payment) {
             $payment->enrollment->recalculateFees();
-            
+
             // Si c'est un paiement d'inscription, marquer comme payé
             if ($payment->payment_type === 'registration') {
                 $payment->enrollment->update(['registration_fee_paid' => true]);
+            }
+        });
+
+        static::deleted(function ($payment) {
+            $enrollment = $payment->enrollment;
+            if (!$enrollment) {
+                return;
+            }
+
+            $enrollment->recalculateFees();
+
+            if ($payment->payment_type === 'registration') {
+                $stillHasRegistrationPayment = $enrollment->payments()
+                    ->where('payment_type', 'registration')
+                    ->exists();
+                $enrollment->update(['registration_fee_paid' => $stillHasRegistrationPayment]);
             }
         });
     }

@@ -44,7 +44,11 @@ class GradeController extends Controller
      public function index($classId)
     {
         $teacher = auth()->user();
-        $assignment = $teacher->teacherAssignments()->where('school_class_id', $classId)->firstOrFail();
+        $schoolYearId = SchoolYear::where('school_id', $teacher->school_id)->where('is_active', true)->value('id');
+        $assignment = $teacher->teacherAssignments()
+            ->where('school_class_id', $classId)
+            ->where('school_year_id', $schoolYearId)
+            ->firstOrFail();
         $class = $assignment->schoolClass;
 
         // 1. Matières de la classe
@@ -60,7 +64,6 @@ class GradeController extends Controller
         $selectedPeriod = request('period', 'Trimestriel');
         $selectedQuarter = request('quarter');
         $selectedMonth = request('month');
-        $schoolYearId = SchoolYear::where('school_id', $class->school_id)->where('is_active', true)->value('id');
 
         // 3. Élèves de la classe
         $students = $class->students()->where('status', 'active')->orderBy('last_name')->get();
@@ -94,7 +97,11 @@ class GradeController extends Controller
     public function create($classId, $subjectId)
     {
         $teacher = auth()->user();
-        $teacher->teacherAssignments()->where('school_class_id', $classId)->firstOrFail();
+        $schoolYearId = SchoolYear::where('school_id', $teacher->school_id)->where('is_active', true)->value('id');
+        $teacher->teacherAssignments()
+            ->where('school_class_id', $classId)
+            ->where('school_year_id', $schoolYearId)
+            ->firstOrFail();
 
         $class = SchoolClass::findOrFail($classId);
         $subject = Subject::findOrFail($subjectId);
@@ -177,7 +184,11 @@ class GradeController extends Controller
     public function store(Request $request, $classId)
     {
         $teacher = auth()->user();
-        $teacher->teacherAssignments()->where('school_class_id', $classId)->firstOrFail();
+        $schoolYearId = SchoolYear::where('school_id', $teacher->school_id)->where('is_active', true)->value('id');
+        $teacher->teacherAssignments()
+            ->where('school_class_id', $classId)
+            ->where('school_year_id', $schoolYearId)
+            ->firstOrFail();
 
         $validated = $request->validate([
             'subject_id' => 'required|exists:subjects,id',
@@ -189,8 +200,6 @@ class GradeController extends Controller
             'grades.*.score' => 'nullable|numeric|min:0',
             'grades.*.remarks' => 'nullable|string|max:255',
         ]);
-
-        $schoolYearId = SchoolYear::where('school_id', $teacher->school_id)->where('is_active', true)->value('id');
 
         DB::beginTransaction();
         try {

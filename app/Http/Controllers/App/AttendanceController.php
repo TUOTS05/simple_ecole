@@ -40,16 +40,16 @@ class AttendanceController extends Controller
 
         switch ($groupBy) {
             case 'week':
-                $groupByRaw = "date_trunc('week', attendances.date)::date";
+                $groupByRaw = "DATE(DATE_SUB(attendances.date, INTERVAL WEEKDAY(attendances.date) DAY))";
                 break;
             case 'month':
-                $groupByRaw = "date_trunc('month', attendances.date)::date";
+                $groupByRaw = "DATE(DATE_FORMAT(attendances.date, '%Y-%m-01'))";
                 break;
             case 'year':
-                $groupByRaw = "date_trunc('year', attendances.date)::date";
+                $groupByRaw = "DATE(DATE_FORMAT(attendances.date, '%Y-01-01'))";
                 break;
             default:
-                $groupByRaw = "attendances.date::date";
+                $groupByRaw = "DATE(attendances.date)";
                 $groupBy = 'day';
                 break;
         }

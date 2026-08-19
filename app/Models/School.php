@@ -15,10 +15,10 @@ class School extends Model
         'name', 'slug', 'logo', 'settings', 'status', 'school_type',
         'subscription_plan', 'subscription_start_date', 'subscription_end_date', 'max_students',
         'email', 'phone', 'address', 'sms_enabled',
-        'orange_sms_api_url', 'orange_sms_client_id', 'orange_sms_client_secret', 
+        'orange_sms_api_url', 'orange_sms_client_id', 'orange_sms_client_secret',
         'orange_sms_sender_name', 'sms_absence_template',
         // ✅ Ajouts pour l'essai gratuit et le SaaS
-        'plan', 'trial_ends_at', 'is_active', 'type', 'subscription_ends_at', 'email',
+        'trial_ends_at', 'is_active', 'type', 'email',
     ];
 
     protected $casts = [
@@ -28,7 +28,6 @@ class School extends Model
         'sms_enabled' => 'boolean',
         // ✅ Ajouts pour que les dates d'essai fonctionnent avec isFuture()
         'trial_ends_at' => 'date',
-        'subscription_ends_at' => 'date',
         'is_active' => 'boolean',
     ];
 
@@ -54,14 +53,6 @@ class School extends Model
             return 0;
         }
         return (int) now()->diffInDays($this->trial_ends_at, false);
-    }
-
-    public function hasActiveSubscription(): bool
-    {
-        // Essai actif OU abonnement payant actif (supporte les deux noms de colonnes possibles)
-        return $this->isTrialActive() 
-            || ($this->subscription_ends_at && $this->subscription_ends_at->isFuture())
-            || ($this->subscription_end_date && $this->subscription_end_date->isFuture());
     }
 
     // ==========================================
@@ -102,16 +93,19 @@ class School extends Model
 
     public function isExpired(): bool
     {
-        return $this->subscription_end_date && Carbon::today()->greaterThan($this->subscription_end_date);
-    }
+        // Abonnement payant en cours de validité ?
+        if ($this->subscription_end_date && Carbon::today()->lessThanOrEqualTo($this->subscription_end_date)) {
+            return false;
+        }
 
-    public function isActive(): bool
-    {
-        if (!$this->subscription_plan) return false;
-        if (!$this->subscription_start_date || !$this->subscription_end_date) return false;
-        if ($this->isExpired()) return false;
-        
-        return $this->status === 'active';
+        // Sinon, essai gratuit en cours de validité ?
+        if ($this->isTrialActive()) {
+            return false;
+        }
+
+        // Ni abonnement ni essai actif : expiré, sauf si aucune échéance n'a jamais été fixée
+        // (écoles créées avant la mise en place du système d'essai/abonnement).
+        return $this->subscription_end_date !== null || $this->trial_ends_at !== null;
     }
 
     public function getStatusBadgeAttribute(): string

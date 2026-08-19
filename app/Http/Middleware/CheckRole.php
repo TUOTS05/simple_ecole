@@ -21,8 +21,13 @@ class CheckRole
             return redirect()->route('login');
         }
 
-        // 2. Vérifier si le rôle de l'utilisateur est dans la liste autorisée
-        if (!in_array($request->user()->role, $roles)) {
+        // 2. Vérifier si le rôle de l'utilisateur est dans la liste autorisée (insensible à la casse,
+        // comme User::isParent(), pour éviter qu'un rôle saisi avec une casse différente en base
+        // échoue silencieusement ici alors qu'il passerait les autres vérifications de rôle).
+        $userRole = strtolower(trim($request->user()->role ?? ''));
+        $allowedRoles = array_map(fn ($role) => strtolower(trim($role)), $roles);
+
+        if (!in_array($userRole, $allowedRoles, true)) {
             abort(403, 'Accès non autorisé. Vous n\'avez pas les permissions requises.');
         }
 

@@ -23,34 +23,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\CheckRole::class,
             'tenant' => \App\Http\Middleware\CheckTenant::class,
             'teacher' => \App\Http\Middleware\EnsureTeacherRole::class,
-            'mobile' => \App\Http\Middleware\MobileOnly::class,
             'parent' => \App\Http\Middleware\IsParent::class,
             'school.active' => \App\Http\Middleware\EnsureSchoolIsActive::class,
-        ]);
-        
-        // Groupes de middleware
-        $middleware->group('admin', [
-            'auth',
-            'role:super_admin,school_admin',
-        ]);
-        
-        $middleware->group('school_admin', [
-            'auth',
-            'role:school_admin',
-            'tenant',
-        ]);
-       
-        
-        $middleware->group('teacher', [
-            'auth',
-            'role:teacher',
-            'tenant',
-        ]);
-        
-        $middleware->group('parent', [
-            'auth',
-            'role:parent',
-            'tenant',
         ]);
     })
     ->withSchedule(function (Schedule $schedule) {

@@ -72,6 +72,23 @@ class SubscriptionController extends Controller
             'max_students' => $plan->max_students ?? 999999,
         ]);
 
+        // 3bis. Créer l'année scolaire active de l'école si elle n'en a pas encore une : sans elle,
+        // tous les modules métier (fin d'année, cantine, bulletins, ...) plantent à la première utilisation.
+        if (!\App\Models\SchoolYear::where('school_id', $school->id)->where('is_active', true)->exists()) {
+            $yearStart = now()->month >= 8 ? now()->year : now()->year - 1;
+            \App\Models\SchoolYear::firstOrCreate(
+                [
+                    'school_id' => $school->id,
+                    'name' => $yearStart . '-' . ($yearStart + 1),
+                ],
+                [
+                    'start_date' => \Carbon\Carbon::createFromDate($yearStart, 9, 1),
+                    'end_date' => \Carbon\Carbon::createFromDate($yearStart + 1, 6, 30),
+                    'is_active' => true,
+                ]
+            );
+        }
+
         // 4. Générer le PDF du contrat
         $this->generateContractPdf($contract, $school);
         // Dans store() :
@@ -309,6 +326,21 @@ class SubscriptionController extends Controller
             'subscription_end_date' => now()->addYear(),
         ]);
 
+        // 1bis. Créer l'année scolaire active de l'école : sans elle, tous les modules métier
+        // (fin d'année, cantine, bulletins, ...) plantent dès la première utilisation.
+        $yearStart = now()->month >= 8 ? now()->year : now()->year - 1;
+        \App\Models\SchoolYear::firstOrCreate(
+            [
+                'school_id' => $school->id,
+                'name' => $yearStart . '-' . ($yearStart + 1),
+            ],
+            [
+                'start_date' => \Carbon\Carbon::createFromDate($yearStart, 9, 1),
+                'end_date' => \Carbon\Carbon::createFromDate($yearStart + 1, 6, 30),
+                'is_active' => true,
+            ]
+        );
+
         // 2. ✅ CRÉER LE CONTRAT D'ABONNEMENT (Dans la table 'subscriptions', PAS 'subscription_requests' !)
         \App\Models\Subscription::create([
             'school_id' => $school->id,
@@ -319,6 +351,26 @@ class SubscriptionController extends Controller
             'amount' => $plan->yearly_price,
             'status' => 'active',
         ]);
+
+        // 2bis. Créer aussi un Contract : c'est la table lue par la liste "Contrats" du Super Admin
+        // (SubscriptionController::index()). Sans cette ligne, une école activée par ce flux de
+        // demande n'apparaissait jamais dans cette liste, contrairement à celles activées via store().
+        Contract::where('school_id', $school->id)->where('status', 'active')->update(['status' => 'expired']);
+
+        $contractNumber = 'CTR-' . date('Y') . '-' . strtoupper(Str::random(6));
+        $contract = Contract::create([
+            'school_id' => $school->id,
+            'contract_number' => $contractNumber,
+            'plan_name' => $plan->name,
+            'start_date' => now(),
+            'end_date' => now()->addYear(),
+            'amount' => $plan->yearly_price,
+            'max_students' => $plan->max_students ?? 0,
+            'max_teachers' => $plan->max_teachers ?? 0,
+            'status' => 'active',
+            'signed_at' => now(),
+        ]);
+        $this->generateContractPdf($contract, $school);
 
         // 3. METTRE À JOUR LA DEMANDE EXISTANTE (et non en créer une nouvelle)
         $subRequest->update([

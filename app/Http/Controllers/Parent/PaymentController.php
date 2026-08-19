@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Student;
 use App\Models\Payment;
 use App\Models\Enrollment;
+use App\Models\StudentInstallment;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
@@ -85,16 +87,30 @@ class PaymentController extends Controller
             ->firstOrFail();
         
         // 2. Récupérer le paiement et vérifier qu'il appartient bien à cet élève via son inscription
-        $payment = \App\Models\Payment::where('id', $paymentId)
+        $payment = Payment::where('id', $paymentId)
             ->whereHas('enrollment', function($q) use ($studentId) {
                 $q->where('student_id', $studentId);
             })
-            ->with(['enrollment' => function($q) {
-                $q->with(['schoolYear', 'schoolClass', 'student']);
-            }])
+            ->with(['enrollment.schoolYear', 'enrollment.schoolClass', 'school'])
             ->firstOrFail();
-        
-        // 3. Afficher la vue du reçu (le PDF sera généré plus tard)
-        return view('parent.payments.receipt', compact('student', 'payment'));
+
+        // 3. Échéances encore en attente, pour l'informatif "reste à payer" du reçu
+        $pendingInstallments = StudentInstallment::where('enrollment_id', $payment->enrollment_id)
+            ->whereIn('status', ['pending', 'partial', 'overdue'])
+            ->orderBy('due_date', 'asc')
+            ->get();
+
+        $schoolClass = $payment->enrollment->schoolClass;
+        $schoolYear = $payment->enrollment->schoolYear;
+        $school = $payment->school;
+
+        // 4. Générer le même PDF que côté admin (App\PaymentController::receipt)
+        $pdf = Pdf::loadView('pdf.receipt', compact(
+            'payment', 'student', 'schoolClass', 'schoolYear', 'school', 'pendingInstallments'
+        ));
+
+        $filename = 'Recu_Paiement_' . str_pad($payment->id, 6, '0', STR_PAD_LEFT) . '.pdf';
+
+        return $pdf->download($filename);
     }
 }

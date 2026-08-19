@@ -18,6 +18,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'last_name',
         'email',
         'phone',
+        'gender', 
         'role',
         'password',
     ];
@@ -52,9 +53,10 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->role === 'teacher';
     }
-    public function isParent(): bool
+       public function isParent(): bool
     {
-        return $this->role === 'parent';
+        // strtolower et trim garantissent que 'Parent', ' parent ' ou 'PARENT' seront reconnus comme 'parent'
+        return strtolower(trim($this->role ?? '')) === 'parent';
     }
 
     public function dashboardRouteName(): string

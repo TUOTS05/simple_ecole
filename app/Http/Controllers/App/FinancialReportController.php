@@ -16,7 +16,7 @@ class FinancialReportController extends Controller
     public function unpaidByClass(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::where('school_id', $schoolId)->where('is_active', true)->value('id'));
 
         // Requête d'agrégation basée sur student_installments
         $classes = DB::table('school_classes')
@@ -53,7 +53,7 @@ class FinancialReportController extends Controller
                 : 0,
         ];
 
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', $schoolId)->orderBy('start_date', 'desc')->get();
 
         return view('app.financial.unpaid_by_class', compact('classes', 'globalStats', 'schoolYears', 'schoolYearId'));
     }
@@ -64,9 +64,9 @@ class FinancialReportController extends Controller
     public function classDetail(Request $request, $classId)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::where('school_id', $schoolId)->where('is_active', true)->value('id'));
 
-        $class = SchoolClass::findOrFail($classId);
+        $class = SchoolClass::where('school_id', $schoolId)->findOrFail($classId);
 
         // Calcul des totaux par élève à partir des échéances (installments)
         $students = DB::table('students')
@@ -81,6 +81,7 @@ class FinancialReportController extends Controller
             )
             ->join('enrollments', 'students.id', '=', 'enrollments.student_id')
             ->leftJoin('student_installments', 'enrollments.id', '=', 'student_installments.enrollment_id')
+            ->where('enrollments.school_id', $schoolId)
             ->where('enrollments.school_class_id', $classId)
             ->where('enrollments.school_year_id', $schoolYearId)
             ->groupBy('students.id', 'students.matricule', 'students.first_name', 'students.last_name')
@@ -98,7 +99,7 @@ class FinancialReportController extends Controller
                 return $student;
             });
 
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', $schoolId)->orderBy('start_date', 'desc')->get();
 
         return view('app.financial.class_detail', compact('class', 'students', 'schoolYears', 'schoolYearId'));
     }
@@ -110,7 +111,7 @@ class FinancialReportController extends Controller
     public function exportUnpaidByClassExcel(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::where('school_id', $schoolId)->where('is_active', true)->value('id'));
 
         return \Maatwebsite\Excel\Facades\Excel::download(
             new \App\Exports\UnpaidByClassExport($schoolId, $schoolYearId),
@@ -173,7 +174,7 @@ class FinancialReportController extends Controller
     public function exportUnpaidByClassPdf(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', \App\Models\SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', \App\Models\SchoolYear::where('school_id', $schoolId)->where('is_active', true)->value('id'));
         $schoolYear = \App\Models\SchoolYear::find($schoolYearId);
         $user = auth()->user();
 
@@ -243,7 +244,8 @@ class FinancialReportController extends Controller
      */
     public function exportClassDetailExcel(Request $request, $classId)
     {
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolId = session('current_school_id');
+        $schoolYearId = $request->get('school_year_id', SchoolYear::where('school_id', $schoolId)->where('is_active', true)->value('id'));
 
         return \Maatwebsite\Excel\Facades\Excel::download(
             new \App\Exports\ClassDetailExport($classId, $schoolYearId),
@@ -355,7 +357,8 @@ class FinancialReportController extends Controller
      */
     public function exportClassDetailPdf(Request $request, $classId)
     {
-        $schoolYearId = $request->get('school_year_id', \App\Models\SchoolYear::where('is_active', true)->value('id'));
+        $schoolId = session('current_school_id');
+        $schoolYearId = $request->get('school_year_id', \App\Models\SchoolYear::where('school_id', $schoolId)->where('is_active', true)->value('id'));
         $schoolYear = \App\Models\SchoolYear::find($schoolYearId);
         $class = \App\Models\SchoolClass::findOrFail($classId);
         $user = auth()->user();
@@ -430,7 +433,7 @@ class FinancialReportController extends Controller
     public function studentDetail(Request $request, $studentId)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::where('school_id', $schoolId)->where('is_active', true)->value('id'));
 
         $student = \App\Models\Student::findOrFail($studentId);
 
@@ -460,7 +463,7 @@ class FinancialReportController extends Controller
         $totalRemaining = $totalDue - $totalPaid;
         $paymentRate = $totalDue > 0 ? round(($totalPaid / $totalDue) * 100, 1) : 0;
 
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', $schoolId)->orderBy('start_date', 'desc')->get();
 
         return view('app.financial.student_detail', compact(
             'student', 'enrollment', 'installments', 'payments',
@@ -474,7 +477,8 @@ class FinancialReportController extends Controller
      */
     public function exportStudentDetailExcel(Request $request, $studentId)
     {
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolId = session('current_school_id');
+        $schoolYearId = $request->get('school_year_id', SchoolYear::where('school_id', $schoolId)->where('is_active', true)->value('id'));
 
         return \Maatwebsite\Excel\Facades\Excel::download(
             new \App\Exports\StudentDetailExport($studentId, $schoolYearId),
@@ -528,7 +532,8 @@ class FinancialReportController extends Controller
      */
     public function exportStudentDetailPdf(Request $request, $studentId)
     {
-        $schoolYearId = $request->get('school_year_id', \App\Models\SchoolYear::where('is_active', true)->value('id'));
+        $schoolId = session('current_school_id');
+        $schoolYearId = $request->get('school_year_id', \App\Models\SchoolYear::where('school_id', $schoolId)->where('is_active', true)->value('id'));
         $schoolYear = \App\Models\SchoolYear::find($schoolYearId);
         $user = auth()->user();
 

@@ -147,6 +147,7 @@ class SchoolOnboardingController extends Controller
                 'address' => $validated['school_address'],
                 'status' => 'pending',
                 'is_active' => false,
+                'trial_ends_at' => now()->addDays(14),
             ]);
 
             // 3. Créer l'utilisateur Directeur

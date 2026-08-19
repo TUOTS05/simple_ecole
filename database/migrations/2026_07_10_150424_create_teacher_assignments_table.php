@@ -24,7 +24,7 @@ return new class extends Migration
             $table->timestamps();
 
             // Un enseignant ne peut pas être deux fois dans la même classe pour la même année
-            $table->unique(['school_class_id', 'user_id', 'school_year_id']);
+            $table->unique(['school_class_id', 'user_id', 'school_year_id'], 'teacher_assignments_unique');
         });
     }
 

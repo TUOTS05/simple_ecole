@@ -159,7 +159,7 @@ class CanteenController extends Controller
 
     public function ratesEdit($id)
     {
-        $rate = CanteenRate::findOrFail($id);
+        $rate = CanteenRate::where('school_id', session('current_school_id'))->findOrFail($id);
         $classes = SchoolClass::where('school_id', $rate->school_id)->orderBy('name')->get();
         $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
 
@@ -168,7 +168,7 @@ class CanteenController extends Controller
 
     public function ratesUpdate(Request $request, $id)
     {
-        $rate = CanteenRate::findOrFail($id);
+        $rate = CanteenRate::where('school_id', session('current_school_id'))->findOrFail($id);
 
         $validated = $request->validate([
             'school_class_id' => 'required|exists:school_classes,id',
@@ -187,7 +187,7 @@ class CanteenController extends Controller
 
     public function ratesDestroy($id)
     {
-        $rate = CanteenRate::findOrFail($id);
+        $rate = CanteenRate::where('school_id', session('current_school_id'))->findOrFail($id);
         $schoolYearId = $rate->school_year_id;
         $rate->delete();
 
@@ -351,7 +351,7 @@ class CanteenController extends Controller
 
     public function subscriptionsDestroy($id)
     {
-        $subscription = CanteenSubscription::findOrFail($id);
+        $subscription = CanteenSubscription::where('school_id', session('current_school_id'))->findOrFail($id);
         $schoolYearId = $subscription->school_year_id;
         $subscription->delete();
 
@@ -533,7 +533,7 @@ class CanteenController extends Controller
 
         DB::beginTransaction();
         try {
-            $subscription = CanteenSubscription::findOrFail($validated['canteen_subscription_id']);
+            $subscription = CanteenSubscription::where('school_id', $schoolId)->findOrFail($validated['canteen_subscription_id']);
             $paymentAmount = $validated['amount'];
 
             CanteenPayment::create([
@@ -597,7 +597,7 @@ class CanteenController extends Controller
         $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
         $selectedMonth = $request->get('month', '');
 
-        $class = SchoolClass::findOrFail($classId);
+        $class = SchoolClass::where('school_id', $schoolId)->findOrFail($classId);
 
         $subscriptions = CanteenSubscription::where('school_id', $schoolId)
             ->where('school_year_id', $schoolYearId)
@@ -648,7 +648,7 @@ class CanteenController extends Controller
     public function studentDetail(Request $request, $studentId)
     {
         $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
-        $student = Student::findOrFail($studentId);
+        $student = Student::where('school_id', session('current_school_id'))->findOrFail($studentId);
 
         $subscription = CanteenSubscription::where('student_id', $studentId)
             ->where('school_year_id', $schoolYearId)

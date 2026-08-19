@@ -168,7 +168,7 @@
                     <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-green-500 rounded-lg flex items-center justify-center">
                         <i class="fas fa-graduation-cap text-white text-xl"></i>
                     </div>
-                    <span class="text-xl font-bold text-gray-900">Simple-<span class="text-blue-600">School</span></span>
+                    <span class="text-xl font-bold text-gray-900">Simple <span class="text-blue-600">Ecole</span></span>
                 </div>
 
                 <!-- Menu Desktop -->
@@ -190,9 +190,9 @@
                             SANDBOX
                         </span>
                     </a>
-                    <a href="/register?role=school_admin" class="bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-lg font-bold transition shadow-lg flex items-center justify-center animate-pulse-glow">
+                    <a href="{{ route('request-account') }}" class="bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-lg font-bold transition shadow-lg flex items-center justify-center animate-pulse-glow">
                         <i class="fas fa-building mr-2"></i>
-                        Créer mon école (Essai 30 jours)
+                        Demander mon compte
                     </a>
                 </div>
                 <!-- Mobile Menu Button -->
@@ -216,8 +216,8 @@
                     <a href="#contact" class="text-gray-700 font-medium py-2">Contact</a>
                     <hr class="my-4">
                     <a href="/login" class="text-gray-700 font-medium py-2">Connexion</a>
-                    <a href="/register" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition shadow-lg shadow-blue-600/30">
-                        Essai gratuit
+                    <a href="{{ route('request-account') }}" target="_blank" class="bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-lg font-medium transition shadow-lg shadow-green-500/30">
+                        Demander mon compte
                     </a>
 
                 </div>
@@ -857,7 +857,7 @@
                 <br>Essai gratuit de 30 jours, sans engagement.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center reveal">
-                <a href="/register" class="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-lg font-bold transition shadow-2xl">
+                <a href="{{ route('demo.login') }}" class="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-lg font-bold transition shadow-2xl">
                     <i class="fas fa-rocket mr-2"></i>
                     Démarrer l'essai gratuit
                 </a>
@@ -964,7 +964,7 @@
                     <ul class="space-y-3 text-sm">
                         <li class="flex items-start">
                             <i class="fas fa-envelope text-blue-400 mt-1 mr-2"></i>
-                            <span>contact@Simple Ecole.com</span>
+                            <span>contact@simple-ecole.com</span>
                         </li>
                         <li class="flex items-start">
                             <i class="fas fa-phone text-blue-400 mt-1 mr-2"></i>

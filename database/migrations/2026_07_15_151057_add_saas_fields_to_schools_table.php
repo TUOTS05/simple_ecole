@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::table('schools', function (Blueprint $table) {
             // On ajoute uniquement les colonnes qui n'existent pas encore
             if (!Schema::hasColumn('schools', 'subscription_plan')) {
-                $table->string('subscription_plan')->default('basic')->after('phone');
+                $table->string('subscription_plan')->default('basic');
             }
             if (!Schema::hasColumn('schools', 'subscription_start_date')) {
                 $table->date('subscription_start_date')->nullable()->after('subscription_plan');

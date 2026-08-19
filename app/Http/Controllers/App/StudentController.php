@@ -247,7 +247,7 @@ class StudentController extends Controller
                 $student->classes()->attach($validated['class_id']);
 
                 // 6. GÉNÉRATION AUTOMATIQUE DES ÉCHÉANCES
-                $this->generateFeeSchedule($enrollment, $validated['class_id'], $validated['admission_date']);
+                $this->generateFeeSchedule($enrollment, $validated['class_id']);
             }
 
             DB::commit();
@@ -288,67 +288,12 @@ class StudentController extends Controller
     /**
      * Génère automatiquement les échéances de paiement pour un élève inscrit
      */
-    private function generateFeeSchedule($enrollment, $classId, $admissionDate)
+    private function generateFeeSchedule($enrollment, $classId)
     {
         $schoolClass = \App\Models\SchoolClass::find($classId);
         if (!$schoolClass) return;
 
-        $startDate = \Carbon\Carbon::parse($admissionDate);
-
-        // 1. Créer la ligne "Frais d'inscription"
-        \App\Models\StudentInstallment::create([
-            'school_id' => $enrollment->school_id,
-            'enrollment_id' => $enrollment->id,
-            'type' => 'registration',
-            'description' => 'Frais d\'inscription',
-            'amount' => $schoolClass->registration_fee ?? 0,
-            'paid_amount' => 0,
-            'due_date' => $startDate,
-            'status' => 'pending'
-        ]);
-
-        // 2. Créer les lignes des échéances restantes
-        $modality = $schoolClass->payment_modality ?? 'unique';
-        $count = $schoolClass->number_of_installments ?? 1;
-        $installmentAmount = $schoolClass->installment_amount ?? 0;
-
-        $currentDate = clone $startDate;
-
-        for ($i = 1; $i <= $count; $i++) {
-            // Calcul de la date d'échéance selon la modalité
-            if ($modality === 'mensuel') {
-                $currentDate->addMonth();
-            } elseif ($modality === 'trimestriel') {
-                $currentDate->addMonths(3);
-            } elseif ($modality === 'semestriel') {
-                $currentDate->addMonths(6);
-            } else {
-                $currentDate->addMonth();
-            }
-
-            // Texte ordinal pour la description
-            $ordinal = $this->getOrdinal($i);
-
-            \App\Models\StudentInstallment::create([
-                'school_id' => $enrollment->school_id,
-                'enrollment_id' => $enrollment->id,
-                'type' => 'installment',
-                'description' => "{$ordinal} échéance",
-                'amount' => $installmentAmount,
-                'paid_amount' => 0,
-                'due_date' => $currentDate,
-                'status' => 'pending'
-            ]);
-        }
-    }
-
-    /**
-     * Retourne le texte ordinal (1ère, 2ème, 3ème, etc.)
-     */
-    private function getOrdinal($number)
-    {
-        $ordinals = ['1ère', '2ème', '3ème', '4ème', '5ème', '6ème', '7ème', '8ème', '9ème', '10ème', '11ème', '12ème'];
-        return $ordinals[$number - 1] ?? "{$number}ème";
+        \App\Models\StudentInstallment::generateScheduleFor($enrollment, $schoolClass, $enrollment->enrollment_date);
     }
 
     /**

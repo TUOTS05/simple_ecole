@@ -5,8 +5,11 @@ use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardCo
 use App\Http\Controllers\App\DashboardController as AppDashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Models\Message;
-
+use App\Http\Controllers\SuperAdmin\SubscriptionPlanController;
+use App\Http\Controllers\SuperAdmin\SubscriptionController;
+use App\Http\Controllers\SuperAdmin\ActivityLogController;
 use App\Http\Controllers\DemoController;
+use App\Http\Controllers\SuperAdmin\SystemSettingController;
 
 
 
@@ -97,8 +100,14 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent', 
     // Inscriptions
     Route::resource('/enrollments', \App\Http\Controllers\App\EnrollmentController::class);
 
-    // 📨 MESSAGERIE ADMIN ÉCOLE
+        // 📨 MESSAGERIE ADMIN ÉCOLE
     Route::get('/messages', [\App\Http\Controllers\App\MessageController::class, 'index'])->name('messages.index');
+    
+    // ✅ IMPORTANT : Les routes spécifiques (sans paramètre dynamique) DOIVENT être placées AVANT les routes avec {message}
+    Route::get('/messages/broadcast', [\App\Http\Controllers\App\BroadcastMessageController::class, 'create'])->name('messages.broadcast');
+    Route::post('/messages/broadcast', [\App\Http\Controllers\App\BroadcastMessageController::class, 'store'])->name('messages.broadcast.store');
+
+    // Les routes avec paramètres dynamiques {message} viennent ENSUITE
     Route::get('/messages/{message}', [\App\Http\Controllers\App\MessageController::class, 'show'])->name('messages.show');
     Route::post('/messages/{message}/reply', [\App\Http\Controllers\App\MessageController::class, 'reply'])->name('messages.reply');
 
@@ -176,11 +185,19 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent', 
     Route::get('/financial/export/student-detail/{studentId}/pdf', [\App\Http\Controllers\App\FinancialReportController::class, 'exportStudentDetailPdf'])
         ->name('financial.export.student_detail.pdf');
 
-    Route::get('/subscription/request', [\App\Http\Controllers\App\SubscriptionRequestController::class, 'create'])->name('subscription.request');
-    Route::post('/subscription/request', [\App\Http\Controllers\App\SubscriptionRequestController::class, 'store'])->name('subscription.request.store');
-
     Route::get('/notifications', [App\Http\Controllers\App\NotificationLogController::class, 'index'])
     ->name('notifications.index');
+
+    Route::get('/end-of-year', [\App\Http\Controllers\App\EndOfYearController::class, 'index'])->name('end-of-year.index');
+    Route::get('/end-of-year/{class}', [\App\Http\Controllers\App\EndOfYearController::class, 'show'])->name('end-of-year.show');
+    Route::post('/end-of-year/student/{student}/decision', [\App\Http\Controllers\App\EndOfYearController::class, 'updateDecision'])->name('end-of-year.update-decision');
+    Route::post('/end-of-year/{class}/migrate', [\App\Http\Controllers\App\EndOfYearController::class, 'migrateClass'])->name('end-of-year.migrate');
+
+          // PROFIL ADMIN ÉCOLE (le changement de mot de passe est intégré au formulaire de profil)
+    Route::get('/profile', [\App\Http\Controllers\App\ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [\App\Http\Controllers\App\ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [\App\Http\Controllers\App\ProfileController::class, 'updatePassword'])->name('profile.password.update');
+
 });
 
 /*
@@ -188,7 +205,7 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent', 
 | ESPACE ENSEIGNANT (Mobile-First)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'teacher'])->prefix('teacher')->name('teacher.')->group(function () {
+Route::middleware(['auth', 'teacher', 'school.active', 'tenant'])->prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Teacher\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/classes', [\App\Http\Controllers\Teacher\DashboardController::class, 'classes'])->name('classes');
     Route::get('/classes/{id}', [\App\Http\Controllers\Teacher\DashboardController::class, 'classDetails'])->name('class.details');
@@ -210,8 +227,8 @@ Route::middleware(['auth', 'teacher'])->prefix('teacher')->name('teacher.')->gro
     Route::post('/classes/{classId}/grades', [\App\Http\Controllers\Teacher\GradeController::class, 'store'])->name('grades.store');
     // Page de sélection de la classe pour les notes (accessible depuis le sidebar)
     Route::get('/grades', [\App\Http\Controllers\Teacher\GradeController::class, 'selectClass'])->name('grades.select');
-    // ==========================================
-    // PROFIL ENSEIGNANT
+     // ==========================================
+    // ✅ PROFIL ENSEIGNANT (Ces 3 lignes sont OBLIGATOIRES)
     // ==========================================
     Route::get('/profile', [\App\Http\Controllers\Teacher\ProfileController::class, 'index'])->name('profile.index');
     Route::put('/profile', [\App\Http\Controllers\Teacher\ProfileController::class, 'update'])->name('profile.update');
@@ -223,8 +240,17 @@ Route::middleware(['auth', 'teacher'])->prefix('teacher')->name('teacher.')->gro
 | ESPACE PARENT (Mobile-First)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'parent'])->prefix('parent')->name('parent.')->group(function () {
+Route::middleware(['auth', 'parent', 'school.active', 'tenant'])->prefix('parent')->name('parent.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Parent\DashboardController::class, 'index'])->name('dashboard');
+        // ==========================================
+    // PROFIL PARENT (Informations personnelles)
+    // ==========================================
+    Route::get('/profile', [\App\Http\Controllers\Parent\ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [\App\Http\Controllers\Parent\ProfileController::class, 'update'])->name('profile.update');
+
+    // (Vos routes de mot de passe sont déjà là, c'est parfait)
+    Route::get('/profile/password', [App\Http\Controllers\Parent\ProfileController::class, 'editPassword'])->name('profile.password');
+    Route::post('/profile/password', [App\Http\Controllers\Parent\ProfileController::class, 'updatePassword'])->name('profile.password.update');
 
     Route::get('/messages', [\App\Http\Controllers\Parent\MessageController::class, 'index'])->name('messages.index');
     Route::get('/messages/create', [\App\Http\Controllers\Parent\MessageController::class, 'create'])->name('messages.create');
@@ -239,16 +265,14 @@ Route::middleware(['auth', 'parent'])->prefix('parent')->name('parent.')->group(
     Route::get('/{student}/attendance', [\App\Http\Controllers\Parent\AttendanceController::class, 'index'])->name('attendance.index');
     Route::get('/{student}/payments', [\App\Http\Controllers\Parent\PaymentController::class, 'index'])->name('payments.index');
     Route::get('/{student}/payments/{payment}/receipt', [\App\Http\Controllers\Parent\PaymentController::class, 'downloadReceipt'])->name('payments.receipt');
-    // Routes pour la modification du mot de passe
-    Route::get('/profile/password', [App\Http\Controllers\Parent\ProfileController::class, 'editPassword'])->name('profile.password');
-    Route::post('/profile/password', [App\Http\Controllers\Parent\ProfileController::class, 'updatePassword'])->name('profile.password.update');
+    
 });
 
 
 // ==========================================
 // CANTINE SCOLAIRE
 // ==========================================
-Route::prefix('canteen')->name('canteen.')->group(function () {
+Route::middleware(['auth', 'school.active', 'role:school_admin', 'tenant'])->prefix('canteen')->name('canteen.')->group(function () {
     // Tarifs
     Route::get('/rates', [\App\Http\Controllers\App\CanteenController::class, 'ratesIndex'])->name('rates.index');
     Route::get('/rates/create', [\App\Http\Controllers\App\CanteenController::class, 'ratesCreate'])->name('rates.create');
@@ -277,6 +301,37 @@ Route::prefix('canteen')->name('canteen.')->group(function () {
 
 });
 
+// ==========================================
+// GOÛTER MATERNELLE
+// ==========================================
+Route::middleware(['auth', 'school.active', 'role:school_admin', 'tenant'])->prefix('gouter')->name('gouter.')->group(function () {
+    // Tarifs
+    Route::get('/rates', [\App\Http\Controllers\App\GouterController::class, 'ratesIndex'])->name('rates.index');
+    Route::get('/rates/create', [\App\Http\Controllers\App\GouterController::class, 'ratesCreate'])->name('rates.create');
+    Route::post('/rates', [\App\Http\Controllers\App\GouterController::class, 'ratesStore'])->name('rates.store');
+    Route::get('/rates/{id}/edit', [\App\Http\Controllers\App\GouterController::class, 'ratesEdit'])->name('rates.edit');
+    Route::put('/rates/{id}', [\App\Http\Controllers\App\GouterController::class, 'ratesUpdate'])->name('rates.update');
+    Route::delete('/rates/{id}', [\App\Http\Controllers\App\GouterController::class, 'ratesDestroy'])->name('rates.destroy');
+
+    // Routes AJAX pour le formulaire d'inscription dynamique
+    Route::get('/maternelle-classes', [\App\Http\Controllers\App\GouterController::class, 'getMaternelleClasses'])->name('maternelle-classes');
+    Route::get('/students-by-class', [\App\Http\Controllers\App\GouterController::class, 'getStudentsByClass'])->name('students-by-class');
+    Route::get('/subscriptions-by-class', [\App\Http\Controllers\App\GouterController::class, 'getSubscriptionsByClass'])->name('subscriptions-by-class');
+
+    // Inscriptions des élèves
+    Route::get('/subscriptions', [\App\Http\Controllers\App\GouterController::class, 'subscriptionsIndex'])->name('subscriptions.index');
+    Route::post('/subscriptions', [\App\Http\Controllers\App\GouterController::class, 'subscriptionsStore'])->name('subscriptions.store');
+    Route::delete('/subscriptions/{id}', [\App\Http\Controllers\App\GouterController::class, 'subscriptionsDestroy'])->name('subscriptions.destroy');
+
+    // Paiements
+    Route::get('/payments', [\App\Http\Controllers\App\GouterController::class, 'paymentsIndex'])->name('payments.index');
+    Route::post('/payments', [\App\Http\Controllers\App\GouterController::class, 'paymentsStore'])->name('payments.store');
+    Route::get('/payments/{payment}/receipt', [\App\Http\Controllers\App\GouterController::class, 'receipt'])->name('payments.receipt');
+
+    // Rapports
+    Route::get('/reports/unpaid-by-class', [\App\Http\Controllers\App\GouterController::class, 'unpaidByClass'])->name('reports.unpaid_by_class');
+});
+
 
 /*
 |--------------------------------------------------------------------------
@@ -298,14 +353,6 @@ Route::get('/logout-form', function () {
     return view('logout-form');
 });
 
-
-// Route publique pour demander un compte depuis la démo
-Route::get('/demande-compte', function () {
-    return view('auth.request-account');
-})->name('request-account');
-
-Route::post('/demande-compte', [App\Http\Controllers\SchoolOnboardingController::class, 'storeRequest'])
-    ->name('request-account.store');
 
 // Route publique pour la demande de création d'école (accessible depuis la démo ou la landing page)
 Route::get('/demande-compte', [App\Http\Controllers\SchoolOnboardingController::class, 'showRequestForm'])
