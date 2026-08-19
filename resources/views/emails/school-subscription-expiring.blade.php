@@ -20,10 +20,10 @@
                         <td style="padding: 30px;">
                             <p style="font-size: 16px; color: #333333; line-height: 1.6;">Bonjour,</p>
                             <p style="font-size: 16px; color: #333333; line-height: 1.6;">
-                                Nous vous informons que l'abonnement de votre établissement, <strong>{{ $school->name }}</strong>, arrive à expiration dans <strong>30 jours</strong>.
+                                Nous vous informons que {{ $isTrial ? "l'essai gratuit" : "l'abonnement" }} de votre établissement, <strong>{{ $school->name }}</strong>, arrive à expiration dans <strong>30 jours</strong>.
                             </p>
                             <p style="font-size: 16px; color: #333333; line-height: 1.6;">
-                                Date d'expiration : <strong>{{ \Carbon\Carbon::parse($school->subscription_end_date)->format('d/m/Y') }}</strong>
+                                Date d'expiration : <strong>{{ \Carbon\Carbon::parse($expiresAt)->format('d/m/Y') }}</strong>
                             </p>
                             <p style="font-size: 16px; color: #333333; line-height: 1.6;">
                                 Afin d'éviter toute interruption de service pour votre école (gestion des élèves, paiements, bulletins, etc.), nous vous invitons à renouveler votre abonnement dès que possible.

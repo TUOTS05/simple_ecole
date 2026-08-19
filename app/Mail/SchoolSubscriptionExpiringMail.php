@@ -12,13 +12,20 @@ class SchoolSubscriptionExpiringMail extends Mailable
     use Queueable, SerializesModels;
 
     public $school;
+    public $expiresAt;
+    public $isTrial;
 
     /**
      * Créer une nouvelle instance de message.
+     *
+     * @param  \Illuminate\Support\Carbon|string  $expiresAt  Date d'expiration à afficher (essai ou abonnement payant).
+     * @param  bool  $isTrial  true si c'est l'essai gratuit qui expire, false si c'est un abonnement payant.
      */
-    public function __construct(School $school)
+    public function __construct(School $school, $expiresAt, bool $isTrial = false)
     {
         $this->school = $school;
+        $this->expiresAt = $expiresAt;
+        $this->isTrial = $isTrial;
     }
 
     /**
@@ -26,7 +33,11 @@ class SchoolSubscriptionExpiringMail extends Mailable
      */
     public function build()
     {
-        return $this->subject('⚠️ Rappel : Votre abonnement expire dans 30 jours')
+        $subject = $this->isTrial
+            ? '⚠️ Rappel : Votre essai gratuit expire dans 30 jours'
+            : '⚠️ Rappel : Votre abonnement expire dans 30 jours';
+
+        return $this->subject($subject)
                     ->view('emails.school-subscription-expiring');
     }
 }

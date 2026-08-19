@@ -32,6 +32,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('notifications:late-payments')
                 ->dailyAt('09:00')
              ->withoutOverlapping();
+
+        // Le rappel d'expiration d'abonnement/essai gratuit (notify:schools-expiring) est déjà
+        // planifié dans routes/console.php — ne pas le redéclarer ici pour éviter un double envoi.
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Rendre JSON les erreurs pour l'API

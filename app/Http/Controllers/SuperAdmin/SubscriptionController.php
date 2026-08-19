@@ -72,6 +72,20 @@ class SubscriptionController extends Controller
             'max_students' => $plan->max_students ?? 999999,
         ]);
 
+        // 3ter. Garder la table `subscriptions` synchronisée avec les contrats (voir approveRequest()
+        // plus bas) : sans ceci, une école créée manuellement via ce formulaire n'a jamais de ligne
+        // dans `subscriptions`.
+        Subscription::where('school_id', $school->id)->where('status', 'active')->update(['status' => 'expired']);
+        Subscription::create([
+            'school_id' => $school->id,
+            'plan_id' => $plan->id,
+            'plan_name' => $plan->name,
+            'start_date' => $validated['start_date'],
+            'end_date' => $validated['end_date'],
+            'amount' => $validated['amount'],
+            'status' => 'active',
+        ]);
+
         // 3bis. Créer l'année scolaire active de l'école si elle n'en a pas encore une : sans elle,
         // tous les modules métier (fin d'année, cantine, bulletins, ...) plantent à la première utilisation.
         if (!\App\Models\SchoolYear::where('school_id', $school->id)->where('is_active', true)->exists()) {
@@ -180,6 +194,23 @@ class SubscriptionController extends Controller
             'subscription_end_date' => $validated['end_date'],
             'max_students' => $oldContract->max_students ?: $school->max_students,
         ]);
+
+        // 5bis. Garder la table `subscriptions` synchronisée : jusqu'ici seule l'approbation initiale
+        // (approveRequest) l'alimentait, elle devenait obsolète dès le premier renouvellement alors
+        // que `contracts` continuait de suivre l'historique correctement.
+        Subscription::where('school_id', $school->id)->where('status', 'active')->update(['status' => 'expired']);
+        $plan = SubscriptionPlan::where('name', $planName)->first();
+        if ($plan) {
+            Subscription::create([
+                'school_id' => $school->id,
+                'plan_id' => $plan->id,
+                'plan_name' => $planName,
+                'start_date' => $validated['start_date'],
+                'end_date' => $validated['end_date'],
+                'amount' => $validated['amount'],
+                'status' => 'active',
+            ]);
+        }
 
         // 6. Générer le nouveau PDF
         $this->generateContractPdf($newContract, $school);
@@ -322,13 +353,21 @@ class SubscriptionController extends Controller
             return redirect()->back()->with('error', '⚠️ Impossible d\'activer un abonnement pour l\'école de démonstration.');
         }
 
+        // La demande précise une durée (mensuelle ou annuelle) qui était jusqu'ici toujours ignorée :
+        // l'activation forçait systématiquement +1 an au tarif annuel, quelle que soit la durée choisie.
+        $isMonthly = $subRequest->duration === 'monthly';
+        $subscriptionStart = now();
+        $subscriptionEnd = $isMonthly ? now()->addMonth() : now()->addYear();
+        $subscriptionAmount = $isMonthly ? ($plan->monthly_price ?? $plan->yearly_price) : $plan->yearly_price;
+
         // 1. ACTIVER CETTE ÉCOLE
         $school->update([
             'status' => 'active',
             'is_active' => true,
             'subscription_plan' => $plan->name,
-            'subscription_start_date' => now(),
-            'subscription_end_date' => now()->addYear(),
+            'subscription_start_date' => $subscriptionStart,
+            'subscription_end_date' => $subscriptionEnd,
+            'max_students' => $plan->max_students ?? 999999,
         ]);
 
         // 1bis. Créer l'année scolaire active de l'école : sans elle, tous les modules métier
@@ -347,13 +386,13 @@ class SubscriptionController extends Controller
         );
 
         // 2. ✅ CRÉER LE CONTRAT D'ABONNEMENT (Dans la table 'subscriptions', PAS 'subscription_requests' !)
-        \App\Models\Subscription::create([
+        Subscription::create([
             'school_id' => $school->id,
             'plan_id' => $plan->id,
             'plan_name' => $plan->name,
-            'start_date' => now(),
-            'end_date' => now()->addYear(),
-            'amount' => $plan->yearly_price,
+            'start_date' => $subscriptionStart,
+            'end_date' => $subscriptionEnd,
+            'amount' => $subscriptionAmount,
             'status' => 'active',
         ]);
 
@@ -367,9 +406,9 @@ class SubscriptionController extends Controller
             'school_id' => $school->id,
             'contract_number' => $contractNumber,
             'plan_name' => $plan->name,
-            'start_date' => now(),
-            'end_date' => now()->addYear(),
-            'amount' => $plan->yearly_price,
+            'start_date' => $subscriptionStart,
+            'end_date' => $subscriptionEnd,
+            'amount' => $subscriptionAmount,
             'max_students' => $plan->max_students ?? 0,
             'max_teachers' => $plan->max_teachers ?? 0,
             'status' => 'active',
