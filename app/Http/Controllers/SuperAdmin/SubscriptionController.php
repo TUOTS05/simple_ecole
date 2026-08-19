@@ -170,10 +170,15 @@ class SubscriptionController extends Controller
             'signed_at' => now(),
         ]);
 
-        // 5. Mettre à jour l'école
+        // 5. Mettre à jour l'école : la nouvelle période de facturation démarre bien à cette date de
+        // renouvellement (subscription_start_date restait figée à la toute première souscription
+        // avant ce correctif), et le plafond d'élèves suit le contrat renouvelé.
         $school->update([
             'status' => 'active',
+            'subscription_plan' => $planName,
+            'subscription_start_date' => $validated['start_date'],
             'subscription_end_date' => $validated['end_date'],
+            'max_students' => $oldContract->max_students ?: $school->max_students,
         ]);
 
         // 6. Générer le nouveau PDF

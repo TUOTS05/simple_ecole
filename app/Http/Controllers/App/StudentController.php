@@ -131,6 +131,18 @@ class StudentController extends Controller
         $schoolId = session('current_school_id');
         $year = date('Y');
 
+        // Plafond d'élèves de l'abonnement : jusqu'ici School.max_students n'était jamais vérifié
+        // nulle part, rendant le plafonnement du plan purement décoratif.
+        $school = \App\Models\School::find($schoolId);
+        if ($school && $school->max_students) {
+            $activeStudentCount = Student::where('school_id', $schoolId)->where('status', 'active')->count();
+            if ($activeStudentCount >= $school->max_students) {
+                return back()->withErrors([
+                    'class_id' => "Le plafond de {$school->max_students} élèves actifs de votre abonnement est atteint. Contactez le support pour augmenter votre plan.",
+                ])->withInput();
+            }
+        }
+
         // ✅ AJOUT : Gestion des 4 documents avant la création
         $documentsData = [];
         for ($i = 1; $i <= 4; $i++) {
