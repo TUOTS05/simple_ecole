@@ -254,7 +254,7 @@
                     </p>
 
                     <div class="flex flex-col sm:flex-row gap-4 animate-fade-in-up delay-300">
-                        <a href="/register" class="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-lg font-bold transition shadow-2xl flex items-center justify-center group">
+                        <a href="{{ route('request-account') }}" class="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-lg font-bold transition shadow-2xl flex items-center justify-center group">
                             Démarrer gratuitement
                             <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition"></i>
                         </a>
@@ -619,7 +619,7 @@
                 <p class="text-lg text-gray-700 mb-6">
                     Convaincu ? Commencez votre essai gratuit dès maintenant !
                 </p>
-                <a href="/register" class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-bold transition shadow-xl shadow-blue-600/30 group">
+                <a href="{{ route('request-account') }}" class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-bold transition shadow-xl shadow-blue-600/30 group">
                     <i class="fas fa-rocket mr-2 group-hover:animate-bounce"></i>
                     Démarrer l'essai gratuit (30 jours)
                 </a>
@@ -721,7 +721,7 @@
                         <li class="flex items-center text-gray-700"><i class="fas fa-check text-green-500 mr-2"></i>Toutes les fonctionnalités</li>
                         <li class="flex items-center text-gray-700"><i class="fas fa-check text-green-500 mr-2"></i>Support email</li>
                     </ul>
-                    <a href="/register?plan=starter" class="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-900 py-3 rounded-lg font-bold transition">
+                    <a href="{{ route('request-account') }}" class="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-900 py-3 rounded-lg font-bold transition">
                         Commencer
                     </a>
                 </div>
@@ -744,7 +744,7 @@
                         <li class="flex items-center"><i class="fas fa-check text-green-300 mr-2"></i>Support prioritaire 24/7</li>
                         <li class="flex items-center"><i class="fas fa-check text-green-300 mr-2"></i>Formation incluse</li>
                     </ul>
-                    <a href="/register?plan=medium" class="block w-full text-center bg-white hover:bg-gray-100 text-blue-600 py-3 rounded-lg font-bold transition">
+                    <a href="{{ route('request-account') }}" class="block w-full text-center bg-white hover:bg-gray-100 text-blue-600 py-3 rounded-lg font-bold transition">
                         Choisir ce plan
                     </a>
                 </div>
@@ -763,7 +763,7 @@
                         <li class="flex items-center text-gray-700"><i class="fas fa-check text-green-500 mr-2"></i>Support dédié</li>
                         <li class="flex items-center text-gray-700"><i class="fas fa-check text-green-500 mr-2"></i>Personnalisation avancée</li>
                     </ul>
-                    <a href="/register?plan=premium" class="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-900 py-3 rounded-lg font-bold transition">
+                    <a href="#contact" class="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-900 py-3 rounded-lg font-bold transition">
                         Nous contacter pour Premium
                     </a>
                 </div>
@@ -857,7 +857,7 @@
                 <br>Essai gratuit de 30 jours, sans engagement.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center reveal">
-                <a href="{{ route('demo.login') }}" class="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-lg font-bold transition shadow-2xl">
+                <a href="{{ route('request-account') }}" class="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-lg font-bold transition shadow-2xl">
                     <i class="fas fa-rocket mr-2"></i>
                     Démarrer l'essai gratuit
                 </a>
