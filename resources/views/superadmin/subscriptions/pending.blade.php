@@ -18,6 +18,7 @@
                 <thead class="bg-gray-50 text-gray-600 uppercase text-xs font-semibold">
                     <tr>
                         <th class="px-6 py-4">École</th>
+                        <th class="px-6 py-4">Contact</th>
                         <th class="px-6 py-4">Plan demandé</th>
                         <th class="px-6 py-4">Durée</th>
                         <th class="px-6 py-4">Date de la demande</th>
@@ -26,15 +27,33 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse($requests as $req)
+                    @php($director = $req->school->users->firstWhere('role', 'school_admin'))
+                    @php($isStale = $req->created_at->diffInHours(now()) >= 24)
                     <tr class="hover:bg-gray-50 transition">
-                        <td class="px-6 py-4 font-medium text-gray-900">{{ $req->school->name }}</td>
+                        <td class="px-6 py-4 font-medium text-gray-900">
+                            {{ $req->school->name }}
+                            <div class="text-xs text-gray-400 font-normal">{{ $req->school->address }} · {{ $req->school->phone }}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            @if($director)
+                                <div class="text-gray-900">{{ $director->first_name }} {{ $director->last_name }}</div>
+                                <div class="text-xs text-gray-400">{{ $director->email }}</div>
+                            @else
+                                <span class="text-gray-400 text-xs">—</span>
+                            @endif
+                        </td>
                         <td class="px-6 py-4">
                             <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">
                                 {{ $req->plan->name }}
                             </span>
                         </td>
                         <td class="px-6 py-4 capitalize">{{ $req->duration === 'yearly' ? 'Annuel' : 'Mensuel' }}</td>
-                        <td class="px-6 py-4 text-gray-500">{{ $req->created_at->format('d/m/Y H:i') }}</td>
+                        <td class="px-6 py-4 text-gray-500">
+                            {{ $req->created_at->format('d/m/Y H:i') }}
+                            @if($isStale)
+                                <span class="block mt-1 bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full w-fit">⏰ En attente depuis {{ $req->created_at->diffForHumans(null, true) }}</span>
+                            @endif
+                        </td>
                         <td class="px-6 py-4 text-center space-x-2">
                             <!-- Bouton Approuver -->
                             <button onclick="document.getElementById('approve-modal-{{ $req->id }}').classList.remove('hidden')" 
@@ -84,7 +103,7 @@
 
                     @empty
                     <tr>
-                        <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
                             🎉 Aucune demande en attente pour le moment.
                         </td>
                     </tr>

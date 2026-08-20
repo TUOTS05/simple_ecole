@@ -169,12 +169,24 @@ class SchoolOnboardingController extends Controller
             ]);
 
             // 4. Créer la demande d'abonnement
-            \App\Models\SubscriptionRequest::create([
+            $subRequest = \App\Models\SubscriptionRequest::create([
                 'school_id' => $school->id,
                 'plan_id' => $validated['plan_id'],
                 'duration' => 'yearly',
                 'status' => 'pending',
             ]);
+
+            // 5. Prévenir les super admins tout de suite, pour que la revue manuelle
+            // n'attende pas qu'un admin pense à aller consulter la liste des demandes.
+            try {
+                $superAdmins = \App\Models\User::where('role', 'super_admin')->get();
+                if ($superAdmins->isNotEmpty()) {
+                    \Illuminate\Support\Facades\Mail::to($superAdmins)
+                        ->send(new \App\Mail\NewSubscriptionRequestMail($subRequest->load('school.users', 'plan')));
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Erreur envoi notification nouvelle demande: ' . $e->getMessage());
+            }
 
             return redirect()->route('landing')
                 ->with('success', '✅ Votre demande a été envoyée avec succès ! Nous vous contacterons sous 24h.');

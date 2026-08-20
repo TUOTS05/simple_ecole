@@ -237,7 +237,7 @@ class SubscriptionController extends Controller
      */
     public function pendingRequests()
     {
-        $requests = \App\Models\SubscriptionRequest::with(['school', 'plan'])
+        $requests = \App\Models\SubscriptionRequest::with(['school.users', 'plan'])
             ->where('status', 'pending')
             ->latest()
             ->get();
