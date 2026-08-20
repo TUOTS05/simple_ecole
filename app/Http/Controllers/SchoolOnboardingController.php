@@ -160,7 +160,10 @@ class SchoolOnboardingController extends Controller
                 'first_name' => $firstName,
                 'last_name' => $lastName,
                 'email' => $validated['director_email'],
-                'password' => \Illuminate\Support\Facades\Hash::make('Temporaire123!'),
+                // Mot de passe aléatoire et inconnu : la connexion reste impossible tant que
+                // la demande n'est pas approuvée et qu'un vrai mot de passe n'est généré (voir
+                // SubscriptionController::approveRequest).
+                'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(32)),
                 'role' => 'school_admin',
                 'email_verified_at' => now(),
             ]);

@@ -441,8 +441,15 @@ class SubscriptionController extends Controller
                                     ->first();
         
         if ($director) {
+            // Mot de passe généré à l'approbation (unique par école) : avant cette étape, le
+            // compte créé par storeRequest() a un mot de passe aléatoire inconnu de tous.
+            $temporaryPassword = Str::random(12);
+            $director->update([
+                'password' => \Illuminate\Support\Facades\Hash::make($temporaryPassword),
+            ]);
+
             \Illuminate\Support\Facades\Mail::to($director->email)->send(
-                new \App\Mail\SchoolAdminWelcomeMail($school->name, $director->email, 'Temporaire123!')
+                new \App\Mail\SchoolAdminWelcomeMail($school->name, $director->email, $temporaryPassword)
             );
         }
 

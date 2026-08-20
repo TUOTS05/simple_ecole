@@ -26,6 +26,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'parent' => \App\Http\Middleware\IsParent::class,
             'school.active' => \App\Http\Middleware\EnsureSchoolIsActive::class,
         ]);
+
+        // Empêche le compte de démo partagé d'écrire en base (sauf déconnexion)
+        $middleware->web(append: [
+            \App\Http\Middleware\PreventDemoWrites::class,
+        ]);
     })
     ->withSchedule(function (Schedule $schedule) {
         // Exécuter tous les jours à 9h du matin
@@ -35,6 +40,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Le rappel d'expiration d'abonnement/essai gratuit (notify:schools-expiring) est déjà
         // planifié dans routes/console.php — ne pas le redéclarer ici pour éviter un double envoi.
+
+        // Réinitialise l'école de démo chaque nuit pour effacer ce que les visiteurs y ont modifié
+        $schedule->command('demo:reset')
+                ->dailyAt('04:00')
+                ->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Rendre JSON les erreurs pour l'API

@@ -880,27 +880,14 @@
                     Demandez un contrat d'essai de 30 jours. Notre équipe configurera votre espace et vous enverra un lien de validation sécurisé.
                 </p>
 
-                <form action="/ecole/demande-contrat" method="POST" class="max-w-md mx-auto space-y-4">
-                    @csrf
-                    <div>
-                        <input type="text" name="school_name" placeholder="Nom de votre école" required
-                            class="w-full px-4 py-3 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-400 focus:outline-none">
-                    </div>
-                    <div>
-                        <input type="email" name="email" placeholder="Votre email professionnel" required
-                            class="w-full px-4 py-3 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-400 focus:outline-none">
-                    </div>
-                    <div>
-                        <input type="tel" name="phone" placeholder="Votre numéro de téléphone" required
-                            class="w-full px-4 py-3 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-400 focus:outline-none">
-                    </div>
-                    <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-lg transition shadow-lg transform hover:-translate-y-1">
+                <div class="max-w-md mx-auto space-y-4">
+                    <a href="{{ route('request-account') }}" class="block w-full text-center bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-lg transition shadow-lg transform hover:-translate-y-1">
                         <i class="fas fa-paper-plane mr-2"></i> Recevoir mon contrat d'essai
-                    </button>
+                    </a>
                     <p class="text-xs text-blue-200 mt-3">
                         🔒 Aucune carte de crédit requise. Configuration manuelle par notre équipe sous 24h.
                     </p>
-                </form>
+                </div>
             </div>
         </div>
     </section>
@@ -915,7 +902,7 @@
                         <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-green-500 rounded-lg flex items-center justify-center">
                             <i class="fas fa-graduation-cap text-white text-xl"></i>
                         </div>
-                        <span class="text-xl font-bold text-white">School<span class="text-blue-400">Manager</span></span>
+                        <span class="text-xl font-bold text-white">Simple <span class="text-blue-400">Ecole</span></span>
                     </div>
                     <p class="text-sm text-gray-400 mb-4">
                         La solution complète de gestion scolaire pour les écoles d'Afrique.
