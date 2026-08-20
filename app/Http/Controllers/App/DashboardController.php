@@ -146,33 +146,81 @@ class DashboardController extends Controller
 
         $registrationPaidCount = \App\Models\Enrollment::where('school_id', $schoolId)->where('registration_fee_paid', true)->count();
 
-        // Alertes
+        // Alertes : toute échéance non soldée (pending/partial/overdue) et déjà échue
         $lateInstallments = \App\Models\StudentInstallment::where('school_id', $schoolId)
-            ->where('status', 'pending')
+            ->where('status', '!=', 'paid')
             ->whereDate('due_date', '<', now())
             ->with('enrollment.student')
             ->limit(5)
             ->get();
-            
-        $recentAbsences = collect(); // Sécurité : évite le bug si la table attendance n'est pas encore remplie
 
-        // Données pour les graphiques (Valeurs par défaut sécurisées pour éviter les erreurs JS)
-        $paymentLabels = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'];
-        $paymentData = [0, 0, 0, 0, 0, 0]; 
-        
+        // Élèves marqués absents au moins une fois durant les 7 derniers jours
+        $recentAbsences = \App\Models\Student::where('school_id', $schoolId)
+            ->whereHas('attendances', function ($q) {
+                $q->where('status', 'absent')->where('date', '>=', now()->subDays(7));
+            })
+            ->orderBy('last_name')
+            ->limit(5)
+            ->get();
+
+        // Paiements encaissés sur les 6 derniers mois (pour le graphique en courbe)
+        $paymentsByMonth = \App\Models\Payment::where('school_id', $schoolId)
+            ->where('payment_date', '>=', now()->subMonths(5)->startOfMonth())
+            ->selectRaw("DATE_FORMAT(payment_date, '%Y-%m') as ym, SUM(amount) as total")
+            ->groupBy('ym')
+            ->pluck('total', 'ym');
+
+        $paymentLabels = [];
+        $paymentData = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $paymentLabels[] = $month->translatedFormat('M Y');
+            $paymentData[] = (float) ($paymentsByMonth[$month->format('Y-m')] ?? 0);
+        }
+
         $paymentStatusCounts = [
-            'paid' => \App\Models\StudentInstallment::where('school_id', $schoolId)->where('status', 'completed')->count(),
+            'paid' => \App\Models\StudentInstallment::where('school_id', $schoolId)->where('status', 'paid')->count(),
             'pending' => \App\Models\StudentInstallment::where('school_id', $schoolId)->where('status', 'pending')->count(),
             'partial' => \App\Models\StudentInstallment::where('school_id', $schoolId)->where('status', 'partial')->count(),
-            'overdue' => $lateInstallments->count()
+            'overdue' => \App\Models\StudentInstallment::where('school_id', $schoolId)->where('status', 'overdue')->count(),
         ];
 
-        $attendanceLabels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-        $attendancePresent = [0, 0, 0, 0, 0, 0, 0];
-        $attendanceAbsent = [0, 0, 0, 0, 0, 0, 0];
-        $attendanceLate = [0, 0, 0, 0, 0, 0, 0];
-        $attendanceRate = 0;
-        $presentCount = 0;
+        // Présences des 7 derniers jours (pour le graphique + le taux affiché en KPI)
+        $attendanceByDay = \App\Models\Attendance::where('school_id', $schoolId)
+            ->where('date', '>=', now()->subDays(6)->startOfDay())
+            ->selectRaw('date, status, count(*) as count')
+            ->groupBy('date', 'status')
+            ->get()
+            ->groupBy(fn ($row) => $row->date->format('Y-m-d'));
+
+        $attendanceLabels = [];
+        $attendancePresent = [];
+        $attendanceAbsent = [];
+        $attendanceLate = [];
+        $totalPresent = 0;
+        $totalMarked = 0;
+
+        for ($i = 6; $i >= 0; $i--) {
+            $day = now()->subDays($i);
+            $rows = $attendanceByDay->get($day->format('Y-m-d'), collect());
+            $present = (int) $rows->firstWhere('status', 'present')?->count;
+            $absent = (int) $rows->firstWhere('status', 'absent')?->count;
+            $late = (int) $rows->firstWhere('status', 'late')?->count;
+
+            $attendanceLabels[] = $day->translatedFormat('D');
+            $attendancePresent[] = $present;
+            $attendanceAbsent[] = $absent;
+            $attendanceLate[] = $late;
+
+            $totalPresent += $present;
+            $totalMarked += (int) $rows->sum('count');
+        }
+
+        $attendanceRate = $totalMarked > 0 ? round(($totalPresent / $totalMarked) * 100, 1) : 0;
+        $presentCount = \App\Models\Attendance::where('school_id', $schoolId)
+            ->whereDate('date', now()->toDateString())
+            ->where('status', 'present')
+            ->count();
 
         // Envoi de TOUTES les variables à la vue
         return view('app.dashboard', compact(

@@ -44,10 +44,12 @@ class AttendanceController extends Controller
         $endDate = $request->get('end_date', now()->format('Y-m-d'));
         $attendanceHasPeriod = true;
 
+        // Fonctions MySQL (le projet n'utilise pas PostgreSQL) : TO_CHAR faisait planter la page
+        // dès qu'un enseignant choisissait un regroupement autre que "Jour".
         $groupByClause = 'DATE(date)';
-        if ($groupBy === 'week') $groupByClause = "TO_CHAR(date, 'IYYY-IW')";
-        elseif ($groupBy === 'month') $groupByClause = "TO_CHAR(date, 'YYYY-MM')";
-        elseif ($groupBy === 'year') $groupByClause = "TO_CHAR(date, 'YYYY')";
+        if ($groupBy === 'week') $groupByClause = "DATE(DATE_SUB(date, INTERVAL WEEKDAY(date) DAY))";
+        elseif ($groupBy === 'month') $groupByClause = "DATE(DATE_FORMAT(date, '%Y-%m-01'))";
+        elseif ($groupBy === 'year') $groupByClause = "DATE(DATE_FORMAT(date, '%Y-01-01'))";
 
         // 1. Requête pour le tableau de bilan global
         $query = Attendance::query()

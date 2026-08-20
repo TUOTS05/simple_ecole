@@ -19,21 +19,21 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $parent = auth()->user();
-        
-        // Récupérer l'année scolaire sélectionnée (par défaut : année active)
+
+        // Année scolaire sélectionnée (par défaut : année active). Un parent peut avoir des
+        // enfants dans des écoles différentes, donc il n'existe pas d'"année courante" unique :
+        // chaque enfant doit résoudre l'année scolaire de SA propre école.
         $selectedYearId = $request->get('year');
-        
-        if ($selectedYearId) {
-            $currentYear = SchoolYear::find($selectedYearId);
-        } else {
-            $currentYear = SchoolYear::where('is_active', true)->first();
-        }
-        
+
         // Récupérer tous les enfants de ce parent
         $children = $parent->children()->with('school')->get();
-        
-        // Pour chaque enfant, récupérer les données de l'année sélectionnée
-        $childrenData = $children->map(function($child) use ($currentYear) {
+
+        // Pour chaque enfant, récupérer les données de l'année scolaire de son école
+        $childrenData = $children->map(function($child) use ($selectedYearId) {
+            $currentYear = $selectedYearId
+                ? SchoolYear::where('id', $selectedYearId)->where('school_id', $child->school_id)->first()
+                : SchoolYear::where('school_id', $child->school_id)->where('is_active', true)->first();
+
             $data = [
                 'student' => $child,
                 'enrollment' => null,
@@ -44,7 +44,7 @@ class DashboardController extends Controller
                 'totalDays' => 0,
                 'presentDays' => 0,
             ];
-            
+
             if ($currentYear) {
                 // Récupérer l'inscription pour cette année
                 $enrollment = Enrollment::where('student_id', $child->id)
@@ -101,8 +101,11 @@ class DashboardController extends Controller
             return $data['student']->school_id;
         });
         
-        // Récupérer toutes les années scolaires pour le sélecteur
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        // Années scolaires des écoles où ce parent a effectivement des enfants (pas toutes les
+        // écoles de la plateforme)
+        $schoolYears = SchoolYear::whereIn('school_id', $children->pluck('school_id')->unique())
+            ->orderBy('start_date', 'desc')
+            ->get();
         
         // Statistiques globales
         $globalStats = [
@@ -117,8 +120,7 @@ class DashboardController extends Controller
         ];
         
         return view('parent.dashboard', compact(
-            'childrenBySchool', 
-            'currentYear', 
+            'childrenBySchool',
             'schoolYears',
             'globalStats'
         ));

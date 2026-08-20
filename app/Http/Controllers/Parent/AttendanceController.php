@@ -20,8 +20,9 @@ class AttendanceController extends Controller
         // 2. Récupérer TOUS les enfants pour le menu déroulant
         $siblings = $parent->children()->get();
 
-        // 3. Récupérer la classe via l'inscription (Votre logique, intacte)
-        $currentYear = SchoolYear::where('is_active', true)->first();
+        // 3. Récupérer la classe via l'inscription, sur l'année active de l'école DE CET ÉLÈVE
+        // (un parent peut avoir des enfants dans des écoles différentes)
+        $currentYear = SchoolYear::where('school_id', $student->school_id)->where('is_active', true)->first();
         $enrollment = Enrollment::where('student_id', $studentId)
             ->where('school_year_id', $currentYear?->id)
             ->with('schoolClass')

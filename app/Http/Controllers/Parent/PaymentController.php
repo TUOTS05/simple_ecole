@@ -28,10 +28,11 @@ class PaymentController extends Controller
         // ✅ AJOUT : Récupérer TOUS les enfants pour le menu déroulant
         $siblings = $parent->children()->get();
         
-        // 2. Récupérer l'inscription de l'élève pour l'année en cours
+        // 2. Récupérer l'inscription de l'élève pour l'année active de SON école (un parent peut
+        // avoir des enfants dans des écoles différentes, donc "l'année active" n'est pas globale)
         $enrollment = Enrollment::where('student_id', $studentId)
-            ->whereHas('schoolYear', function($q) {
-                $q->where('is_active', true);
+            ->whereHas('schoolYear', function($q) use ($student) {
+                $q->where('is_active', true)->where('school_id', $student->school_id);
             })
             ->with('schoolClass') // On charge aussi la classe pour l'afficher
             ->first();
