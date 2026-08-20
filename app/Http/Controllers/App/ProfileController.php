@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\School;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
@@ -47,6 +48,7 @@ class ProfileController extends Controller
             'school_address' => 'nullable|string|max:500',
             'school_email' => 'nullable|email|max:255',
             'school_phone' => 'nullable|string|max:20',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         // Mise à jour de l'Utilisateur
@@ -59,13 +61,22 @@ class ProfileController extends Controller
 
         // Mise à jour de l'École
         if ($school) {
-            $school->update([
+            $schoolData = [
                 'name' => $validatedSchool['school_name'],
                 'school_type' => $validatedSchool['school_type'],
                 'address' => $validatedSchool['school_address'],
                 'email' => $validatedSchool['school_email'],
                 'phone' => $validatedSchool['school_phone'],
-            ]);
+            ];
+
+            if ($request->hasFile('logo')) {
+                if ($school->logo) {
+                    Storage::disk('public')->delete($school->logo);
+                }
+                $schoolData['logo'] = $request->file('logo')->store('schools/logos', 'public');
+            }
+
+            $school->update($schoolData);
         }
 
         return back()->with('success', '✅ Les informations du profil et de l\'établissement ont été mises à jour avec succès.');
