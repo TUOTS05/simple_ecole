@@ -63,7 +63,49 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
 # Routes Admin École
 #--------------------------------------------------------------------------
 
-Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent', 'tenant'])->prefix('app')->name('app.')->group(function () {
+Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent,accountant', 'tenant'])->prefix('app')->name('app.')->group(function () {
+
+    // ==========================================================================
+    // Ouvert au personnel comptable (rôle "accountant") : uniquement inscriptions
+    // et paiements, plus les échéances/sélecteurs dont ces écrans dépendent.
+    // ==========================================================================
+
+    // Route AJAX pour récupérer les élèves par classe (utilisée par le formulaire de paiement)
+    Route::get('/students/by-class', [\App\Http\Controllers\App\PaymentController::class, 'getStudentsByClass'])
+        ->name('students.by-class');
+
+    // Inscriptions
+    Route::get('/enrollments/export', [\App\Http\Controllers\App\EnrollmentController::class, 'export'])->name('enrollments.export');
+    Route::resource('/enrollments', \App\Http\Controllers\App\EnrollmentController::class);
+
+    // Paiements
+    Route::get('/payments/export', [\App\Http\Controllers\App\PaymentController::class, 'export'])->name('payments.export');
+    Route::resource('/payments', \App\Http\Controllers\App\PaymentController::class);
+    Route::get('/payments/{payment}/receipt', [\App\Http\Controllers\App\PaymentController::class, 'receipt'])->name('payments.receipt');
+
+    // Échéances (créées/supprimées depuis les écrans d'inscription et de paiement)
+    Route::resource('/installments', \App\Http\Controllers\App\StudentInstallmentController::class)
+        ->only(['store', 'destroy'])
+        ->names([
+            'store' => 'installments.store',
+            'destroy' => 'installments.destroy'
+        ]);
+
+    // Profil personnel du comptable (infos + mot de passe uniquement, pas les infos école :
+    // ça reste dans ProfileController, réservé plus bas à school_admin/teacher/parent).
+    Route::get('/accountant-profile', [\App\Http\Controllers\App\AccountantProfileController::class, 'edit'])
+        ->name('accountant-profile.edit');
+    Route::put('/accountant-profile', [\App\Http\Controllers\App\AccountantProfileController::class, 'update'])
+        ->name('accountant-profile.update');
+    Route::put('/accountant-profile/password', [\App\Http\Controllers\App\AccountantProfileController::class, 'updatePassword'])
+        ->name('accountant-profile.password.update');
+
+    // ==========================================================================
+    // Tout le reste : réservé à school_admin, teacher, parent (le personnel
+    // comptable n'y a PAS accès, conformément à son rôle restreint).
+    // ==========================================================================
+    Route::middleware('role:school_admin,teacher,parent')->group(function () {
+
     Route::get('/dashboard', [AppDashboardController::class, 'index'])->name('dashboard');
 
     // Années scolaires
@@ -73,25 +115,18 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent', 
     Route::resource('/fees', \App\Http\Controllers\App\FeeController::class)
         ->middleware('role:school_admin');
 
-    // Route AJAX pour récupérer les élèves par classe
-    Route::get('/students/by-class', [\App\Http\Controllers\App\PaymentController::class, 'getStudentsByClass'])
-        ->name('students.by-class');
-
-    // Élèves
-    Route::get('/enrollments/export', [\App\Http\Controllers\App\EnrollmentController::class, 'export'])->name('enrollments.export');
-    
     Route::resource('/students', \App\Http\Controllers\App\StudentController::class);
     Route::get('/students/by-matricule/{matricule}', [\App\Http\Controllers\App\StudentController::class, 'getByMatricule'])
     ->name('students.by-matricule');
     Route::get('/students/{student}/dossier', [\App\Http\Controllers\App\StudentController::class, 'dossier'])
     ->name('students.dossier');
-    
+
         // ==========================================
     // EXPORTS ADMIN (Élèves)
     // ==========================================
     Route::get('/students/export/excel', [\App\Http\Controllers\App\StudentController::class, 'exportExcel'])
         ->name('students.export.excel'); // Laravel ajoutera automatiquement "app." devant -> app.students.export.excel
-        
+
     Route::get('/students/export/pdf', [\App\Http\Controllers\App\StudentController::class, 'exportPdf'])
         ->name('students.export.pdf'); // -> app.students.export.pdf
 
@@ -102,15 +137,16 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent', 
     Route::get('/parents/{parentUser}', [\App\Http\Controllers\App\ParentController::class, 'show'])
         ->name('parents.show')->middleware('role:school_admin');
 
+    // Personnel comptable (gestion des comptes) : réservé à l'admin école.
+    Route::resource('/accountants', \App\Http\Controllers\App\AccountantController::class)
+        ->middleware('role:school_admin');
+
     // Classes
     Route::resource('/classes', \App\Http\Controllers\App\SchoolClassController::class);
 
-    // Inscriptions
-    Route::resource('/enrollments', \App\Http\Controllers\App\EnrollmentController::class);
-
         // 📨 MESSAGERIE ADMIN ÉCOLE
     Route::get('/messages', [\App\Http\Controllers\App\MessageController::class, 'index'])->name('messages.index');
-    
+
     // ✅ IMPORTANT : Les routes spécifiques (sans paramètre dynamique) DOIVENT être placées AVANT les routes avec {message}
     Route::get('/messages/broadcast', [\App\Http\Controllers\App\BroadcastMessageController::class, 'create'])->name('messages.broadcast');
     Route::post('/messages/broadcast', [\App\Http\Controllers\App\BroadcastMessageController::class, 'store'])->name('messages.broadcast.store');
@@ -118,11 +154,6 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent', 
     // Les routes avec paramètres dynamiques {message} viennent ENSUITE
     Route::get('/messages/{message}', [\App\Http\Controllers\App\MessageController::class, 'show'])->name('messages.show');
     Route::post('/messages/{message}/reply', [\App\Http\Controllers\App\MessageController::class, 'reply'])->name('messages.reply');
-
-    // Paiements
-    Route::get('/payments/export', [\App\Http\Controllers\App\PaymentController::class, 'export'])->name('payments.export');
-    Route::resource('/payments', \App\Http\Controllers\App\PaymentController::class);
-    Route::get('/payments/{payment}/receipt', [\App\Http\Controllers\App\PaymentController::class, 'receipt'])->name('payments.receipt');
 
     // Routes pour les sms
     Route::get('/settings/sms', [App\Http\Controllers\App\SmsSettingsController::class, 'index'])->name('settings.sms');
@@ -155,14 +186,6 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent', 
     Route::get('/class-fees/{schoolClass}/edit', [\App\Http\Controllers\App\ClassFeeController::class, 'edit'])->name('class-fees.edit');
     Route::put('/class-fees/{schoolClass}', [\App\Http\Controllers\App\ClassFeeController::class, 'update'])->name('class-fees.update');
 
-    // Échéances
-    Route::resource('/installments', \App\Http\Controllers\App\StudentInstallmentController::class)
-        ->only(['store', 'destroy'])
-        ->names([
-            'store' => 'installments.store',
-            'destroy' => 'installments.destroy'
-        ]);
-    
     // ==========================================
     // ÉTATS FINANCIERS
     // ==========================================
@@ -205,6 +228,8 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent', 
     Route::get('/profile', [\App\Http\Controllers\App\ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [\App\Http\Controllers\App\ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [\App\Http\Controllers\App\ProfileController::class, 'updatePassword'])->name('profile.password.update');
+
+    }); // fin du sous-groupe role:school_admin,teacher,parent
 
 });
 

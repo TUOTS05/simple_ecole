@@ -38,6 +38,12 @@ class AuthenticatedSessionController extends Controller
         }
 
 
+        // Le personnel comptable n'a pas accès au tableau de bord général (réservé à school_admin,
+        // teacher, parent) : il est envoyé directement sur les inscriptions.
+        if (method_exists($user, 'isAccountant') && $user->isAccountant()) {
+            return redirect()->intended(route('app.enrollments.index'));
+        }
+
         if (method_exists($user, 'isSchoolAdmin') && $user->isSchoolAdmin()) {
             return redirect()->intended(route('app.dashboard')); // Ou 'school.dashboard' selon votre nommage
         }

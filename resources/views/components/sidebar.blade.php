@@ -132,6 +132,19 @@
             @endif
         </a>
 
+        @elseif(method_exists(auth()->user(), 'isAccountant') && auth()->user()->isAccountant())
+        <!-- ========================================== -->
+        <!-- MENU PERSONNEL COMPTABLE (accès restreint)  -->
+        <!-- ========================================== -->
+        <a href="{{ route('app.enrollments.index') }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('app.enrollments.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+            <span class="text-xl min-w-[24px] text-center">📝</span>
+            <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Inscriptions</span>
+        </a>
+        <a href="{{ route('app.payments.index') }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('app.payments.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+            <span class="text-xl min-w-[24px] text-center">💳</span>
+            <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Paiements</span>
+        </a>
+
         @else
         <!-- ========================================== -->
         <!-- MENU ADMIN ÉCOLE                           -->
@@ -184,7 +197,7 @@
 
         @if(auth()->user()->isSchoolAdmin())
         <!-- Groupe : Ressources Humaines -->
-        <div x-data="{ open: {{ request()->routeIs('app.teachers.*') || request()->routeIs('app.teacher-assignments.*') ? 'true' : 'false' }} }" class="space-y-1">
+        <div x-data="{ open: {{ request()->routeIs('app.teachers.*') || request()->routeIs('app.teacher-assignments.*') || request()->routeIs('app.accountants.*') ? 'true' : 'false' }} }" class="space-y-1">
             <button @click="if(!sidebarOpen) sidebarOpen = true; open = !open" title="Personnel Enseignant"
                 class="w-full flex items-center justify-between px-3 py-3 rounded-lg transition text-gray-700 hover:bg-gray-100 focus:outline-none">
                 <div class="flex items-center">
@@ -198,6 +211,7 @@
             <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
                 <a href="{{ route('app.teachers.index') }}" title="Liste des Enseignants" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.teachers.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Enseignants</a>
                 <a href="{{ route('app.teacher-assignments.index') }}" title="Assignations" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.teacher-assignments.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Assignations</a>
+                <a href="{{ route('app.accountants.index') }}" title="Personnel Comptable" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.accountants.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Comptables</a>
             </div>
         </div>
 
@@ -347,6 +361,14 @@
 
         @elseif(auth()->user()->isTeacher())
             <a href="{{ route('teacher.profile.index') }}" title="Mon Profil" class="flex items-center justify-center px-3 py-2 rounded-lg hover:bg-gray-100 transition text-gray-700 text-sm font-medium">
+                <svg class="w-5 h-5 min-w-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                <span x-show="sidebarOpen" class="ml-2 whitespace-nowrap">Mon Profil</span>
+            </a>
+
+        @elseif(method_exists(auth()->user(), 'isAccountant') && auth()->user()->isAccountant())
+            <a href="{{ route('app.accountant-profile.edit') }}" title="Mon Profil" class="flex items-center justify-center px-3 py-2 rounded-lg hover:bg-gray-100 transition text-gray-700 text-sm font-medium">
                 <svg class="w-5 h-5 min-w-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                 </svg>

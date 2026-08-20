@@ -59,12 +59,20 @@ class User extends Authenticatable implements MustVerifyEmail
         return strtolower(trim($this->role ?? '')) === 'parent';
     }
 
+    public function isAccountant(): bool
+    {
+        return strtolower(trim($this->role ?? '')) === 'accountant';
+    }
+
     public function dashboardRouteName(): string
     {
         return match ($this->role) {
             'super_admin' => 'superadmin.dashboard',
             'teacher' => 'teacher.dashboard',
             'parent' => 'parent.dashboard',
+            // Le personnel comptable n'a accès qu'aux inscriptions et paiements : pas de tableau
+            // de bord général à sa disposition, on l'envoie directement sur les inscriptions.
+            'accountant' => 'app.enrollments.index',
             default => 'app.dashboard',
         };
     }
