@@ -348,6 +348,7 @@
         </div>
 
     </nav>
+    @endif
     <!-- Footer Sidebar -->
     <div class="p-3 border-t border-gray-200 flex-shrink-0 space-y-2">
         
@@ -396,7 +397,6 @@
             </button>
         </form>
     </div>
-@endif
 </aside>
 
 <style>
