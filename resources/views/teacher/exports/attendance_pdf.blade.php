@@ -107,7 +107,7 @@
     <div class="header">
         <div class="header-left">
             <!-- Logo dynamique avec fallback si aucun logo n'est défini -->
-            <img src="{{ $schoolLogo ?? public_path('images/default-logo.png') }}" alt="Logo École" class="logo">
+            <img src="{{ $schoolLogoPath ?? public_path('images/default-logo.png') }}" alt="Logo École" class="logo">
             <div class="header-title">
                 <h2>Rapport de Présences</h2>
                 <div class="school-year">ANNÉE {{ $schoolYear ?? '2025-2026' }}</div>

@@ -146,8 +146,8 @@
         <table>
             <tr>
                 <td class="header-logo">
-                    @if($school && $school->logo_path && file_exists(public_path('storage/' . $school->logo_path)))
-                    <img src="{{ public_path('storage/' . $school->logo_path) }}" alt="Logo">
+                    @if($school && $school->logo && file_exists(public_path('storage/' . $school->logo)))
+                    <img src="{{ public_path('storage/' . $school->logo) }}" alt="Logo">
                     @else
                     <div style="font-size: 9px; color: #666; border: 1px dashed #999; padding: 5px; display: inline-block;">[ LOGO ]</div>
                     @endif

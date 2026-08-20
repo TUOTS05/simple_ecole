@@ -177,8 +177,8 @@
         <!-- En-tête : Logo à gauche, Infos école à droite -->
         <div class="header-table">
             <div class="header-cell logo-cell">
-                @if($school && $school->logo_path && file_exists(public_path('storage/' . $school->logo_path)))
-                    <img src="{{ public_path('storage/' . $school->logo_path) }}" alt="Logo" style="max-width: 80px; max-height: 80px;">
+                @if($school && $school->logo && file_exists(public_path('storage/' . $school->logo)))
+                    <img src="{{ public_path('storage/' . $school->logo) }}" alt="Logo" style="max-width: 80px; max-height: 80px;">
                 @else
                     <div style="font-size: 10px; color: #666; border: 1px dashed #999; padding: 10px; display: inline-block;">[ LOGO ]</div>
                 @endif

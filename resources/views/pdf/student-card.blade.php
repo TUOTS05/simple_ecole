@@ -10,8 +10,12 @@
         .card { width: 85.6mm; height: 54mm; position: relative; overflow: hidden; background: #fff; border: .45mm solid #143b74; }
         .top-band { height: 13mm; padding: 2.5mm 4mm; color: #fff; background: #123b76; }
         .top-band:after { content: ''; position: absolute; top: 0; right: -8mm; width: 34mm; height: 13mm; background: #e8a317; transform: skewX(-28deg); }
-        .school-name { position: relative; z-index: 2; width: 56mm; font-size: 10px; line-height: 1.2; font-weight: bold; text-transform: uppercase; }
-        .card-type { position: relative; z-index: 2; margin-top: 1mm; font-size: 6.4px; letter-spacing: .55px; font-weight: bold; }
+        .top-band-table { position: relative; z-index: 2; width: 62mm; border-collapse: collapse; }
+        .top-band-table td { vertical-align: middle; }
+        .logo-cell { width: 9mm; padding-right: 1.5mm; }
+        .card-logo { width: 8mm; height: 8mm; object-fit: contain; background: #fff; border-radius: 1mm; padding: .3mm; }
+        .school-name { font-size: 10px; line-height: 1.2; font-weight: bold; text-transform: uppercase; }
+        .card-type { margin-top: 1mm; font-size: 6.4px; letter-spacing: .55px; font-weight: bold; }
         .body { padding: 3mm 4mm 2mm; }
         .content { width: 100%; border-collapse: collapse; }
         .photo-cell { width: 20mm; vertical-align: top; }
@@ -48,8 +52,19 @@
 
     <div class="card">
         <div class="top-band">
-            <div class="school-name">{{ $school->name ?? 'Établissement scolaire' }}</div>
-            <div class="card-type">CARTE D'IDENTITÉ SCOLAIRE</div>
+            <table class="top-band-table">
+                <tr>
+                    @if($school->logo ?? null)
+                    <td class="logo-cell">
+                        <img src="{{ public_path('storage/' . $school->logo) }}" alt="Logo" class="card-logo">
+                    </td>
+                    @endif
+                    <td>
+                        <div class="school-name">{{ $school->name ?? 'Établissement scolaire' }}</div>
+                        <div class="card-type">CARTE D'IDENTITÉ SCOLAIRE</div>
+                    </td>
+                </tr>
+            </table>
         </div>
 
         <div class="body">
