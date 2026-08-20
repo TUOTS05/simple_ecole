@@ -255,7 +255,7 @@
 
                     <div class="flex flex-col sm:flex-row gap-4 animate-fade-in-up delay-300">
                         <a href="{{ route('request-account') }}" class="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-lg font-bold transition shadow-2xl flex items-center justify-center group">
-                            Démarrer gratuitement
+                            Démarrer ma demande
                             <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition"></i>
                         </a>
                         <a href="#demo" class="glass text-white hover:bg-white/20 px-8 py-4 rounded-lg font-bold transition flex items-center justify-center">
@@ -489,71 +489,28 @@
                     Voyez <span class="gradient-text">Simple Ecole</span> en action
                 </h2>
                 <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-                    Découvrez comment notre plateforme simplifie chaque aspect de la gestion scolaire en moins de 3 minutes.
+                    Pas de vidéo à regarder : explorez directement l'interface avec de vraies données de démonstration.
                 </p>
             </div>
 
-            <!-- Video Container -->
+            <!-- Live Demo CTA (remplace l'ancienne fausse vidéo) -->
             <div class="max-w-5xl mx-auto reveal">
-                <div class="relative rounded-2xl overflow-hidden shadow-2xl bg-gray-900 aspect-video group cursor-pointer" id="video-container">
-                    <!-- Video Thumbnail / Placeholder -->
-                    <div class="absolute inset-0 bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center" id="video-thumbnail">
-                        <div class="text-center text-white">
-                            <div class="w-24 h-24 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 animate-pulse-glow">
-                                <i class="fas fa-play text-4xl ml-2"></i>
-                            </div>
-                            <h3 class="text-2xl font-bold mb-2">Démo Simple Ecole</h3>
-                            <p class="text-blue-100">Cliquez pour lancer la vidéo (2:45)</p>
-                        </div>
+                <div class="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-blue-600 to-blue-800 p-10 md:p-16 text-center">
+                    <div class="absolute top-10 left-10 w-20 h-20 border-2 border-white/20 rounded-lg transform rotate-12"></div>
+                    <div class="absolute bottom-10 right-10 w-16 h-16 border-2 border-white/20 rounded-full"></div>
+                    <div class="absolute top-1/2 left-1/4 w-12 h-12 bg-white/10 rounded-lg transform -rotate-12"></div>
 
-                        <!-- Decorative elements -->
-                        <div class="absolute top-10 left-10 w-20 h-20 border-2 border-white/20 rounded-lg transform rotate-12"></div>
-                        <div class="absolute bottom-10 right-10 w-16 h-16 border-2 border-white/20 rounded-full"></div>
-                        <div class="absolute top-1/2 left-1/4 w-12 h-12 bg-white/10 rounded-lg transform -rotate-12"></div>
+                    <div class="relative w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse-glow">
+                        <i class="fas fa-play text-3xl text-white ml-1"></i>
                     </div>
-
-                    <!-- Actual Video (Hidden initially) -->
-                    <iframe
-                        id="demo-video"
-                        class="w-full h-full absolute inset-0 hidden"
-                        src=""
-                        frameborder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowfullscreen>
-                    </iframe>
-                </div>
-
-                <!-- Video Controls / Info -->
-                <div class="mt-8 grid md:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition">
-                        <div class="flex items-center mb-3">
-                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                                <i class="fas fa-clock text-blue-600"></i>
-                            </div>
-                            <h4 class="font-bold text-gray-900">Durée : 2:45</h4>
-                        </div>
-                        <p class="text-sm text-gray-600">Une présentation concise et complète de toutes les fonctionnalités clés.</p>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition">
-                        <div class="flex items-center mb-3">
-                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-                                <i class="fas fa-closed-captioning text-green-600"></i>
-                            </div>
-                            <h4 class="font-bold text-gray-900">Sous-titres FR</h4>
-                        </div>
-                        <p class="text-sm text-gray-600">Vidéo accessible avec sous-titres en français pour tous les utilisateurs.</p>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition">
-                        <div class="flex items-center mb-3">
-                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
-                                <i class="fas fa-mobile-alt text-purple-600"></i>
-                            </div>
-                            <h4 class="font-bold text-gray-900">Multi-appareils</h4>
-                        </div>
-                        <p class="text-sm text-gray-600">Regardez la démo sur ordinateur, tablette ou smartphone.</p>
-                    </div>
+                    <h3 class="relative text-2xl md:text-3xl font-bold text-white mb-3">Essayez la démo en direct</h3>
+                    <p class="relative text-blue-100 max-w-xl mx-auto mb-8">
+                        Un compte de démonstration partagé, en lecture seule, réinitialisé chaque nuit. Aucune inscription requise.
+                    </p>
+                    <a href="{{ route('demo.login') }}" class="relative inline-flex items-center bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-lg font-bold transition shadow-xl">
+                        <i class="fas fa-play-circle mr-2"></i>
+                        Ouvrir la démo sandbox
+                    </a>
                 </div>
             </div>
 
@@ -617,11 +574,11 @@
             <!-- CTA after demo -->
             <div class="mt-12 text-center reveal">
                 <p class="text-lg text-gray-700 mb-6">
-                    Convaincu ? Commencez votre essai gratuit dès maintenant !
+                    Convaincu ? Envoyez votre demande dès maintenant !
                 </p>
                 <a href="{{ route('request-account') }}" class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-bold transition shadow-xl shadow-blue-600/30 group">
                     <i class="fas fa-rocket mr-2 group-hover:animate-bounce"></i>
-                    Démarrer l'essai gratuit (30 jours)
+                    Demander mon compte
                 </a>
             </div>
         </div>
@@ -854,12 +811,12 @@
             </h2>
             <p class="text-xl text-blue-100 mb-8 reveal">
                 Rejoignez plus de 50 écoles qui ont déjà fait le choix de la digitalisation.
-                <br>Essai gratuit de 30 jours, sans engagement.
+                <br>Réponse et configuration de votre espace sous 24h.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center reveal">
                 <a href="{{ route('request-account') }}" class="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-lg font-bold transition shadow-2xl">
                     <i class="fas fa-rocket mr-2"></i>
-                    Démarrer l'essai gratuit
+                    Démarrer ma demande
                 </a>
                 <a href="#contact" class="glass text-white hover:bg-white/20 px-8 py-4 rounded-lg font-bold transition">
                     <i class="fas fa-phone mr-2"></i>
@@ -877,15 +834,15 @@
                     Prêt à tester avec vos propres données ?
                 </h2>
                 <p class="text-blue-100 mb-8 text-lg">
-                    Demandez un contrat d'essai de 30 jours. Notre équipe configurera votre espace et vous enverra un lien de validation sécurisé.
+                    Envoyez votre demande. Notre équipe configure votre espace et valide votre abonnement sous 24h.
                 </p>
 
                 <div class="max-w-md mx-auto space-y-4">
                     <a href="{{ route('request-account') }}" class="block w-full text-center bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-lg transition shadow-lg transform hover:-translate-y-1">
-                        <i class="fas fa-paper-plane mr-2"></i> Recevoir mon contrat d'essai
+                        <i class="fas fa-paper-plane mr-2"></i> Demander mon compte
                     </a>
                     <p class="text-xs text-blue-200 mt-3">
-                        🔒 Aucune carte de crédit requise. Configuration manuelle par notre équipe sous 24h.
+                        🔒 Aucune carte de crédit requise en ligne. Un conseiller vous contacte pour finaliser votre abonnement.
                     </p>
                 </div>
             </div>
@@ -1027,34 +984,6 @@
         });
 
 
-        // Video player functionality
-        const videoContainer = document.getElementById('video-container');
-        const videoThumbnail = document.getElementById('video-thumbnail');
-        const demoVideo = document.getElementById('demo-video');
-
-        videoContainer.addEventListener('click', function() {
-            // Remplacez cette URL par votre vraie vidéo (YouTube, Vimeo, ou fichier local)
-            const videoUrl = 'https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1'; // Exemple YouTube
-
-            // Si vous avez une vidéo locale, utilisez plutôt :
-            // const videoUrl = '/videos/demo-Simple Ecole.mp4';
-
-            demoVideo.src = videoUrl;
-            demoVideo.classList.remove('hidden');
-            videoThumbnail.classList.add('hidden');
-        });
-
-        // Optionnel : Mettre en pause la vidéo quand on scroll loin
-        let videoPaused = false;
-        window.addEventListener('scroll', function() {
-            const rect = videoContainer.getBoundingClientRect();
-            const isVisible = rect.top < window.innerHeight && rect.bottom >= 0;
-
-            if (!isVisible && !demoVideo.classList.contains('hidden')) {
-                demoVideo.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-                videoPaused = true;
-            }
-        });
     </script>
 </body>
 
