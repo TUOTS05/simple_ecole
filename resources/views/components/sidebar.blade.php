@@ -160,7 +160,7 @@
         </div>
 
         <!-- Groupe : Vie Scolaire -->
-        <div x-data="{ open: {{ request()->routeIs('app.students.*') || request()->routeIs('app.attendances.*') || request()->routeIs('app.report-cards.*') ? 'true' : 'false' }} }" class="space-y-1">
+        <div x-data="{ open: {{ request()->routeIs('app.students.*') || request()->routeIs('app.attendances.*') || request()->routeIs('app.report-cards.*') || request()->routeIs('app.parents.*') ? 'true' : 'false' }} }" class="space-y-1">
             <button @click="if(!sidebarOpen) sidebarOpen = true; open = !open" title="Vie Scolaire"
                 class="w-full flex items-center justify-between px-3 py-3 rounded-lg transition text-gray-700 hover:bg-gray-100 focus:outline-none">
                 <div class="flex items-center">
@@ -173,6 +173,9 @@
             </button>
             <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
                 <a href="{{ route('app.students.index') }}" title="Liste des Élèves" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.students.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Élèves</a>
+                @if(auth()->user()->isSchoolAdmin())
+                <a href="{{ route('app.parents.index') }}" title="Parents" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.parents.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Parents</a>
+                @endif
                 <a href="{{ route('app.attendances.index') }}" title="Présences" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.attendances.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Présences</a>
                 <a href="{{ route('app.report-cards.index') }}" title="Bulletins" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.report-cards.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Bulletins</a>
                 <a href="{{ route('app.end-of-year.index') }}" title="Fin d'année & Passage" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.end-of-year.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Fin d'année & Passage</a>

@@ -94,6 +94,14 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent', 
         
     Route::get('/students/export/pdf', [\App\Http\Controllers\App\StudentController::class, 'exportPdf'])
         ->name('students.export.pdf'); // -> app.students.export.pdf
+
+    // Parents (annuaire des comptes parents, avec indication des enfants liés).
+    // Réservé à l'admin école : ce sont les coordonnées d'autres familles.
+    Route::get('/parents', [\App\Http\Controllers\App\ParentController::class, 'index'])
+        ->name('parents.index')->middleware('role:school_admin');
+    Route::get('/parents/{parentUser}', [\App\Http\Controllers\App\ParentController::class, 'show'])
+        ->name('parents.show')->middleware('role:school_admin');
+
     // Classes
     Route::resource('/classes', \App\Http\Controllers\App\SchoolClassController::class);
 
