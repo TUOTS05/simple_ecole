@@ -14,6 +14,17 @@ export default {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
+            colors: {
+                // Palette de marque de l'application : ces tokens (bg-primary, text-accent,
+                // border-danger...) sont utilisés dans des dizaines de vues mais n'avaient
+                // jamais été déclarés ici, donc Tailwind ne générait aucune classe pour eux.
+                primary: {
+                    DEFAULT: '#2563eb',
+                    dark: '#1d4ed8',
+                },
+                accent: '#16a34a',
+                danger: '#dc2626',
+            },
         },
     },
 
