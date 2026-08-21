@@ -4,25 +4,38 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class SystemSetting extends Model
 {
     protected $fillable = [
-        'app_name',
-        'app_logo',
-        'app_favicon',
+        'platform_name',
         'support_email',
         'support_phone',
-        'currency',
-        'timezone',
-        'date_format',
-        'is_maintenance_mode',
-        // Ajoutez ici vos autres colonnes si nécessaire
+        'support_address',
+        'logo',
+        'favicon',
+        'terms_of_service',
+        'privacy_policy',
+        'primary_color',
+        'secondary_color',
+        'maintenance_mode',
+        'maintenance_message',
     ];
 
     protected $casts = [
-        'is_maintenance_mode' => 'boolean',
+        'maintenance_mode' => 'boolean',
     ];
+
+    public function getLogoUrlAttribute(): ?string
+    {
+        return $this->logo ? Storage::disk('public')->url($this->logo) : null;
+    }
+
+    public function getFaviconUrlAttribute(): ?string
+    {
+        return $this->favicon ? Storage::disk('public')->url($this->favicon) : null;
+    }
 
     /**
      * Récupère les paramètres système (avec cache sécurisé)

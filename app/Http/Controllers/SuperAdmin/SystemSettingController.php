@@ -72,7 +72,7 @@ class SystemSettingController extends Controller
         $settings->save();
 
         // Invalider le cache (déjà fait automatiquement par le modèle, mais on force)
-        Cache::forget('system_settings');
+        Cache::forget('system_settings_data');
 
         return redirect()->route('superadmin.settings.edit')
             ->with('success', '✅ Paramètres système mis à jour avec succès !');
