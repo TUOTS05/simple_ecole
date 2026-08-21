@@ -512,10 +512,10 @@
                         {{ $i }}.
                     </label>
                     <div class="flex items-center justify-center w-full">
-                        <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
+                        <label class="js-file-dropzone flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
                             <div class="flex flex-col items-center justify-center pt-5 pb-6">
                                 <svg class="w-8 h-8 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                                <p class="text-xs text-gray-500">Drag and drop or click</p>
+                                <p class="js-file-dropzone-label text-xs text-gray-500 text-center px-2">Drag and drop or click</p>
                             </div>
                             <input type="file" name="documents[{{ $i }}]" accept=".pdf,.doc,.docx,.jpg,.png" class="hidden">
                         </label>
@@ -631,6 +631,50 @@ document.addEventListener('DOMContentLoaded', function() {
         const randomNumMat = Math.floor(Math.random() * 9000) + 1000;
         matriculeField.value = `MAT-${year}-${randomNumMat}`;
     }
+
+    // 5. Glisser-déposer pour les zones de téléchargement de documents
+    document.querySelectorAll('.js-file-dropzone').forEach(function (zone) {
+        const input = zone.querySelector('input[type="file"]');
+        const label = zone.querySelector('.js-file-dropzone-label');
+        const defaultText = label ? label.textContent : '';
+
+        function showSelectedFile() {
+            if (!label) return;
+            if (input.files.length > 1) {
+                label.textContent = `${input.files.length} fichiers sélectionnés`;
+            } else if (input.files.length === 1) {
+                label.textContent = input.files[0].name;
+            } else {
+                label.textContent = defaultText;
+            }
+        }
+
+        ['dragenter', 'dragover'].forEach(function (eventName) {
+            zone.addEventListener(eventName, function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                zone.classList.add('border-primary', 'bg-blue-50');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(function (eventName) {
+            zone.addEventListener(eventName, function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                zone.classList.remove('border-primary', 'bg-blue-50');
+            });
+        });
+
+        zone.addEventListener('drop', function (e) {
+            if (!input || !e.dataTransfer || !e.dataTransfer.files.length) return;
+            input.files = e.dataTransfer.files;
+            showSelectedFile();
+        });
+
+        if (input) {
+            input.addEventListener('change', showSelectedFile);
+        }
+    });
 });
 </script>
 @endsection
