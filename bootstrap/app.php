@@ -30,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Empêche le compte de démo partagé d'écrire en base (sauf déconnexion)
         $middleware->web(append: [
             \App\Http\Middleware\PreventDemoWrites::class,
+            \App\Http\Middleware\CheckMaintenanceMode::class,
         ]);
     })
     ->withSchedule(function (Schedule $schedule) {
