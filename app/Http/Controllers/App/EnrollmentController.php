@@ -9,6 +9,7 @@ use App\Models\SchoolClass;
 use App\Models\SchoolYear;
 use App\Models\Student;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 
 class EnrollmentController extends Controller
@@ -134,6 +135,18 @@ class EnrollmentController extends Controller
         $schoolId = session('current_school_id');
         $year = date('Y');
 
+        // L'email des users est unique globalement (toutes écoles confondues) : si le tuteur
+        // saisi correspond à un compte d'une autre école (ou d'un autre rôle), la création
+        // plantait plus loin avec une erreur SQL brute. On le détecte ici proprement.
+        if (!empty($validated['guardian_email'])) {
+            $existingParent = \App\Models\User::where('email', $validated['guardian_email'])->first();
+            if ($existingParent && ($existingParent->school_id !== $schoolId || $existingParent->role !== 'parent')) {
+                return back()->withErrors([
+                    'guardian_email' => "Cette adresse email est déjà utilisée par un autre compte et ne peut pas servir d'email pour le tuteur.",
+                ])->withInput();
+            }
+        }
+
         DB::beginTransaction();
         try {
             // Gestion des documents avant la création de l'élève
@@ -199,6 +212,9 @@ class EnrollmentController extends Controller
             // ==========================================
             // 4. GESTION INTELLIGENTE DU COMPTE PARENT
             // ==========================================
+            $newParentPassword = 'Ecole2024!';
+            $isNewParentAccount = false;
+            $parentUser = null;
             if (!empty($validated['guardian_email'])) {
                 // a) Créer ou récupérer l'utilisateur Parent
                 $parentUser = \App\Models\User::firstOrCreate(
@@ -210,10 +226,11 @@ class EnrollmentController extends Controller
                         'first_name' => $validated['guardian_first_name'],
                         'last_name' => $validated['guardian_last_name'],
                         'role' => 'parent',
-                        'password' => bcrypt('Ecole2024!'), // Mot de passe par défaut
+                        'password' => bcrypt($newParentPassword), // Mot de passe par défaut
                         'phone' => $validated['guardian_phone'],
                     ]
                 );
+                $isNewParentAccount = $parentUser->wasRecentlyCreated;
 
                 // b) Lier ce parent à l'élève dans la table pivot (avec school_id)
                 \Illuminate\Support\Facades\DB::table('parent_student')->updateOrInsert(
@@ -249,6 +266,23 @@ class EnrollmentController extends Controller
             }
 
             DB::commit();
+
+            if ($isNewParentAccount && $parentUser) {
+                try {
+                    $school = session('current_school') ?? \App\Models\School::find($schoolId);
+                    \Illuminate\Support\Facades\Mail::to($parentUser->email)->send(
+                        new \App\Mail\ParentWelcomeMail(
+                            trim($parentUser->first_name . ' ' . $parentUser->last_name),
+                            trim($student->first_name . ' ' . $student->last_name),
+                            $school->name ?? 'votre école',
+                            $parentUser->email,
+                            $newParentPassword
+                        )
+                    );
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error('Échec envoi email de bienvenue au parent : ' . $e->getMessage());
+                }
+            }
 
             // 7. Gestion du bouton "Ajouter enfant de mêmes parents"
             if ($request->input('action') === 'add_sibling') {
