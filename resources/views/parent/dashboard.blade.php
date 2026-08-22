@@ -73,7 +73,7 @@
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col">
                         
                         <!-- En-tête de la carte -->
-                        <div class="p-5 border-b border-gray-100 bg-gray-50/50 flex items-center gap-4">
+                        <a href="{{ route('parent.child.details', $student->id) }}" class="p-5 border-b border-gray-100 bg-gray-50/50 flex items-center gap-4 hover:bg-gray-100/70 transition">
                             <div class="w-14 h-14 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xl font-bold shadow-sm flex-shrink-0">
                                 {{ strtoupper(substr($student->first_name, 0, 1)) }}{{ strtoupper(substr($student->last_name, 0, 1)) }}
                             </div>
@@ -91,7 +91,7 @@
                                     </span>
                                 @endif
                             </div>
-                        </div>
+                        </a>
 
                         <!-- Statistiques rapides (Mini-cartes) -->
                         <div class="p-5 grid grid-cols-3 gap-3 flex-grow">
