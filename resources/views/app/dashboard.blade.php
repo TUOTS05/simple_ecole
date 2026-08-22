@@ -22,7 +22,7 @@
             Bienvenue, {{ auth()->user()->first_name }} 👋
         </h1>
         <p class="text-gray-600 mt-2">
-            Voici un aperçu de votre école <strong>{{ session('current_school')->name }}</strong>
+            Voici un aperçu de votre école <strong>{{ session('current_school')->name ?? 'votre école' }}</strong>
         </p>
     </div>
 
@@ -38,7 +38,7 @@
                 <div>
                     <p class="text-sm text-gray-600 mb-1">Élèves actifs</p>
                     <p class="text-3xl font-bold text-gray-800">{{ $totalStudents }}</p>
-                    <p class="text-xs text-gray-500 mt-1">{{ $totalClasses }} classes</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ $totalClasses }} classes · {{ $enrollmentRate }}% inscrits</p>
                 </div>
                 <div class="text-5xl opacity-20">👨‍🎓</div>
             </div>
@@ -145,6 +145,12 @@
                     <span class="text-gray-600">Total encaissé</span>
                     <span class="text-2xl font-bold text-accent">
                         {{ number_format($totalTuitionPaid, 0, ',', ' ') }} FCFA
+                    </span>
+                </div>
+                <div class="flex justify-between items-center pb-3 border-b">
+                    <span class="text-gray-600">Encaissé ce mois-ci</span>
+                    <span class="text-lg font-semibold text-gray-800">
+                        {{ number_format($totalCollected, 0, ',', ' ') }} FCFA
                     </span>
                 </div>
                 <div class="flex justify-between items-center pb-3 border-b">
