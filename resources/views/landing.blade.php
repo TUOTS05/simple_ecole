@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Ecole - La Solution Complète de Gestion Scolaire</title>
     <meta name="description" content="Gérez votre école de A à Z : inscriptions, paiements, bulletins, présences, cartes scolaires QR code. Une plateforme moderne pour les écoles d'Afrique.">
+    <link rel="icon" type="image/jpeg" href="{{ asset('icons/log.jpg.jpeg') }}">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -523,11 +524,8 @@
                 <div class="grid md:grid-cols-3 gap-6">
                     <!-- Screenshot 1 -->
                     <div class="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition">
-                        <div class="aspect-video bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                            <div class="text-center text-white">
-                                <i class="fas fa-tachometer-alt text-5xl mb-3"></i>
-                                <p class="font-bold">Dashboard Admin</p>
-                            </div>
+                        <div class="aspect-video overflow-hidden">
+                            <img src="{{ asset('screenshots/dashboard.jpg') }}" alt="Tableau de bord Simple Ecole" class="w-full h-full object-cover object-top">
                         </div>
                         <div class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                             <div class="text-white text-center p-4">
@@ -539,11 +537,8 @@
 
                     <!-- Screenshot 2 -->
                     <div class="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition">
-                        <div class="aspect-video bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
-                            <div class="text-center text-white">
-                                <i class="fas fa-file-invoice-dollar text-5xl mb-3"></i>
-                                <p class="font-bold">Gestion des Paiements</p>
-                            </div>
+                        <div class="aspect-video overflow-hidden">
+                            <img src="{{ asset('screenshots/payments.jpg') }}" alt="Gestion des paiements et inscriptions" class="w-full h-full object-cover object-top">
                         </div>
                         <div class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                             <div class="text-white text-center p-4">
@@ -555,11 +550,8 @@
 
                     <!-- Screenshot 3 -->
                     <div class="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition">
-                        <div class="aspect-video bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
-                            <div class="text-center text-white">
-                                <i class="fas fa-chart-line text-5xl mb-3"></i>
-                                <p class="font-bold">Rapports & Statistiques</p>
-                            </div>
+                        <div class="aspect-video overflow-hidden">
+                            <img src="{{ asset('screenshots/reports.jpg') }}" alt="Rapports financiers et statistiques" class="w-full h-full object-cover object-top">
                         </div>
                         <div class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                             <div class="text-white text-center p-4">
