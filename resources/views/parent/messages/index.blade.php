@@ -43,14 +43,15 @@
 
         <div class="divide-y divide-gray-100">
                         @forelse($messages as $message)
-                <a href="{{ route('parent.messages.show', $message->id) }}" 
+                @php $sentByMe = $message->sender_id === auth()->id(); @endphp
+                <a href="{{ route('parent.messages.show', $message->id) }}"
                    class="block p-5 hover:bg-gray-50 transition duration-200 group {{ !$message->is_read && $message->receiver_id === auth()->id() ? 'bg-blue-50/50' : '' }}">
                     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
                         <div class="flex-1">
                             <h3 class="font-bold text-gray-800 text-base group-hover:text-primary transition">
                                 {{ $message->subject ?? 'Sans objet' }}
                             </h3>
-                            
+
                             {{-- ✅ NOUVEAU : Affichage du contexte (Classe ou Tous les parents) --}}
                             @if($message->target_info)
                                 <span class="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 text-xs px-2 py-1 rounded-md font-medium border border-indigo-100 mt-1">
@@ -58,8 +59,8 @@
                                 </span>
                             @endif
                         </div>
-                        
-                        @if($message->receiver_id === auth()->id())
+
+                        @if(!$sentByMe)
                             <span class="flex-shrink-0 bg-blue-100 text-blue-800 text-xs px-2.5 py-1 rounded-full font-medium">📥 Reçu</span>
                         @else
                             @if($message->reply)
@@ -69,13 +70,13 @@
                             @endif
                         @endif
                     </div>
-                    
+
                     <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ Str::limit($message->message ?? 'Aucun contenu', 120) }}</p>
-                    
+
                     <div class="flex flex-wrap justify-between items-center text-xs text-gray-500 pt-2 border-t border-gray-100">
                         <span class="flex items-center gap-1.5">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                            @if($message->receiver_id === auth()->id())
+                            @if(!$sentByMe)
                                 {{ $message->school->name ?? 'Établissement' }}
                             @else
                                 Vous (Parent)

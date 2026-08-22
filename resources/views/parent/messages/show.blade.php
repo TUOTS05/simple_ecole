@@ -41,10 +41,10 @@
                 </div>
             </div>
             
-            @if($message->receiver_id === auth()->id())
-                <span class="flex-shrink-0 bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full font-medium">📥 Message reçu</span>
-            @else
+            @if($message->sender_id === auth()->id())
                 <span class="flex-shrink-0 bg-gray-100 text-gray-800 text-xs px-3 py-1 rounded-full font-medium">📤 Message envoyé</span>
+            @else
+                <span class="flex-shrink-0 bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full font-medium">📥 Message reçu</span>
             @endif
         </div>
 
