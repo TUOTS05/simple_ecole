@@ -18,6 +18,12 @@
         </a>
     </div>
 
+    @if(session('success'))
+        <div class="bg-accent text-white px-6 py-4 rounded-lg mb-6">
+            {{ session('success') }}
+        </div>
+    @endif
+
     <form action="{{ route('app.students.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
         @csrf
 

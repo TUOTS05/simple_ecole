@@ -6,6 +6,18 @@
 @section('content')
 <div class="max-w-7xl mx-auto">
 
+    @if(session('success'))
+        <div class="bg-accent text-white px-6 py-4 rounded-lg mb-6">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="bg-danger text-white px-6 py-4 rounded-lg mb-6">
+            {{ session('error') }}
+        </div>
+    @endif
+
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
             <h1 class="text-3xl font-bold text-gray-800">Liste des Élèves</h1>
