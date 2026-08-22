@@ -36,12 +36,16 @@ class GouterController extends Controller
     public function getStudentsByClass(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->school_year_id ?? SchoolYear::where('is_active', true)->value('id');
+        $schoolYearId = $request->school_year_id ?? SchoolYear::where('school_id', $schoolId)->where('is_active', true)->value('id');
 
+        // On se base sur l'affectation de classe (student_school_class), pas sur
+        // les inscriptions (enrollments) : certains élèves affectés à une classe
+        // n'ont pas de ligne d'inscription pour l'année, ce qui les faisait
+        // disparaître de cette liste alors qu'ils sont bien dans la classe.
         $students = Student::where('school_id', $schoolId)
-            ->whereHas('enrollments', function ($q) use ($request, $schoolYearId) {
-                $q->where('school_class_id', $request->class_id)
-                    ->where('school_year_id', $schoolYearId);
+            ->whereHas('classes', function ($q) use ($request, $schoolYearId) {
+                $q->where('school_classes.id', $request->class_id)
+                    ->where('student_school_class.school_year_id', $schoolYearId);
             })
             ->orderBy('last_name')
             ->orderBy('first_name')
