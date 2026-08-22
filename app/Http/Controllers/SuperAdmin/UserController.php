@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\School;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -89,8 +90,13 @@ class UserController extends Controller
         // Supprimer password_confirmation
         unset($validated['password_confirmation']);
         
-        User::create($validated);
-        
+        $newUser = User::create($validated);
+
+        ActivityLog::logAction(
+            'created_user',
+            "A créé l'utilisateur {$newUser->email} (rôle : {$newUser->role})"
+        );
+
         return redirect()->route('superadmin.users.index')
             ->with('success', 'Utilisateur créé avec succès !');
     }
@@ -152,7 +158,12 @@ class UserController extends Controller
         unset($validated['password_confirmation']);
         
         $user->update($validated);
-        
+
+        ActivityLog::logAction(
+            'updated_user',
+            "A modifié l'utilisateur {$user->email}"
+        );
+
         return redirect()->route('superadmin.users.index')
             ->with('success', 'Utilisateur mis à jour avec succès !');
     }
@@ -168,8 +179,14 @@ class UserController extends Controller
                 ->with('error', 'Impossible de supprimer le dernier super administrateur.');
         }
         
+        $userEmail = $user->email;
         $user->delete();
-        
+
+        ActivityLog::logAction(
+            'deleted_user',
+            "A supprimé l'utilisateur {$userEmail}"
+        );
+
         return redirect()->route('superadmin.users.index')
             ->with('success', 'Utilisateur supprimé avec succès !');
     }

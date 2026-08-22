@@ -36,15 +36,29 @@
                                 @php
                                     $badge = match($log->action) {
                                         'created_school' => 'bg-blue-100 text-blue-800',
+                                        'updated_school' => 'bg-blue-100 text-blue-800',
+                                        'deleted_school' => 'bg-red-100 text-red-800',
                                         'created_contract' => 'bg-green-100 text-green-800',
                                         'renewed_contract' => 'bg-purple-100 text-purple-800',
+                                        'approved_subscription' => 'bg-green-100 text-green-800',
+                                        'rejected_subscription' => 'bg-red-100 text-red-800',
+                                        'created_user' => 'bg-indigo-100 text-indigo-800',
+                                        'updated_user' => 'bg-indigo-100 text-indigo-800',
+                                        'deleted_user' => 'bg-red-100 text-red-800',
                                         'payment_created' => 'bg-yellow-100 text-yellow-800',
                                         default => 'bg-gray-100 text-gray-800',
                                     };
                                     $label = match($log->action) {
                                         'created_school' => 'Création École',
+                                        'updated_school' => 'Modification École',
+                                        'deleted_school' => 'Suppression École',
                                         'created_contract' => 'Activation Contrat',
                                         'renewed_contract' => 'Renouvellement',
+                                        'approved_subscription' => 'Abonnement Approuvé',
+                                        'rejected_subscription' => 'Abonnement Refusé',
+                                        'created_user' => 'Création Utilisateur',
+                                        'updated_user' => 'Modification Utilisateur',
+                                        'deleted_user' => 'Suppression Utilisateur',
                                         'payment_created' => 'Paiement',
                                         default => 'Action',
                                     };

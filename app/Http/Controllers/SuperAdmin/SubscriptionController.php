@@ -227,6 +227,11 @@ class SubscriptionController extends Controller
         // 6. Générer le nouveau PDF
         $this->generateContractPdf($newContract, $school);
 
+        ActivityLog::logAction(
+            'renewed_contract',
+            "A renouvelé le contrat de l'école '{$school->name}' (nouveau contrat {$newContractNumber})"
+        );
+
         return redirect()->route('superadmin.subscriptions.index')
             ->with('success', "✅ Contrat renouvelé ! Nouveau contrat {$newContractNumber} généré pour {$school->name}.");
     }
@@ -453,6 +458,11 @@ class SubscriptionController extends Controller
             );
         }
 
+        ActivityLog::logAction(
+            'approved_subscription',
+            "A approuvé la demande et activé le contrat {$contractNumber} pour l'école '{$school->name}'"
+        );
+
         return redirect()->route('superadmin.subscriptions.pending')
             ->with('success', "✅ L'école '{$school->name}' a été activée avec succès et le contrat a été généré.");
     }
@@ -470,6 +480,11 @@ class SubscriptionController extends Controller
             'status' => 'rejected',
             'admin_notes' => $validated['admin_notes']
         ]);
+
+        ActivityLog::logAction(
+            'rejected_subscription',
+            "A refusé la demande d'abonnement de l'école '{$subRequest->school->name}' (motif : {$validated['admin_notes']})"
+        );
 
         return redirect()->route('superadmin.subscriptions.pending')
             ->with('success', "❌ Demande refusée. L'administrateur de l'école sera notifié.");

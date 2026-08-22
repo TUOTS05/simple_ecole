@@ -334,7 +334,12 @@ class SchoolController extends Controller
         }
         
         $school->update($validated);
-        
+
+        ActivityLog::logAction(
+            'updated_school',
+            "A modifié l'école '{$school->name}'"
+        );
+
         return redirect()->route('superadmin.schools.index')
             ->with('success', '✅ École et abonnement mis à jour avec succès !');
     }
@@ -381,6 +386,11 @@ class SchoolController extends Controller
         // La suppression douce : met à jour 'deleted_at' au lieu de supprimer la ligne
         // Les utilisateurs et élèves liés restent intacts en base de données
         $school->delete();
+
+        ActivityLog::logAction(
+            'deleted_school',
+            "A archivé l'école '{$school->name}'"
+        );
 
         return redirect()->route('superadmin.schools.index')
             ->with('success', '✅ École archivée avec succès ! (Les données sont conservées en sécurité)');
