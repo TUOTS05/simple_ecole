@@ -124,6 +124,11 @@ class EnrollmentController extends Controller
             'previous_school' => 'nullable|string',
             'remarks' => 'nullable|string',
             'action' => 'nullable|string|in:add_sibling',
+
+            'documents.1' => 'nullable|file|extensions:pdf,doc,docx,jpg,jpeg,png|max:2048',
+            'documents.2' => 'nullable|file|extensions:pdf,doc,docx,jpg,jpeg,png|max:2048',
+            'documents.3' => 'nullable|file|extensions:pdf,doc,docx,jpg,jpeg,png|max:2048',
+            'documents.4' => 'nullable|file|extensions:pdf,doc,docx,jpg,jpeg,png|max:2048',
         ]);
 
         $schoolId = session('current_school_id');
@@ -131,6 +136,15 @@ class EnrollmentController extends Controller
 
         DB::beginTransaction();
         try {
+            // Gestion des documents avant la création de l'élève
+            $documentsData = [];
+            for ($i = 1; $i <= 4; $i++) {
+                if ($request->hasFile("documents.$i") && $request->file("documents.$i")->isValid()) {
+                    $path = $request->file("documents.$i")->store('students/documents', 'public');
+                    $documentsData["doc_$i"] = $path;
+                }
+            }
+
             // 1. Générer le Numéro d'Admission
             $lastStudent = Student::where('school_id', $schoolId)->whereYear('created_at', $year)->orderBy('id', 'desc')->first();
             $nextAdmissionNum = $lastStudent && $lastStudent->admission_number ? (intval(substr($lastStudent->admission_number, -4)) + 1) : 1;
@@ -179,6 +193,7 @@ class EnrollmentController extends Controller
                 'permanent_address' => $validated['permanent_address'] ?? null,
                 'previous_school' => $validated['previous_school'] ?? null,
                 'remarks' => $validated['remarks'] ?? null,
+                'documents' => !empty($documentsData) ? $documentsData : null,
             ]);
 
             // ==========================================
@@ -263,7 +278,7 @@ class EnrollmentController extends Controller
             return redirect()->route('app.students.index')
                 ->with('success', "✅ Inscription réussie ! Matricule : {$student->matricule}. Un compte parent a été créé/lié.");
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             return back()->withErrors(['error' => 'Erreur : ' . $e->getMessage()])->withInput();
         }

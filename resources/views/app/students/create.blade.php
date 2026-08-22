@@ -20,7 +20,13 @@
 
     <form action="{{ route('app.students.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
         @csrf
-        
+
+        @if($errors->any())
+            <div class="bg-red-50 border-l-4 border-red-500 p-4">
+                <ul class="list-disc list-inside text-red-700 text-sm">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+            </div>
+        @endif
+
         <!-- Section 1: Informations d'admission -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
@@ -517,16 +523,18 @@
                     <span class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center mr-3 text-sm font-bold">5</span>
                     Télécharger des documents
                 </h2>
+                <p class="text-xs text-gray-500 mt-1 ml-11">Formats acceptés : PDF, DOC, DOCX, JPG, PNG — Taille maximale : 2 Mo par fichier</p>
             </div>
 
             <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                 @for($i = 1; $i <= 4; $i++)
-                <div>
+                <div class="js-file-dropzone-container">
                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">
                         {{ $i }}.
                     </label>
                     <div class="flex items-center justify-center w-full">
-                        <label class="js-file-dropzone flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
+                        <label class="js-file-dropzone flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition"
+                               data-max-size-mb="2" data-accept-ext="pdf,doc,docx,jpg,jpeg,png">
                             <div class="flex flex-col items-center justify-center pt-5 pb-6">
                                 <svg class="w-8 h-8 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                                 <p class="js-file-dropzone-label text-xs text-gray-500 text-center px-2">Drag and drop or click</p>
@@ -534,6 +542,10 @@
                             <input type="file" name="documents[{{ $i }}]" accept=".pdf,.doc,.docx,.jpg,.png" class="hidden">
                         </label>
                     </div>
+                    <p class="js-file-dropzone-error text-xs text-red-500 mt-1 hidden"></p>
+                    @error('documents.' . $i)
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
                 @endfor
             </div>
@@ -635,7 +647,35 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.js-file-dropzone').forEach(function (zone) {
         const input = zone.querySelector('input[type="file"]');
         const label = zone.querySelector('.js-file-dropzone-label');
+        const errorEl = zone.closest('.js-file-dropzone-container')?.querySelector('.js-file-dropzone-error');
         const defaultText = label ? label.textContent : '';
+        const maxSizeBytes = (parseFloat(zone.dataset.maxSizeMb) || 2) * 1024 * 1024;
+        const acceptedExt = (zone.dataset.acceptExt || '').split(',').map(function (ext) { return ext.trim().toLowerCase(); });
+
+        function showError(message) {
+            if (!errorEl) return;
+            errorEl.textContent = message;
+            errorEl.classList.remove('hidden');
+        }
+
+        function clearError() {
+            if (!errorEl) return;
+            errorEl.textContent = '';
+            errorEl.classList.add('hidden');
+        }
+
+        function validateFile(file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (acceptedExt.length && !acceptedExt.includes(ext)) {
+                return `Format non accepté (.${ext}). Formats acceptés : ${acceptedExt.join(', ')}.`;
+            }
+            if (file.size > maxSizeBytes) {
+                const maxMb = (maxSizeBytes / (1024 * 1024)).toFixed(1);
+                const fileMb = (file.size / (1024 * 1024)).toFixed(1);
+                return `Fichier trop volumineux (${fileMb} Mo). Taille maximale : ${maxMb} Mo.`;
+            }
+            return null;
+        }
 
         function showSelectedFile() {
             if (!label) return;
@@ -646,6 +686,20 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 label.textContent = defaultText;
             }
+        }
+
+        function acceptFiles(files) {
+            if (!files || !files.length) return;
+            const error = validateFile(files[0]);
+            if (error) {
+                showError(error);
+                input.value = '';
+                showSelectedFile();
+                return;
+            }
+            clearError();
+            input.files = files;
+            showSelectedFile();
         }
 
         ['dragenter', 'dragover'].forEach(function (eventName) {
@@ -666,12 +720,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
         zone.addEventListener('drop', function (e) {
             if (!input || !e.dataTransfer || !e.dataTransfer.files.length) return;
-            input.files = e.dataTransfer.files;
-            showSelectedFile();
+            acceptFiles(e.dataTransfer.files);
         });
 
         if (input) {
-            input.addEventListener('change', showSelectedFile);
+            input.addEventListener('change', function () {
+                if (!input.files.length) {
+                    clearError();
+                    showSelectedFile();
+                    return;
+                }
+                const error = validateFile(input.files[0]);
+                if (error) {
+                    showError(error);
+                    input.value = '';
+                    showSelectedFile();
+                    return;
+                }
+                clearError();
+                showSelectedFile();
+            });
         }
     });
 });

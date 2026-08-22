@@ -24,6 +24,12 @@
         @csrf
         @method('PUT')
 
+        @if($errors->any())
+            <div class="bg-red-50 border-l-4 border-red-500 p-4">
+                <ul class="list-disc list-inside text-red-700 text-sm">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+            </div>
+        @endif
+
         <!-- Section 1: Informations de l'élève -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
@@ -268,11 +274,6 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">Courriel du tuteur</label>
-                    <input type="email" name="guardian_email" value="{{ old('guardian_email', $student->guardian_email ?? '') }}" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
-                </div>
-
-                <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">Téléphone du gardien</label>
                     <input type="tel" name="guardian_phone" value="{{ old('guardian_phone', $student->guardian_phone ?? '') }}" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
                 </div>
@@ -348,7 +349,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         <span>
-                            <strong>Info :</strong> Cliquez ou glissez-déposez un fichier pour remplacer l'actuel. Formats acceptés : PDF, JPG, PNG, DOC.
+                            <strong>Info :</strong> Cliquez ou glissez-déposez un fichier pour remplacer l'actuel. Formats acceptés : PDF, DOC, DOCX, JPG, PNG — Taille maximale : 2 Mo par fichier.
                         </span>
                     </p>
                 </div>
@@ -361,18 +362,19 @@
                             $currentDocName = $docPath ? basename($docPath) : null;
                         @endphp
 
-                        <div class="relative group">
+                        <div class="relative group js-file-dropzone-container">
                             <label class="block text-sm font-semibold text-gray-700 mb-1.5">Document {{ $i }}</label>
 
                             <!-- Zone de Drop / Clic interactive -->
-                            <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-blue-50 hover:border-blue-400 transition-all duration-200" id="drop-zone-{{ $i }}">
+                            <label class="js-file-dropzone flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-blue-50 hover:border-blue-400 transition-all duration-200"
+                                   data-max-size-mb="2" data-accept-ext="pdf,doc,docx,jpg,jpeg,png">
                                 <div class="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
                                     <svg class="w-8 h-8 mb-2 text-gray-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                                     </svg>
 
-                                    <!-- Ce texte changera dynamiquement via JS -->
-                                    <p class="text-xs font-medium text-gray-500" id="file-label-{{ $i }}">
+                                    <!-- Ce texte change dynamiquement via JS -->
+                                    <p class="js-file-dropzone-label text-xs font-medium text-gray-500 text-center px-2">
                                         Cliquer ou glisser un fichier ici
                                     </p>
 
@@ -382,8 +384,12 @@
                                     </p>
                                     @endif
                                 </div>
-                                <input type="file" name="documents[{{ $i }}]" accept=".pdf,.doc,.docx,.jpg,.png" class="hidden" onchange="updateFileName(this, {$i})">
+                                <input type="file" name="documents[{{ $i }}]" accept=".pdf,.doc,.docx,.jpg,.png" class="hidden">
                             </label>
+                            <p class="js-file-dropzone-error text-xs text-red-500 mt-1 hidden"></p>
+                            @error('documents.' . $i)
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
                         @endfor
                 </div> <!-- FIN DE LA GRILLE -->
@@ -410,19 +416,111 @@
 
 @push('scripts')
 <script>
-function updateFileName(input, index) {
-    const label = document.getElementById(`file-label-${index}`);
-    if (input.files && input.files.length > 0) {
-        // Affiche le nom du fichier sélectionné
-        label.textContent = input.files[0].name;
-        label.classList.remove('text-gray-500');
-        label.classList.add('text-blue-600', 'font-bold');
-    } else {
-        // Revient à l'état initial si annulé
-        label.textContent = 'Cliquer ou glisser un fichier ici';
-        label.classList.add('text-gray-500');
-        label.classList.remove('text-blue-600', 'font-bold');
-    }
-}
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.js-file-dropzone').forEach(function (zone) {
+        const input = zone.querySelector('input[type="file"]');
+        const label = zone.querySelector('.js-file-dropzone-label');
+        const errorEl = zone.closest('.js-file-dropzone-container')?.querySelector('.js-file-dropzone-error');
+        const defaultText = label ? label.textContent : '';
+        const maxSizeBytes = (parseFloat(zone.dataset.maxSizeMb) || 2) * 1024 * 1024;
+        const acceptedExt = (zone.dataset.acceptExt || '').split(',').map(function (ext) { return ext.trim().toLowerCase(); });
+
+        function showError(message) {
+            if (!errorEl) return;
+            errorEl.textContent = message;
+            errorEl.classList.remove('hidden');
+        }
+
+        function clearError() {
+            if (!errorEl) return;
+            errorEl.textContent = '';
+            errorEl.classList.add('hidden');
+        }
+
+        function validateFile(file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (acceptedExt.length && !acceptedExt.includes(ext)) {
+                return `Format non accepté (.${ext}). Formats acceptés : ${acceptedExt.join(', ')}.`;
+            }
+            if (file.size > maxSizeBytes) {
+                const maxMb = (maxSizeBytes / (1024 * 1024)).toFixed(1);
+                const fileMb = (file.size / (1024 * 1024)).toFixed(1);
+                return `Fichier trop volumineux (${fileMb} Mo). Taille maximale : ${maxMb} Mo.`;
+            }
+            return null;
+        }
+
+        function showSelectedFile() {
+            if (!label) return;
+            if (input.files.length > 1) {
+                label.textContent = `${input.files.length} fichiers sélectionnés`;
+                label.classList.add('text-blue-600', 'font-bold');
+                label.classList.remove('text-gray-500');
+            } else if (input.files.length === 1) {
+                label.textContent = input.files[0].name;
+                label.classList.add('text-blue-600', 'font-bold');
+                label.classList.remove('text-gray-500');
+            } else {
+                label.textContent = defaultText;
+                label.classList.remove('text-blue-600', 'font-bold');
+                label.classList.add('text-gray-500');
+            }
+        }
+
+        function acceptFiles(files) {
+            if (!files || !files.length) return;
+            const error = validateFile(files[0]);
+            if (error) {
+                showError(error);
+                input.value = '';
+                showSelectedFile();
+                return;
+            }
+            clearError();
+            input.files = files;
+            showSelectedFile();
+        }
+
+        ['dragenter', 'dragover'].forEach(function (eventName) {
+            zone.addEventListener(eventName, function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                zone.classList.add('border-blue-400', 'bg-blue-50');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(function (eventName) {
+            zone.addEventListener(eventName, function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                zone.classList.remove('border-blue-400', 'bg-blue-50');
+            });
+        });
+
+        zone.addEventListener('drop', function (e) {
+            if (!input || !e.dataTransfer || !e.dataTransfer.files.length) return;
+            acceptFiles(e.dataTransfer.files);
+        });
+
+        if (input) {
+            input.addEventListener('change', function () {
+                if (!input.files.length) {
+                    clearError();
+                    showSelectedFile();
+                    return;
+                }
+                const error = validateFile(input.files[0]);
+                if (error) {
+                    showError(error);
+                    input.value = '';
+                    showSelectedFile();
+                    return;
+                }
+                clearError();
+                showSelectedFile();
+            });
+        }
+    });
+});
 </script>
 @endpush

@@ -122,10 +122,10 @@ class StudentController extends Controller
             'remarks' => 'nullable|string',
             'action' => 'nullable|string|in:add_sibling',
 
-            'documents.1' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:2048',
-            'documents.2' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:2048',
-            'documents.3' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:2048',
-            'documents.4' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:2048',
+            'documents.1' => 'nullable|file|extensions:pdf,doc,docx,jpg,jpeg,png|max:2048',
+            'documents.2' => 'nullable|file|extensions:pdf,doc,docx,jpg,jpeg,png|max:2048',
+            'documents.3' => 'nullable|file|extensions:pdf,doc,docx,jpg,jpeg,png|max:2048',
+            'documents.4' => 'nullable|file|extensions:pdf,doc,docx,jpg,jpeg,png|max:2048',
         ]);
 
         $schoolId = session('current_school_id');
@@ -143,15 +143,6 @@ class StudentController extends Controller
             }
         }
 
-        // ✅ AJOUT : Gestion des 4 documents avant la création
-        $documentsData = [];
-        for ($i = 1; $i <= 4; $i++) {
-            if ($request->hasFile("documents.$i")) {
-                $path = $request->file("documents.$i")->store('students/documents', 'public');
-                $documentsData["doc_$i"] = $path;
-            }
-        }
-
         // Si le client n'a pas envoyé de numéro de reçu, on en génère un côté serveur.
         if (empty($validated['receipt_number'])) {
             $validated['receipt_number'] = 'REC-' . $year . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
@@ -159,6 +150,15 @@ class StudentController extends Controller
 
         DB::beginTransaction();
         try {
+            // ✅ AJOUT : Gestion des 4 documents avant la création
+            $documentsData = [];
+            for ($i = 1; $i <= 4; $i++) {
+                if ($request->hasFile("documents.$i") && $request->file("documents.$i")->isValid()) {
+                    $path = $request->file("documents.$i")->store('students/documents', 'public');
+                    $documentsData["doc_$i"] = $path;
+                }
+            }
+
             // 1. Générer le Numéro d'Admission
             $lastStudent = Student::where('school_id', $schoolId)->whereYear('created_at', $year)->orderBy('id', 'desc')->first();
             $nextAdmissionNum = $lastStudent && $lastStudent->admission_number ? (intval(substr($lastStudent->admission_number, -4)) + 1) : 1;
@@ -291,7 +291,7 @@ class StudentController extends Controller
 
             return redirect()->route('app.students.index')
                 ->with('success', "✅ Inscription réussie ! Matricule : {$student->matricule}. Un compte parent a été créé/lié.");
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             return back()->withErrors(['error' => 'Erreur : ' . $e->getMessage()])->withInput();
         }
@@ -581,10 +581,10 @@ class StudentController extends Controller
             'previous_school' => 'nullable|string',
             'remarks' => 'nullable|string',
 
-            'documents.1' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:2048',
-            'documents.2' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:2048',
-            'documents.3' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:2048',
-            'documents.4' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:2048',
+            'documents.1' => 'nullable|file|extensions:pdf,doc,docx,jpg,jpeg,png|max:2048',
+            'documents.2' => 'nullable|file|extensions:pdf,doc,docx,jpg,jpeg,png|max:2048',
+            'documents.3' => 'nullable|file|extensions:pdf,doc,docx,jpg,jpeg,png|max:2048',
+            'documents.4' => 'nullable|file|extensions:pdf,doc,docx,jpg,jpeg,png|max:2048',
         ]);
 
         $schoolId = session('current_school_id');
@@ -604,7 +604,7 @@ class StudentController extends Controller
             $documentsData = $student->documents ?? []; 
             
             for ($i = 1; $i <= 4; $i++) {
-                if ($request->hasFile("documents.$i")) {
+                if ($request->hasFile("documents.$i") && $request->file("documents.$i")->isValid()) {
                     // Supprimer l'ancien fichier s'il existe
                     $oldPath = $documentsData["doc_$i"] ?? null;
                     if ($oldPath) {
@@ -667,13 +667,14 @@ class StudentController extends Controller
                     [
                         'school_class_id' => $validated['class_id'],
                         'status' => 'enrolled',
+                        'enrollment_date' => $validated['admission_date'],
                     ]
                 );
             }
 
             // 5. GESTION INTELLIGENTE DU COMPTE PARENT (Mise à jour ou Création)
             if (!empty($validated['guardian_email'])) {
-                $parentUser = \App\Models\User::updateOrCreate(
+                $parentUser = \App\Models\User::firstOrCreate(
                     [
                         'email' => $validated['guardian_email'],
                         'school_id' => $schoolId
@@ -682,9 +683,17 @@ class StudentController extends Controller
                         'first_name' => $validated['guardian_first_name'],
                         'last_name' => $validated['guardian_last_name'],
                         'role' => 'parent',
+                        'password' => bcrypt('Ecole2024!'), // Mot de passe par défaut
                         'phone' => $validated['guardian_phone'],
                     ]
                 );
+
+                // Si le compte parent existait déjà, on garde son profil synchronisé
+                $parentUser->fill([
+                    'first_name' => $validated['guardian_first_name'],
+                    'last_name' => $validated['guardian_last_name'],
+                    'phone' => $validated['guardian_phone'],
+                ])->save();
 
                 $student->parents()->syncWithoutDetaching([
                     $parentUser->id => ['school_id' => $schoolId]
@@ -695,7 +704,7 @@ class StudentController extends Controller
 
             return redirect()->route('app.students.index')
                 ->with('success', "✅ Informations de {$student->first_name} mises à jour avec succès ! Le compte parent a été synchronisé.");
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             return back()->withErrors(['error' => 'Erreur lors de la mise à jour : ' . $e->getMessage()])->withInput();
         }
