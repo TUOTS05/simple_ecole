@@ -7,12 +7,54 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
     
     <!-- En-tête accueillant -->
-    <div class="bg-gradient-to-r from-primary to-primary-dark rounded-xl shadow-md p-6 mb-8 text-white">
-        <h2 class="text-2xl font-bold mb-2">Bonjour, {{ auth()->user()->first_name }} 👋</h2>
-        <p class="opacity-90 max-w-2xl">
-            Retrouvez ici le suivi scolaire, les présences et la situation administrative de vos enfants pour l'année en cours.
-        </p>
+    <div class="bg-gradient-to-r from-primary to-primary-dark rounded-xl shadow-md p-6 mb-8 text-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h2 class="text-2xl font-bold mb-2">Bonjour, {{ auth()->user()->first_name }} 👋</h2>
+            <p class="opacity-90 max-w-2xl">
+                Retrouvez ici le suivi scolaire, les présences et la situation administrative de vos enfants pour l'année en cours.
+            </p>
+        </div>
+
+        @if($schoolYears->count() > 1)
+            <form method="GET" class="flex-shrink-0">
+                <label for="year" class="sr-only">Année scolaire</label>
+                <select name="year" id="year" onchange="this.form.submit()"
+                    class="bg-white/10 border border-white/30 text-white text-sm rounded-lg px-4 py-2 focus:ring-2 focus:ring-white/50 focus:outline-none [&>option]:text-gray-800">
+                    @foreach($schoolYears as $year)
+                        <option value="{{ $year->id }}" @selected(request('year') == $year->id)>
+                            {{ $year->name }}{{ $year->is_active ? ' (en cours)' : '' }}
+                        </option>
+                    @endforeach
+                </select>
+            </form>
+        @endif
     </div>
+
+    <!-- Statistiques globales -->
+    @if($globalStats['totalChildren'] > 0)
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Enfants</p>
+                <p class="text-2xl font-bold text-gray-800">{{ $globalStats['totalChildren'] }}</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Présence moyenne</p>
+                <p class="text-2xl font-bold text-gray-800">
+                    {{ $globalStats['averageAttendance'] !== null ? round($globalStats['averageAttendance'], 1) : '--' }}<span class="text-sm font-normal text-gray-500">%</span>
+                </p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Frais de scolarité totaux</p>
+                <p class="text-2xl font-bold text-gray-800">{{ number_format($globalStats['totalFees'], 0, ',', ' ') }} <span class="text-sm font-normal text-gray-500">FCFA</span></p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Reste à payer</p>
+                <p class="text-2xl font-bold {{ ($globalStats['totalFees'] - $globalStats['totalPaid']) > 0 ? 'text-red-600' : 'text-green-600' }}">
+                    {{ number_format(max(0, $globalStats['totalFees'] - $globalStats['totalPaid']), 0, ',', ' ') }} <span class="text-sm font-normal text-gray-500">FCFA</span>
+                </p>
+            </div>
+        </div>
+    @endif
 
     <!-- Grille des enfants -->
     @if(count($childrenBySchool) > 0)
@@ -48,7 +90,7 @@
                                         Classe non assignée
                                     </span>
                                 @endif
-                            </div each>
+                            </div>
                         </div>
 
                         <!-- Statistiques rapides (Mini-cartes) -->

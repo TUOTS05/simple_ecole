@@ -64,12 +64,15 @@ class DashboardController extends Controller
                         );
                     }
                     
-                    // Calculer la moyenne générale
+                    // Calculer la moyenne générale (bulletin le plus récent de l'année :
+                    // un élève a un bulletin par période, donc on trie par updated_at)
                     $reportCard = ReportCard::where('student_id', $child->id)
                         ->where('school_year_id', $currentYear->id)
+                        ->whereNotNull('average')
+                        ->orderBy('updated_at', 'desc')
                         ->first();
-                    
-                    if ($reportCard && $reportCard->grades_count > 0) {
+
+                    if ($reportCard) {
                         $data['average'] = round($reportCard->average, 2);
                     }
                     
