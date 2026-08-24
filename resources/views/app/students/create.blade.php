@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="max-w-6xl mx-auto">
-    
+
     <!-- En-tête -->
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -27,11 +27,7 @@
     <form action="{{ route('app.students.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
         @csrf
 
-        @if($errors->any())
-            <div class="bg-red-50 border-l-4 border-red-500 p-4">
-                <ul class="list-disc list-inside text-red-700 text-sm">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
-            </div>
-        @endif
+        @include('app.students._partials.validation-errors')
 
         <!-- Section 1: Informations d'admission -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -45,7 +41,7 @@
                     Importer un élève
                 </button>
             </div>
-            
+
             <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Numéro d'admission -->
                 <!-- Numéro d'admission (Auto-généré) -->
@@ -72,188 +68,7 @@
                     <p class="text-xs text-gray-500 mt-1">Sera généré automatiquement</p>
                 </div>
 
-                <!-- Classe -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Classe <span class="text-red-500">*</span>
-                    </label>
-                    <select name="class_id" required
-                            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition @error('class_id') border-red-500 @enderror">
-                        <option value="">Sélectionner</option>
-                        @foreach($classes as $class)
-                            <option value="{{ $class->id }}" {{ old('class_id') == $class->id ? 'selected' : '' }}>
-                                {{ $class->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('class_id')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Section -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Section <span class="text-red-500">*</span>
-                    </label>
-                    <select name="section" required
-                            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition @error('section') border-red-500 @enderror">
-                        <option value="">Sélectionner</option>
-                        <option value="A" {{ old('section') == 'A' ? 'selected' : '' }}>Section A</option>
-                        <option value="B" {{ old('section') == 'B' ? 'selected' : '' }}>Section B</option>
-                        <option value="C" {{ old('section') == 'C' ? 'selected' : '' }}>Section C</option>
-                    </select>
-                    @error('section')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Prénom -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Prénom <span class="text-red-500">*</span>
-                    </label>
-                    <input type="text" name="first_name" value="{{ old('first_name') }}" required
-                           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition @error('first_name') border-red-500 @enderror">
-                    @error('first_name')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Nom de famille -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Nom de famille <span class="text-red-500">*</span>
-                    </label>
-                    <input type="text" name="last_name" value="{{ old('last_name') }}" required
-                           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition @error('last_name') border-red-500 @enderror">
-                    @error('last_name')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Genre -->
-                <!-- Genre -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Genre <span class="text-red-500">*</span>
-                    </label>
-                    <select name="gender" required
-                            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition @error('gender') border-red-500 @enderror">
-                        <option value="">Sélectionner</option>
-                        <option value="M" {{ old('gender') == 'M' ? 'selected' : '' }}>Masculin</option>
-                        <option value="F" {{ old('gender') == 'F' ? 'selected' : '' }}>Féminin</option>
-                    </select>
-                    @error('gender')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Date de naissance -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Date de naissance <span class="text-red-500">*</span>
-                    </label>
-                    <input type="date" name="birth_date" value="{{ old('birth_date') }}" 
-                    max="{{ date('Y-m-d') }}"
-                    required
-                           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition @error('birth_date') border-red-500 @enderror">
-                    @error('birth_date')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Statut -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Statut <span class="text-red-500">*</span>
-                    </label>
-                    <input type="hidden" name="status" value="inactive">
-                    <select name="status" readonly class="w-full px-4 py-2.5 bg-gray-100 border border-gray-300 text-gray-600 text-sm rounded-lg cursor-not-allowed">
-                        <option value="inactive" selected>Inactif (En attente de paiement)</option>
-                    </select>
-                    @error('status')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Famille nombreuse -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Appartenance à une famille nombreuse <span class="text-red-500">*</span>
-                    </label>
-                    <div class="flex items-center space-x-4 mt-2">
-                        <label class="flex items-center">
-                            <input type="radio" name="large_family" value="1" {{ old('large_family') == '1' ? 'checked' : '' }}
-                                   class="w-4 h-4 text-primary border-gray-300 focus:ring-primary">
-                            <span class="ml-2 text-sm text-gray-700">OUI</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="large_family" value="0" {{ old('large_family', 0) == '0' ? 'checked' : '' }}
-                                   class="w-4 h-4 text-primary border-gray-300 focus:ring-primary">
-                            <span class="ml-2 text-sm text-gray-700">NON</span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Enfant du personnel -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Enfant Du Personnel <span class="text-red-500">*</span>
-                    </label>
-                    <div class="flex items-center space-x-4 mt-2">
-                        <label class="flex items-center">
-                            <input type="radio" name="staff_child" value="1" {{ old('staff_child') == '1' ? 'checked' : '' }}
-                                   class="w-4 h-4 text-primary border-gray-300 focus:ring-primary">
-                            <span class="ml-2 text-sm text-gray-700">OUI</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="staff_child" value="0" {{ old('staff_child', 0) == '0' ? 'checked' : '' }}
-                                   class="w-4 h-4 text-primary border-gray-300 focus:ring-primary">
-                            <span class="ml-2 text-sm text-gray-700">NON</span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Religion -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Religion
-                    </label>
-                    <select name="religion"
-                            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
-                        <option value="">Sélectionner</option>
-                        <option value="catholique" {{ old('religion') == 'catholique' ? 'selected' : '' }}>Catholique</option>
-                        <option value="protestant" {{ old('religion') == 'protestant' ? 'selected' : '' }}>Protestant</option>
-                        <option value="musulman" {{ old('religion') == 'musulman' ? 'selected' : '' }}>Musulman</option>
-                        <option value="autre" {{ old('religion') == 'autre' ? 'selected' : '' }}>Autre</option>
-                    </select>
-                </div>
-
-                <!-- Date d'admission -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Date d'admission
-                    </label>
-                    <input type="date" name="admission_date" value="{{ old('admission_date', date('Y-m-d')) }}"
-                           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
-                </div>
-
-                <!-- Photo élève -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        élève Photo
-                    </label>
-                    <div class="flex items-center space-x-4">
-                        <div class="flex-1">
-                            <input type="file" name="student_photo" accept="image/*"
-                                   class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
-                        </div>
-                        <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-                            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                        </div>
-                    </div>
-                </div>
+                @include('app.students._partials.identity-fields', ['classes' => $classes])
 
                 <!-- Reçu inscription -->
                 <div>
@@ -285,30 +100,7 @@
             </div>
 
             <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Père -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Nom du père
-                    </label>
-                    <input type="text" name="father_name" value="{{ old('father_name', $parentDetails['father_name'] ?? '') }}"
-                           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Téléphone du père
-                    </label>
-                    <input type="tel" name="father_phone" value="{{ old('father_phone', $parentDetails['father_phone'] ?? '') }}"
-                           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Occupation du père
-                    </label>
-                    <input type="text" name="father_occupation" value="{{ old('father_occupation', $parentDetails['father_occupation'] ?? '') }}"
-                           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
-                </div>
+                @include('app.students._partials.father-fields', ['parentDetails' => $parentDetails ?? []])
 
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">
@@ -318,30 +110,7 @@
                            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
                 </div>
 
-                <!-- Mère -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Nom de la mère
-                    </label>
-                    <input type="text" name="mother_name" value="{{ old('mother_name', $parentDetails['mother_name'] ?? '') }}"
-                           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Téléphone de la mère
-                    </label>
-                    <input type="tel" name="mother_phone" value="{{ old('mother_phone', $parentDetails['mother_phone'] ?? '') }}"
-                           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Occupation maternelle
-                    </label>
-                    <input type="text" name="mother_occupation" value="{{ old('mother_occupation', $parentDetails['mother_occupation'] ?? '') }}"
-                           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
-                </div>
+                @include('app.students._partials.mother-fields', ['parentDetails' => $parentDetails ?? []])
 
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">
@@ -351,211 +120,15 @@
                            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
                 </div>
 
-                                <!-- Gardien/Tuteur -->
-                <div class="lg:col-span-4 border-t border-gray-200 pt-6 mt-2">
-                    <h3 class="text-md font-semibold text-gray-700 mb-4 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                        Compte Espace Parent (Tuteur légal)
-                    </h3>
-                    <p class="text-sm text-gray-500 mb-4 bg-blue-50 p-3 rounded-lg border border-blue-100">
-                        💡 <strong>Important :</strong> Ces informations serviront à créer (ou lier) le compte de connexion du parent. Si cet email existe déjà, l'enfant sera simplement ajouté à son espace existant.
-                    </p>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Le tuteur est <span class="text-red-500">*</span>
-                    </label>
-                    <div class="flex items-center space-x-4 mt-2">
-                        <label class="flex items-center">
-                            <input type="radio" name="guardian_type" value="father" {{ old('guardian_type') == 'father' ? 'checked' : '' }}
-                                   class="w-4 h-4 text-primary border-gray-300 focus:ring-primary" onchange="toggleGuardianFields()">
-                            <span class="ml-2 text-sm text-gray-700">Le Père</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="guardian_type" value="mother" {{ old('guardian_type') == 'mother' ? 'checked' : '' }}
-                                   class="w-4 h-4 text-primary border-gray-300 focus:ring-primary" onchange="toggleGuardianFields()">
-                            <span class="ml-2 text-sm text-gray-700">La Mère</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="guardian_type" value="other" {{ old('guardian_type', 'other') == 'other' ? 'checked' : '' }}
-                                   class="w-4 h-4 text-primary border-gray-300 focus:ring-primary" onchange="toggleGuardianFields()">
-                            <span class="ml-2 text-sm text-gray-700">Autre</span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- NOUVEAU : Prénom et Nom séparés pour le compte utilisateur -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Prénom du tuteur <span class="text-red-500">*</span>
-                    </label>
-                    <input type="text" name="guardian_first_name" id="guardian_first_name" value="{{ old('guardian_first_name') }}" required
-                           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Nom du tuteur <span class="text-red-500">*</span>
-                    </label>
-                    <input type="text" name="guardian_last_name" id="guardian_last_name" value="{{ old('guardian_last_name') }}" required
-                           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Courriel du tuteur <span class="text-red-500">*</span>
-                    </label>
-                    <input type="email" name="guardian_email" value="{{ old('guardian_email') }}" required
-                           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
-                    <p class="text-xs text-gray-500 mt-1">Sert d'identifiant de connexion pour l'espace parent.</p>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Téléphone du gardien <span class="text-red-500">*</span>
-                    </label>
-                    <input type="tel" name="guardian_phone" value="{{ old('guardian_phone') }}" required
-                           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Relation avec l'élève
-                    </label>
-                    <input type="text" name="guardian_relation" value="{{ old('guardian_relation') }}"
-                           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"
-                           placeholder="Ex: Oncle, Tante, Grand-père...">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Profession du gardien
-                    </label>
-                    <input type="text" name="guardian_occupation" value="{{ old('guardian_occupation') }}"
-                           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
-                </div>
-
-                <div class="lg:col-span-2">
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Adresse du tuteur
-                    </label>
-                    <textarea name="guardian_address" rows="2"
-                              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition resize-none">{{ old('guardian_address') }}</textarea>
-                </div>
+                @include('app.students._partials.guardian-fields')
             </div>
         </div>
 
-        <!-- Section 3: Adresse Détails -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-800 flex items-center">
-                    <span class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mr-3 text-sm font-bold">3</span>
-                    élève Adresse Détails
-                </h2>
-            </div>
+        @include('app.students._partials.address-fields')
 
-            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="flex items-start">
-                    <input type="checkbox" name="same_guardian_address" id="same_guardian_address" value="1"
-                           class="mt-1 w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
-                           onchange="toggleAddressFields()">
-                    <label for="same_guardian_address" class="ml-3 text-sm text-gray-700">
-                        Si l'adresse du tuteur est l'adresse actuelle
-                    </label>
-                </div>
+        @include('app.students._partials.misc-fields')
 
-                <div class="flex items-start">
-                    <input type="checkbox" name="same_permanent_address" id="same_permanent_address" value="1"
-                           class="mt-1 w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
-                           onchange="togglePermanentAddressFields()">
-                    <label for="same_permanent_address" class="ml-3 text-sm text-gray-700">
-                        Si l'adresse permanente est l'adresse actuelle
-                    </label>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Adresse actuelle
-                    </label>
-                    <textarea name="current_address" id="current_address" rows="2"
-                              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition resize-none">{{ old('current_address') }}</textarea>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Adresse permanente
-                    </label>
-                    <textarea name="permanent_address" id="permanent_address" rows="2"
-                              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition resize-none">{{ old('permanent_address') }}</textarea>
-                </div>
-            </div>
-        </div>
-
-        <!-- Section 4: Détails divers -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-800 flex items-center">
-                    <span class="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center mr-3 text-sm font-bold">4</span>
-                    Détails divers
-                </h2>
-            </div>
-
-            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Détails de l'école précédente
-                    </label>
-                    <textarea name="previous_school" rows="3"
-                              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition resize-none"
-                              placeholder="Nom de l'école, classe précédente, raisons du changement...">{{ old('previous_school') }}</textarea>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Remarque
-                    </label>
-                    <textarea name="remarks" rows="3"
-                              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition resize-none"
-                              placeholder="Observations particulières, besoins spécifiques...">{{ old('remarks') }}</textarea>
-                </div>
-            </div>
-        </div>
-
-        <!-- Section 5: Télécharger des documents -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-800 flex items-center">
-                    <span class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center mr-3 text-sm font-bold">5</span>
-                    Télécharger des documents
-                </h2>
-                <p class="text-xs text-gray-500 mt-1 ml-11">Formats acceptés : PDF, DOC, DOCX, JPG, PNG — Taille maximale : 2 Mo par fichier</p>
-            </div>
-
-            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                @for($i = 1; $i <= 4; $i++)
-                <div class="js-file-dropzone-container">
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                        {{ $i }}.
-                    </label>
-                    <div class="flex items-center justify-center w-full">
-                        <label class="js-file-dropzone flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition"
-                               data-max-size-mb="2" data-accept-ext="pdf,doc,docx,jpg,jpeg,png">
-                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                                <svg class="w-8 h-8 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                                <p class="js-file-dropzone-label text-xs text-gray-500 text-center px-2">Drag and drop or click</p>
-                            </div>
-                            <input type="file" name="documents[{{ $i }}]" accept=".pdf,.doc,.docx,.jpg,.png" class="hidden">
-                        </label>
-                    </div>
-                    <p class="js-file-dropzone-error text-xs text-red-500 mt-1 hidden"></p>
-                    @error('documents.' . $i)
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-                @endfor
-            </div>
-        </div>
+        @include('app.students._partials.documents-fields')
 
         <!-- Boutons d'action -->
         <div class="flex flex-col sm:flex-row justify-end gap-3 sticky bottom-4">
@@ -577,7 +150,7 @@ function toggleGuardianFields() {
     // Logique pour pré-remplir les champs du gardien si père ou mère est sélectionné
     const guardianType = document.querySelector('input[name="guardian_type"]:checked').value;
     const guardianName = document.querySelector('input[name="guardian_name"]');
-    
+
     if (guardianType === 'father') {
         const fatherName = document.querySelector('input[name="father_name"]').value;
         if (fatherName) guardianName.value = fatherName;
@@ -591,7 +164,7 @@ function toggleAddressFields() {
     const checkbox = document.getElementById('same_guardian_address');
     const currentAddress = document.getElementById('current_address');
     const guardianAddress = document.querySelector('textarea[name="guardian_address"]');
-    
+
     if (checkbox.checked && guardianAddress) {
         currentAddress.value = guardianAddress.value;
         currentAddress.readOnly = true;
@@ -606,7 +179,7 @@ function togglePermanentAddressFields() {
     const checkbox = document.getElementById('same_permanent_address');
     const permanentAddress = document.getElementById('permanent_address');
     const currentAddress = document.getElementById('current_address');
-    
+
     if (checkbox.checked) {
         permanentAddress.value = currentAddress.value;
         permanentAddress.readOnly = true;
