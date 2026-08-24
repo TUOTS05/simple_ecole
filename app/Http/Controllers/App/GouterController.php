@@ -75,19 +75,13 @@ class GouterController extends Controller
             ])
             ->get()
             ->map(function ($sub) {
-                $realRemaining = $sub->installments->sum(fn ($inst) => $inst->amount - $inst->paid_amount);
-
-                if ($sub->remaining_amount != $realRemaining) {
-                    $sub->remaining_amount = $realRemaining;
-                    $sub->status = $realRemaining <= 0 ? 'paid' : 'active';
-                    $sub->save();
-                }
-
+                // remaining_amount est maintenu à jour automatiquement par le hook
+                // GouterPayment::booted() (voir GouterSubscription::recalculateAmounts()).
                 return [
                     'id' => $sub->id,
                     'student_name' => $sub->student ? ($sub->student->last_name . ' ' . $sub->student->first_name) : 'Élève inconnu',
                     'matricule' => $sub->student->matricule ?? 'N/A',
-                    'remaining' => $realRemaining,
+                    'remaining' => $sub->remaining_amount,
                     'class_name' => $sub->gouterRate->schoolClass->name ?? 'N/A',
                     'unpaid_installments' => $sub->installments->pluck('label'),
                 ];
@@ -496,6 +490,8 @@ class GouterController extends Controller
             'received_by' => auth()->id(),
             'notes' => $notes,
         ]);
+        // Le hook GouterPayment::booted() recalcule automatiquement
+        // paid_amount/remaining_amount/status sur l'abonnement.
 
         $installments = $subscription->installments()->orderBy('due_date', 'asc')->get();
         $remaining = $amount;
@@ -521,12 +517,6 @@ class GouterController extends Controller
             }
             $inst->save();
         }
-
-        $totalPaid = $subscription->payments()->sum('amount');
-        $subscription->paid_amount = $totalPaid;
-        $subscription->remaining_amount = $subscription->total_amount - $totalPaid;
-        $subscription->status = $subscription->remaining_amount <= 0 ? 'paid' : 'active';
-        $subscription->save();
 
         return $payment;
     }

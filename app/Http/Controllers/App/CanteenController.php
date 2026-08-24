@@ -231,128 +231,6 @@ class CanteenController extends Controller
         ));
     }
 
-    // public function subscriptionsStore(Request $request)
-    // {
-    //     $schoolId = session('current_school_id');
-
-    //     $validated = $request->validate([
-    //         'school_year_id' => 'required|exists:school_years,id',
-    //         'enrollments' => 'required|array|min:1',
-    //         'enrollments.*.selected' => 'required|boolean',
-    //         'enrollments.*.months' => 'required|array|min:1',
-    //         'enrollments.*.months.*' => 'required|date_format:Y-m',
-    //         'enrollments.*.amount' => 'required|numeric|min:0',
-    //         'enrollments.*.payment_method' => 'required|in:cash,mobile_money,transfer,check',
-    //     ]);
-
-    //     DB::beginTransaction();
-    //     try {
-    //         $successCount = 0;
-    //         $skipCount = 0;
-
-    //         foreach ($validated['enrollments'] as $studentId => $data) {
-    //             if (!isset($data['selected']) || !$data['selected']) {
-    //                 continue;
-    //             }
-
-    //             $enrollment = \App\Models\Enrollment::where('student_id', $studentId)
-    //                 ->where('school_year_id', $validated['school_year_id'])
-    //                 ->first();
-
-    //             if (!$enrollment) continue;
-
-    //             $rate = CanteenRate::where('school_id', $schoolId)
-    //                 ->where('school_year_id', $validated['school_year_id'])
-    //                 ->where('school_class_id', $enrollment->school_class_id)
-    //                 ->first();
-
-    //             if (!$rate) continue;
-
-    //             $existing = CanteenSubscription::where('student_id', $studentId)
-    //                 ->where('school_year_id', $validated['school_year_id'])
-    //                 ->first();
-
-    //             if ($existing) {
-    //                 $skipCount++;
-    //                 continue;
-    //             }
-
-    //             // ✅ CORRECTION MAJEURE : Calcul correct des montants
-    //             $numberOfMonths = count($data['months']);
-    //             $totalAmount = $numberOfMonths * $rate->monthly_rate; // Montant total de l'abonnement
-    //             $paidNow = $data['amount']; // Montant payé aujourd'hui
-    //             $remainingAmount = $totalAmount - $paidNow; // Ce qui reste à payer
-
-    //             $subscription = CanteenSubscription::create([
-    //                 'school_id' => $schoolId,
-    //                 'student_id' => $studentId,
-    //                 'school_year_id' => $validated['school_year_id'],
-    //                 'canteen_rate_id' => $rate->id,
-    //                 'total_amount' => $totalAmount,
-    //                 'paid_amount' => $paidNow,
-    //                 'remaining_amount' => $remainingAmount,
-    //                 'status' => $remainingAmount <= 0 ? 'paid' : 'active',
-    //             ]);
-
-    //             foreach ($data['months'] as $month) {
-    //                 CanteenInstallment::create([
-    //                     'canteen_subscription_id' => $subscription->id,
-    //                     'month' => $month,
-    //                     'amount' => $rate->monthly_rate,
-    //                     'paid_amount' => 0,
-    //                     'due_date' => Carbon::parse($month . '-01')->day(5),
-    //                     'status' => 'pending',
-    //                 ]);
-    //             }
-
-    //             // Répartir le paiement initial sur les échéances (FIFO)
-    //             if ($paidNow > 0 && !empty($data['payment_method'])) {
-    //                 CanteenPayment::create([
-    //                     'school_id' => $schoolId,
-    //                     'canteen_subscription_id' => $subscription->id,
-    //                     'amount' => $paidNow,
-    //                     'payment_date' => now(),
-    //                     'payment_method' => $data['payment_method'],
-    //                     'payment_type' => 'initial',
-    //                     'received_by' => auth()->id(),
-    //                 ]);
-
-    //                 $installments = $subscription->installments()->orderBy('due_date', 'asc')->get();
-    //                 $remainingPaymentToAllocate = $paidNow;
-
-    //                 foreach ($installments as $inst) {
-    //                     if ($remainingPaymentToAllocate <= 0) break;
-    //                     $dueAmount = $inst->amount - $inst->paid_amount;
-
-    //                     if ($remainingPaymentToAllocate >= $dueAmount) {
-    //                         $inst->paid_amount = $inst->amount;
-    //                         $inst->status = 'paid';
-    //                         $remainingPaymentToAllocate -= $dueAmount;
-    //                     } else {
-    //                         $inst->paid_amount += $remainingPaymentToAllocate;
-    //                         $inst->status = 'partial';
-    //                         $remainingPaymentToAllocate = 0;
-    //                     }
-    //                     $inst->save();
-    //                 }
-    //             }
-
-    //             $successCount++;
-    //         }
-
-    //         DB::commit();
-
-    //         $message = "✅ $successCount élève(s) inscrit(s) à la cantine avec succès !";
-    //         if ($skipCount > 0) $message .= " ($skipCount déjà inscrit(s) ignoré(s)).";
-
-    //         return redirect()->route('canteen.subscriptions.index', ['school_year_id' => $validated['school_year_id']])
-    //             ->with('success', $message);
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         return back()->withErrors(['error' => 'Erreur : ' . $e->getMessage()])->withInput();
-    //     }
-    // }
-
     public function subscriptionsDestroy($id)
     {
         $subscription = CanteenSubscription::where('school_id', session('current_school_id'))->findOrFail($id);
@@ -551,6 +429,8 @@ class CanteenController extends Controller
                 'received_by' => $userId,
                 'notes' => $validated['notes'] ?? null,
             ]);
+            // Le hook CanteenPayment::booted() recalcule automatiquement
+            // paid_amount/remaining_amount/status sur l'abonnement.
 
             // Répartir automatiquement l'argent sur les échéances (FIFO)
             $installments = $subscription->installments()->orderBy('due_date', 'asc')->get();
@@ -572,14 +452,6 @@ class CanteenController extends Controller
                 }
                 $inst->save();
             }
-
-            $subscription->paid_amount += $paymentAmount;
-            $subscription->remaining_amount = $subscription->total_amount - $subscription->paid_amount;
-
-            if ($subscription->remaining_amount <= 0) {
-                $subscription->status = 'paid';
-            }
-            $subscription->save();
 
             DB::commit();
 
@@ -789,27 +661,17 @@ class CanteenController extends Controller
             ])
             ->get()
             ->map(function($sub) {
-                // Recalcul dynamique du reste à payer basé sur les mois impayés pour être sûr à 100%
+                // remaining_amount est maintenu à jour automatiquement par le hook
+                // CanteenPayment::booted() (voir CanteenSubscription::recalculateAmounts()).
                 $unpaidMonths = $sub->installments->map(function($inst) {
                     return \Carbon\Carbon::parse($inst->month . '-01')->translatedFormat('F Y');
                 })->toArray();
-
-                $realRemaining = $sub->installments->sum(function($inst) {
-                    return $inst->amount - $inst->paid_amount;
-                });
-
-                // On met à jour la base de données si elle était désynchronisée
-                if ($sub->remaining_amount != $realRemaining) {
-                    $sub->remaining_amount = $realRemaining;
-                    $sub->status = $realRemaining <= 0 ? 'paid' : 'active';
-                    $sub->save();
-                }
 
                 return [
                     'id' => $sub->id,
                     'student_name' => $sub->student ? ($sub->student->last_name . ' ' . $sub->student->first_name) : 'Élève inconnu',
                     'matricule' => $sub->student ? $sub->student->matricule : 'N/A',
-                    'remaining' => $realRemaining,
+                    'remaining' => $sub->remaining_amount,
                     'class_name' => $sub->canteenRate && $sub->canteenRate->schoolClass ? $sub->canteenRate->schoolClass->name : 'N/A',
                     'unpaid_months' => $unpaidMonths
                 ];
@@ -875,11 +737,11 @@ class CanteenController extends Controller
 
                 if ($existing) {
                     // ✅ AMÉLIORATION : Au lieu de sauter silencieusement, on MET À JOUR l'abonnement existant
-                    // On ajoute les nouveaux mois au total et au reste à payer
+                    // On ajoute les nouveaux mois au total dû, puis on recalcule paid_amount/remaining_amount/status
+                    // à partir des paiements réels (paid_amount ne change pas ici).
                     $existing->total_amount += $newTotalAmount;
-                    $existing->remaining_amount += $newTotalAmount; // paid_amount ne change pas
-                    $existing->status = $existing->remaining_amount <= 0 ? 'paid' : 'active';
                     $existing->save();
+                    $existing->recalculateAmounts();
 
                     $subscriptionId = $existing->id;
                 } else {
@@ -926,6 +788,8 @@ class CanteenController extends Controller
                         'payment_type' => $existing ? 'additional' : 'initial',
                         'received_by' => auth()->id(),
                     ]);
+                    // Le hook CanteenPayment::booted() recalcule automatiquement
+                    // paid_amount/remaining_amount/status sur l'abonnement.
 
                     // Répartition FIFO sur les échéances
                     $subscription = CanteenSubscription::find($subscriptionId);
@@ -947,13 +811,6 @@ class CanteenController extends Controller
                         }
                         $inst->save();
                     }
-
-                    // Recalcul final du reste à payer global
-                    $totalPaid = $subscription->payments()->sum('amount');
-                    $subscription->paid_amount = $totalPaid;
-                    $subscription->remaining_amount = $subscription->total_amount - $totalPaid;
-                    $subscription->status = $subscription->remaining_amount <= 0 ? 'paid' : 'active';
-                    $subscription->save();
                 }
 
                 $successCount++;

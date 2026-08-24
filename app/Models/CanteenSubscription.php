@@ -46,8 +46,25 @@ class CanteenSubscription extends Model
 
     public function getPaymentRateAttribute()
     {
-        return $this->total_amount > 0 
-            ? round(($this->paid_amount / $this->total_amount) * 100, 1) 
+        return $this->total_amount > 0
+            ? round(($this->paid_amount / $this->total_amount) * 100, 1)
             : 0;
+    }
+
+    /**
+     * Recalcule paid_amount, remaining_amount et status à partir de la somme réelle
+     * des paiements liés à cet abonnement. Source de vérité unique : appelée
+     * automatiquement par les hooks de CanteenPayment (created/updated/deleted),
+     * mais peut aussi être appelée manuellement (ex : après modification de total_amount).
+     */
+    public function recalculateAmounts(): void
+    {
+        $totalPaid = $this->payments()->sum('amount');
+
+        $this->paid_amount = $totalPaid;
+        $this->remaining_amount = $this->total_amount - $totalPaid;
+        $this->status = $this->remaining_amount <= 0 ? 'paid' : 'active';
+
+        $this->save();
     }
 }

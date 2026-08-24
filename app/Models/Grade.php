@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Grade extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'school_id',
         'student_id',
@@ -61,6 +64,9 @@ class Grade extends Model
     // Calculer la note sur 20
     public function getScoreOutOf20Attribute(): float
     {
+        if ($this->max_score === null || (float) $this->max_score == 0.0) {
+            return 0;
+        }
         if ($this->max_score == 20) {
             return $this->score;
         }

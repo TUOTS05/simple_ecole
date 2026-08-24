@@ -45,4 +45,22 @@ class GouterPayment extends Model
     {
         return $this->belongsTo(User::class, 'received_by');
     }
+
+    // Boot : après création, modification ou suppression d'un paiement, recalculer
+    // automatiquement paid_amount/remaining_amount/status sur l'abonnement lié
+    // (même principe que Payment::booted() pour Enrollment::recalculateFees()).
+    protected static function booted()
+    {
+        static::created(function ($payment) {
+            $payment->subscription?->recalculateAmounts();
+        });
+
+        static::updated(function ($payment) {
+            $payment->subscription?->recalculateAmounts();
+        });
+
+        static::deleted(function ($payment) {
+            $payment->subscription?->recalculateAmounts();
+        });
+    }
 }

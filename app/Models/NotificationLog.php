@@ -26,9 +26,7 @@ class NotificationLog extends Model
         ];
     
 
-    protected $casts = [
-        'sent_at' => 'datetime',
-    ];
+    protected $casts = [];
 
     public function student(): BelongsTo
     {

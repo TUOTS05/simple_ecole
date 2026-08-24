@@ -27,7 +27,6 @@ class SchoolClass extends Model
         'total_tuition' => 'decimal:2',
         'registration_fee' => 'decimal:2',
         'installment_amount' => 'decimal:2',
-        'is_active' => 'boolean',
     ];
 
     // Relations

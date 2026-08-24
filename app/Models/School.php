@@ -18,7 +18,7 @@ class School extends Model
         'orange_sms_api_url', 'orange_sms_client_id', 'orange_sms_client_secret',
         'orange_sms_sender_name', 'sms_absence_template',
         // ✅ Ajouts pour l'essai gratuit et le SaaS
-        'trial_ends_at', 'is_active', 'type', 'email',
+        'trial_ends_at', 'is_active', 'type',
     ];
 
     protected $casts = [
