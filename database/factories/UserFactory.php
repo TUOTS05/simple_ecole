@@ -31,8 +31,18 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
-            'role' => 'parent',
         ];
+    }
+
+    /**
+     * role/school_id ne sont pas mass-assignables sur User (voir $fillable) : on les
+     * affecte directement sur le modèle après make(), avant persistance.
+     */
+    public function configure(): static
+    {
+        return $this->afterMaking(function (User $user) {
+            $user->role ??= 'parent';
+        });
     }
 
     /**
@@ -43,5 +53,19 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    public function withRole(string $role): static
+    {
+        return $this->afterMaking(function (User $user) use ($role) {
+            $user->role = $role;
+        });
+    }
+
+    public function forSchool(int $schoolId): static
+    {
+        return $this->afterMaking(function (User $user) use ($schoolId) {
+            $user->school_id = $schoolId;
+        });
     }
 }

@@ -12,11 +12,13 @@ class ClassDetailExport implements FromCollection, WithHeadings, WithMapping, Wi
 {
     protected $classId;
     protected $schoolYearId;
+    protected $schoolId;
 
-    public function __construct($classId, $schoolYearId)
+    public function __construct($classId, $schoolYearId, $schoolId = null)
     {
         $this->classId = $classId;
         $this->schoolYearId = $schoolYearId;
+        $this->schoolId = $schoolId;
     }
 
     public function collection()
@@ -32,6 +34,7 @@ class ClassDetailExport implements FromCollection, WithHeadings, WithMapping, Wi
             )
             ->join('enrollments', 'students.id', '=', 'enrollments.student_id')
             ->leftJoin('student_installments', 'enrollments.id', '=', 'student_installments.enrollment_id')
+            ->when($this->schoolId, fn ($query) => $query->where('enrollments.school_id', $this->schoolId))
             ->where('enrollments.school_class_id', $this->classId)
             ->where('enrollments.school_year_id', $this->schoolYearId)
             ->groupBy('students.id', 'students.matricule', 'students.first_name', 'students.last_name')

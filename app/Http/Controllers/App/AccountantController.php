@@ -37,16 +37,19 @@ class AccountantController extends Controller
             'gender' => 'required|in:M,F',
         ]);
 
-        Accountant::create([
-            'school_id' => session('current_school_id'),
+        // role et school_id ne sont pas mass-assignables (protection contre l'élévation
+        // de privilèges) : on les affecte explicitement après création.
+        $accountant = Accountant::create([
             'first_name' => $validated['first_name'],
             'last_name' => $validated['last_name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'phone' => $validated['phone'] ?? null,
             'gender' => $validated['gender'],
-            'role' => 'accountant',
         ]);
+        $accountant->school_id = session('current_school_id');
+        $accountant->role = 'accountant';
+        $accountant->save();
 
         return redirect()->route('app.accountants.index')
             ->with('success', 'Personnel comptable créé avec succès !');

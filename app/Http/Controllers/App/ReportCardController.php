@@ -68,6 +68,11 @@ class ReportCardController extends Controller
 
         if ($selectedClassId) {
             $class = SchoolClass::find($selectedClassId);
+
+            if (!$class || ! $request->user()->can('view', $class)) {
+                abort(403);
+            }
+
             $students = $class->students()->where('status', 'active')->orderBy('last_name')->get();
 
             $subjects = Subject::where('school_id', $schoolId)

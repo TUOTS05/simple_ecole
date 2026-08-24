@@ -257,15 +257,18 @@ class SchoolController extends Controller
         $firstName = $nameParts[0];
         $lastName = $nameParts[1] ?? $firstName; 
 
-        \App\Models\User::create([
+        // role et school_id ne sont pas mass-assignables (protection contre l'élévation
+        // de privilèges) : on les affecte explicitement après création.
+        $schoolAdmin = \App\Models\User::create([
             'first_name' => $firstName,
             'last_name' => $lastName,
             'name' => $validated['admin_name'],
             'email' => $validated['admin_email'],
             'password' => \Illuminate\Support\Facades\Hash::make($validated['admin_password']),
-            'role' => 'school_admin',
-            'school_id' => $school->id,
         ]);
+        $schoolAdmin->role = 'school_admin';
+        $schoolAdmin->school_id = $school->id;
+        $schoolAdmin->save();
 
                 // 5. Journaliser l'action
         ActivityLog::logAction(

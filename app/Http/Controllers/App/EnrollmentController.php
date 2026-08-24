@@ -217,6 +217,10 @@ class EnrollmentController extends Controller
             $parentUser = null;
             if (!empty($validated['guardian_email'])) {
                 // a) Créer ou récupérer l'utilisateur Parent
+                // Note : role et school_id ne sont pas mass-assignables (protection contre
+                // l'élévation de privilèges) ; le where() de firstOrCreate n'est pas affecté
+                // (ce n'est pas du mass assignment), mais on affecte school_id/role
+                // explicitement après création.
                 $parentUser = \App\Models\User::firstOrCreate(
                     [
                         'email' => $validated['guardian_email'],
@@ -225,12 +229,17 @@ class EnrollmentController extends Controller
                     [
                         'first_name' => $validated['guardian_first_name'],
                         'last_name' => $validated['guardian_last_name'],
-                        'role' => 'parent',
                         'password' => bcrypt($newParentPassword), // Mot de passe par défaut
                         'phone' => $validated['guardian_phone'],
                     ]
                 );
                 $isNewParentAccount = $parentUser->wasRecentlyCreated;
+
+                if ($isNewParentAccount) {
+                    $parentUser->role = 'parent';
+                    $parentUser->school_id = $schoolId;
+                    $parentUser->save();
+                }
 
                 // b) Lier ce parent à l'élève dans la table pivot (avec school_id)
                 \Illuminate\Support\Facades\DB::table('parent_student')->updateOrInsert(

@@ -155,8 +155,9 @@ class SchoolOnboardingController extends Controller
             $firstName = $directorNames[0] ?? 'Directeur';
             $lastName = isset($directorNames[1]) ? implode(' ', array_slice($directorNames, 1)) : 'École';
 
-            \App\Models\User::create([
-                'school_id' => $school->id,
+            // role et school_id ne sont pas mass-assignables (protection contre l'élévation
+            // de privilèges) : on les affecte explicitement après création.
+            $director = \App\Models\User::create([
                 'first_name' => $firstName,
                 'last_name' => $lastName,
                 'email' => $validated['director_email'],
@@ -164,9 +165,11 @@ class SchoolOnboardingController extends Controller
                 // la demande n'est pas approuvée et qu'un vrai mot de passe n'est généré (voir
                 // SubscriptionController::approveRequest).
                 'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(32)),
-                'role' => 'school_admin',
-                'email_verified_at' => now(),
             ]);
+            $director->school_id = $school->id;
+            $director->role = 'school_admin';
+            $director->email_verified_at = now();
+            $director->save();
 
             // 4. Créer la demande d'abonnement
             $subRequest = \App\Models\SubscriptionRequest::create([

@@ -37,13 +37,16 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        // role n'est pas mass-assignable (protection contre l'élévation de privilèges) :
+        // on l'affecte explicitement après création.
         $user = User::create([
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => 'parent',
         ]);
+        $user->role = 'parent';
+        $user->save();
 
         event(new Registered($user));
 

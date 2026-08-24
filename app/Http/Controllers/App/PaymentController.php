@@ -140,10 +140,16 @@ class PaymentController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        // 2. Récupération des modèles liés
+        // 2. Récupération des modèles liés, cloisonnée à l'école courante (StudentPolicy,
+        // EnrollmentPolicy, StudentInstallmentPolicy) pour empêcher qu'un utilisateur
+        // soumette les IDs d'un élève/échéance d'une autre école.
         $student = Student::findOrFail($validatedData['student_id']);
         $enrollment = Enrollment::findOrFail($validatedData['enrollment_id']);
         $installment = StudentInstallment::findOrFail($validatedData['student_installment_id']);
+
+        abort_unless($request->user()->can('view', $student), 404);
+        abort_unless($request->user()->can('view', $enrollment), 404);
+        abort_unless($request->user()->can('view', $installment), 404);
 
         // Récupération de l'école et de l'utilisateur (Nettoyé des doublons)
         $school = $enrollment->school ?? $student->school;
@@ -272,9 +278,7 @@ class PaymentController extends Controller
      */
     public function show(Payment $payment)
     {
-        if ($payment->school_id !== session('current_school_id')) {
-            abort(403);
-        }
+        abort_unless(auth()->user()->can('view', $payment), 403);
         $payment->load(['enrollment.student', 'receivedBy', 'studentInstallment']);
         return view('app.payments.show', compact('payment'));
     }
@@ -284,9 +288,7 @@ class PaymentController extends Controller
      */
     public function destroy(Payment $payment)
     {
-        if ($payment->school_id !== session('current_school_id')) {
-            abort(403);
-        }
+        abort_unless(auth()->user()->can('view', $payment), 403);
 
         DB::beginTransaction();
         try {
@@ -323,9 +325,7 @@ class PaymentController extends Controller
     
     public function receipt(Payment $payment)
     {
-        if ($payment->school_id !== session('current_school_id')) {
-            abort(403);
-        }
+        abort_unless(auth()->user()->can('view', $payment), 403);
 
         $payment->load([
             'enrollment.student', 

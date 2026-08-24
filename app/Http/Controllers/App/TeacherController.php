@@ -37,16 +37,19 @@ class TeacherController extends Controller
             'gender' => 'required|in:M,F',
         ]);
 
-        Teacher::create([
-            'school_id' => session('current_school_id'),
+        // role et school_id ne sont pas mass-assignables (protection contre l'élévation
+        // de privilèges) : on les affecte explicitement après création.
+        $teacher = Teacher::create([
             'first_name' => $validated['first_name'],
             'last_name' => $validated['last_name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'phone' => $validated['phone'] ?? null,
             'gender' => $validated['gender'],
-            'role' => 'teacher',
         ]);
+        $teacher->school_id = session('current_school_id');
+        $teacher->role = 'teacher';
+        $teacher->save();
 
         return redirect()->route('app.teachers.index')
             ->with('success', 'Enseignant créé avec succès !');

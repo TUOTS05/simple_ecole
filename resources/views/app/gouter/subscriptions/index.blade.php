@@ -229,7 +229,7 @@
             selectedStudents: {},
             studentConfig: {},
             loading: false,
-            rates: {!! $rates->mapWithKeys(fn($r) => [$r->school_class_id => (float) $r->total_amount])->toJson() !!},
+            rates: @json($rates->mapWithKeys(fn($r) => [$r->school_class_id => (float) $r->total_amount])),
 
             get currentRateAmount() {
                 return this.rates[this.selectedClassId] ?? 0;

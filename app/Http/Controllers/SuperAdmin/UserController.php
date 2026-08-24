@@ -83,14 +83,23 @@ class UserController extends Controller
         if ($validated['role'] === 'super_admin') {
             $validated['school_id'] = null;
         }
-        
+
         // Hasher le mot de passe
         $validated['password'] = Hash::make($validated['password']);
-        
+
         // Supprimer password_confirmation
         unset($validated['password_confirmation']);
-        
+
+        // role et school_id ne sont pas mass-assignables (protection contre l'élévation
+        // de privilèges) : on les affecte explicitement après validation.
+        $role = $validated['role'];
+        $schoolId = $validated['school_id'];
+        unset($validated['role'], $validated['school_id']);
+
         $newUser = User::create($validated);
+        $newUser->role = $role;
+        $newUser->school_id = $schoolId;
+        $newUser->save();
 
         ActivityLog::logAction(
             'created_user',
@@ -156,8 +165,17 @@ class UserController extends Controller
         
         // Supprimer password_confirmation
         unset($validated['password_confirmation']);
-        
+
+        // role et school_id ne sont pas mass-assignables (protection contre l'élévation
+        // de privilèges) : on les affecte explicitement après validation.
+        $role = $validated['role'];
+        $schoolId = $validated['school_id'];
+        unset($validated['role'], $validated['school_id']);
+
         $user->update($validated);
+        $user->role = $role;
+        $user->school_id = $schoolId;
+        $user->save();
 
         ActivityLog::logAction(
             'updated_user',
