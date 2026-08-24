@@ -14,6 +14,21 @@ use App\Models\User;
 class GradeController extends Controller
 {
     /**
+     * Afficher la liste des classes assignées à l'enseignant, pour choisir laquelle noter
+     */
+    public function selectClass()
+    {
+        $teacher = auth()->user();
+        $assignments = $teacher->teacherAssignments()
+            ->with(['schoolClass' => function ($q) {
+                $q->withCount('students');
+            }])
+            ->get();
+
+        return view('teacher.grades.select-class', compact('assignments'));
+    }
+
+    /**
      * Afficher la liste des matières et l'historique des notes d'une classe
      */
     // public function index($classId)

@@ -11,14 +11,12 @@
             <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
                 <span class="mr-2">⚙️</span> 1. Sélectionner la classe et la date
             </h2>
-            <!-- ✅ CORRECTION 1 : Route teacher.attendance.create -->
-            <form method="GET" action="{{ route('teacher.attendance.create') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <form method="GET" action="{{ route('app.attendances.create') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Classe *</label>
                     <select name="class_id" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
                         <option value="">-- Choisir --</option>
-                        <!-- ✅ CORRECTION 2 : Utilisation de $teacherClasses au lieu de $classes -->
-                        @foreach($teacherClasses as $tc)
+                        @foreach($classes as $tc)
                             <option value="{{ $tc->id }}" data-cycle="{{ $tc->cycle ?? 'Cycle' }}" {{ ($selectedClassId ?? '') == $tc->id ? 'selected' : '' }}>
                                 {{ $tc->name }} ({{ $tc->cycle ?? 'Cycle' }})
                             </option>
@@ -48,10 +46,8 @@
         </div>
 
         <!-- Formulaire d'appel -->
-        <!-- ✅ CORRECTION 3 : Vérification que $students existe avant de compter -->
         @if(isset($students) && $students->count() > 0)
-            <!-- ✅ CORRECTION 4 : Route teacher.attendance.store -->
-            <form action="{{ route('teacher.attendance.store') }}" method="POST">
+            <form action="{{ route('app.attendances.store') }}" method="POST">
                 @csrf
                 <input type="hidden" name="class_id" value="{{ $selectedClassId }}">
                 <input type="hidden" name="date" value="{{ $selectedDate }}">
