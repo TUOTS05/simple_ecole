@@ -189,31 +189,6 @@ class AttendanceController extends Controller
             ->with('success', 'Appel enregistré avec succès pour le ' . Carbon::parse($date)->format('d/m/Y') . ' !');
     }
 
-    public function show(Request $request)
-    {
-        $schoolId = session('current_school_id');
-        $date = $request->get('date', now()->format('Y-m-d'));
-
-        $query = Attendance::where('school_id', $schoolId)
-            ->where('date', $date)
-            ->with(['student.classes', 'markedBy'])
-            ->orderBy('student_id');
-
-        if (Schema::hasColumn('attendances', 'period')) {
-            $query->orderBy('period');
-        }
-
-        $attendances = $query->get()->groupBy('student_id');
-
-        return view('app.attendances.show', compact('attendances', 'date'));
-    }
-
-    // Les méthodes edit, update, destroy ne sont pas utilisées pour l'appel groupé
-    public function edit(string $id) {}
-    public function update(Request $request, string $id) {}
-    public function destroy(string $id) {}
-
-
         public function showByDate(string $date)
     {
         $schoolId = session('current_school_id');

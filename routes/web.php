@@ -296,7 +296,6 @@ Route::middleware(['auth', 'parent', 'school.active', 'tenant'])->prefix('parent
     Route::get('/{student}/grades/{reportCard}/pdf', [\App\Http\Controllers\Parent\GradeController::class, 'downloadPdf'])->name('grades.pdf');
     Route::get('/attendance/{studentId}', [\App\Http\Controllers\Parent\AttendanceController::class, 'index'])
     ->name('attendance.index');
-    Route::get('/{student}/attendance', [\App\Http\Controllers\Parent\AttendanceController::class, 'index'])->name('attendance.index');
     Route::get('/{student}/payments', [\App\Http\Controllers\Parent\PaymentController::class, 'index'])->name('payments.index');
     Route::get('/{student}/payments/{payment}/receipt', [\App\Http\Controllers\Parent\PaymentController::class, 'downloadReceipt'])->name('payments.receipt');
     
