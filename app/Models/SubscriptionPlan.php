@@ -14,7 +14,6 @@ class SubscriptionPlan extends Model
         'max_teachers',
         'max_classes',
         'monthly_price',
-        'yearly_price',
         'is_active',
         'features',
         'sort_order',
@@ -26,6 +25,17 @@ class SubscriptionPlan extends Model
         'monthly_price' => 'decimal:2',
         'yearly_price' => 'decimal:2',
     ];
+
+    /**
+     * Le montant annuel n'est jamais saisi : il vaut toujours 12 fois le prix
+     * mensuel, recalculé automatiquement à chaque enregistrement.
+     */
+    protected static function booted()
+    {
+        static::saving(function (self $plan) {
+            $plan->yearly_price = ($plan->monthly_price ?? 0) * 12;
+        });
+    }
 
     /**
      * Scope pour récupérer uniquement les plans actifs

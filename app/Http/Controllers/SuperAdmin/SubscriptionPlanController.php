@@ -40,7 +40,6 @@ class SubscriptionPlanController extends Controller
             'max_teachers' => 'required|integer|min:1',
             'max_classes' => 'required|integer|min:1',
             'monthly_price' => 'required|numeric|min:0',
-            'yearly_price' => 'required|numeric|min:0',
         ]);
 
         // 2. Traitement des champs spéciaux
@@ -81,7 +80,6 @@ class SubscriptionPlanController extends Controller
             'max_teachers' => 'required|integer|min:1',
             'max_classes' => 'required|integer|min:1',
             'monthly_price' => 'required|numeric|min:0',
-            'yearly_price' => 'required|numeric|min:0',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ]);

@@ -98,17 +98,19 @@
                             <!-- Prix mensuel -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Prix mensuel *</label>
-                                <input type="number" name="monthly_price" value="{{ old('monthly_price', 0) }}" required min="0" step="0.01"
+                                <input type="number" id="monthly_price" name="monthly_price" value="{{ old('monthly_price', 0) }}" required min="0" step="0.01"
+                                       oninput="document.getElementById('yearly_price_preview').textContent = new Intl.NumberFormat('fr-FR').format(Math.round((parseFloat(this.value) || 0) * 12));"
                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent @error('monthly_price') border-red-500 @enderror">
                                 @error('monthly_price') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
                             </div>
 
-                            <!-- Prix annuel -->
+                            <!-- Prix annuel (calculé automatiquement : mensuel × 12) -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Prix annuel *</label>
-                                <input type="number" name="yearly_price" value="{{ old('yearly_price', 0) }}" required min="0" step="0.01"
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent @error('yearly_price') border-red-500 @enderror">
-                                @error('yearly_price') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Prix annuel</label>
+                                <div class="w-full px-4 py-2 border border-gray-200 bg-gray-50 rounded-lg text-gray-600">
+                                    <span id="yearly_price_preview">{{ number_format((old('monthly_price', 0)) * 12, 0, ',', ' ') }}</span> FCFA/an
+                                </div>
+                                <p class="text-xs text-gray-400 mt-1">Calculé automatiquement (prix mensuel × 12)</p>
                             </div>
                         </div>
                     </div>
