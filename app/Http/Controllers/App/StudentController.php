@@ -10,6 +10,7 @@ use App\Models\SchoolClass;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\StudentInstallment;
+use App\Models\ReportCard;
 use Illuminate\Support\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\StudentsExport;
@@ -358,6 +359,42 @@ class StudentController extends Controller
         ]);
 
         return view('app.students.show', compact('student'));
+    }
+
+    /**
+     * Rechercher un élève par matricule (scan de la carte scolaire QR code) et ouvrir son dossier
+     */
+    public function getByMatricule($matricule)
+    {
+        $student = Student::where('school_id', session('current_school_id'))
+            ->where('matricule', $matricule)
+            ->firstOrFail();
+
+        return redirect()->route('app.students.dossier', $student);
+    }
+
+    /**
+     * Afficher le dossier complet de l'élève (parcours, paiements, bulletins, présences)
+     */
+    public function dossier(Student $student)
+    {
+        if ($student->school_id !== session('current_school_id')) {
+            abort(403, 'Accès non autorisé à cet élève.');
+        }
+
+        $student->load([
+            'enrollments.schoolYear',
+            'enrollments.schoolClass',
+            'enrollments.payments',
+            'attendances',
+        ]);
+
+        $reportCards = ReportCard::where('student_id', $student->id)
+            ->with('schoolClass')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('app.students.dossier', compact('student', 'reportCards'));
     }
 
     /**

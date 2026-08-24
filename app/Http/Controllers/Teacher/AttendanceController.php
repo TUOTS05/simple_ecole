@@ -138,6 +138,38 @@ class AttendanceController extends Controller
         return view('teacher.attendance.create', compact('teacherClasses', 'class', 'students', 'selectedClassId', 'selectedDate', 'selectedPeriod', 'existingAttendances'));
     }
 
+    public function history($classId = null)
+    {
+        $teacher = auth()->user();
+        $teacherClasses = SchoolClass::whereHas('teacherAssignments', fn($q) => $q->where('user_id', $teacher->id))->orderBy('name')->get();
+
+        $classId = $classId ?? $teacherClasses->first()->id ?? null;
+
+        if (!$classId || !$teacher->teacherAssignments()->where('school_class_id', $classId)->first()) {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        $class = SchoolClass::findOrFail($classId);
+
+        $attendances = DB::table('attendances')
+            ->select(
+                'date',
+                'period',
+                DB::raw("SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present"),
+                DB::raw("SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as absent"),
+                DB::raw("SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as late"),
+                DB::raw("SUM(CASE WHEN status = 'excused' THEN 1 ELSE 0 END) as excused"),
+                DB::raw('COUNT(*) as total')
+            )
+            ->where('school_class_id', $classId)
+            ->groupBy('date', 'period')
+            ->orderBy('date', 'desc')
+            ->get()
+            ->map(fn($row) => (array) $row);
+
+        return view('teacher.attendance.history', compact('class', 'attendances'));
+    }
+
     public function store(Request $request)
     {
         $teacher = auth()->user();

@@ -39,7 +39,7 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
     Route::get('/dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
     Route::resource('/schools', \App\Http\Controllers\SuperAdmin\SchoolController::class);
     Route::resource('/users', \App\Http\Controllers\SuperAdmin\UserController::class);
-    Route::resource('/plans', \App\Http\Controllers\SuperAdmin\SubscriptionPlanController::class);
+    Route::resource('/plans', \App\Http\Controllers\SuperAdmin\SubscriptionPlanController::class)->except(['show']);
 
     // ✅ AJOUTEZ CETTE LIGNE POUR LES JOURNAUX D'ACTIVITÉ
     Route::get('/activity-logs', [\App\Http\Controllers\SuperAdmin\ActivityLogController::class, 'index'])->name('activity-logs.index');
@@ -80,7 +80,7 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent,ac
 
     // Paiements
     Route::get('/payments/export', [\App\Http\Controllers\App\PaymentController::class, 'export'])->name('payments.export');
-    Route::resource('/payments', \App\Http\Controllers\App\PaymentController::class);
+    Route::resource('/payments', \App\Http\Controllers\App\PaymentController::class)->except(['edit', 'update']);
     Route::get('/payments/{payment}/receipt', [\App\Http\Controllers\App\PaymentController::class, 'receipt'])->name('payments.receipt');
 
     // Échéances (créées/supprimées depuis les écrans d'inscription et de paiement)
@@ -139,6 +139,7 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent,ac
 
     // Personnel comptable (gestion des comptes) : réservé à l'admin école.
     Route::resource('/accountants', \App\Http\Controllers\App\AccountantController::class)
+        ->except(['show'])
         ->middleware('role:school_admin');
 
     // Classes
@@ -179,7 +180,7 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent,ac
         ->only(['index', 'create', 'store', 'destroy']);
 
     // Gestion des Enseignants (CRUD)
-    Route::resource('/teachers', \App\Http\Controllers\App\TeacherController::class);
+    Route::resource('/teachers', \App\Http\Controllers\App\TeacherController::class)->except(['show']);
 
     // Configuration des frais par classe
     Route::get('/class-fees', [\App\Http\Controllers\App\ClassFeeController::class, 'index'])->name('class-fees.index');

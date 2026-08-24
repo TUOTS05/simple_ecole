@@ -22,6 +22,9 @@
         <a href="{{ route('teacher.attendance.create', ['classId' => $class->id]) }}" class="flex items-center px-4 py-2 bg-accent hover:bg-green-400 text-gray-800 rounded-lg font-semibold text-sm transition shadow-sm">
             <i class="fas fa-clipboard-check mr-2"></i> Faire l'appel
         </a>
+        <a href="{{ route('teacher.attendance.history', ['classId' => $class->id]) }}" class="flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 rounded-lg font-semibold text-sm transition shadow-sm">
+            <i class="fas fa-clock-rotate-left mr-2"></i> Historique
+        </a>
         <a href="{{ route('teacher.grades.index', ['classId' => $class->id]) }}" class="flex items-center px-4 py-2 bg-purple-100 hover:bg-purple-200 text-purple-800 border border-purple-300 rounded-lg font-semibold text-sm transition shadow-sm">
             <i class="fas fa-star mr-2"></i> Gérer les notes
         </a>
