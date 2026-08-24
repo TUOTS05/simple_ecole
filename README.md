@@ -1,58 +1,63 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Simple École
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Application de gestion scolaire développée avec Laravel (PHP 8.3). Elle est conçue pour des écoles francophones et fonctionne en mode multi-écoles (SaaS) : plusieurs établissements peuvent utiliser la même instance, chacun étant isolé au niveau des données.
 
-## About Laravel
+## Fonctionnalités principales
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Élèves et inscriptions** : gestion des élèves, des classes, des inscriptions et des années scolaires.
+- **Notes et bulletins** : saisie des notes par matière, calcul des moyennes et des rangs, génération de bulletins PDF (mensuels et trimestriels).
+- **Paiements et échéances** : suivi des frais de scolarité, échéanciers, paiements et rapports financiers.
+- **Cantine / goûter** : abonnements et paiements liés aux services de cantine et de goûter.
+- **Présence** : suivi de l'assiduité des élèves.
+- **Notifications SMS** : envoi de SMS aux parents (absences, retards de paiement, etc.) via la passerelle Orange SMS.
+- **Multi-écoles** : espace Super Admin pour gérer les établissements, les abonnements et les contrats, avec isolation des données par école.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Prérequis
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- PHP 8.3+
+- Composer
+- MySQL (ou MariaDB)
+- Node.js et npm
+- Un environnement local type Laragon, Herd, Valet ou équivalent
 
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Installation
 
 ```bash
-composer require laravel/boost --dev
+# 1. Installer les dépendances PHP
+composer install
 
-php artisan boost:install
+# 2. Copier le fichier d'environnement et générer la clé d'application
+cp .env.example .env
+php artisan key:generate
+
+# 3. Configurer la base de données MySQL dans le fichier .env
+#    (DB_DATABASE, DB_USERNAME, DB_PASSWORD, ...)
+
+# 4. Exécuter les migrations (et éventuellement les seeders)
+php artisan migrate
+# php artisan db:seed
+
+# 5. Installer les dépendances front-end et compiler les assets
+npm install
+npm run build
+
+# 6. Lancer le serveur de développement
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## Variables d'environnement spécifiques au projet
 
-## Contributing
+En plus des variables standard de Laravel, l'application utilise les variables suivantes pour la passerelle SMS Orange (voir `config/services.php` et `app/Services/Sms/OrangeSmsGateway.php`) :
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```
+ORANGE_SMS_CLIENT_ID=
+ORANGE_SMS_CLIENT_SECRET=
+ORANGE_SMS_SENDER_NAME=MIRABELLES
+ORANGE_SMS_DEV_MODE=true
+```
 
-## Code of Conduct
+Ces identifiants peuvent aussi être configurés par école directement depuis l'application (paramètres SMS), auquel cas ils sont stockés chiffrés en base de données et priment sur ces variables globales.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Licence
 
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Ce projet s'appuie sur le framework [Laravel](https://laravel.com), open-sourcé sous licence [MIT](https://opensource.org/licenses/MIT).
