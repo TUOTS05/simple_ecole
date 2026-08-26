@@ -78,7 +78,7 @@
                     <!-- Téléphone -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-1.5">Téléphone</label>
-                        <input type="text" name="phone" value="{{ old('phone', $user->phone ?? '') }}" 
+                        <input type="tel" name="phone" value="{{ old('phone', $user->phone ?? '') }}"
                                class="w-full px-4 py-3 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition @error('phone') border-red-500 @enderror"
                                placeholder="Ex: +225 07 00 00 00 00">
                         @error('phone') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror

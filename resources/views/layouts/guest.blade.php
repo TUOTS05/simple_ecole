@@ -14,6 +14,7 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @include('components.numeric-guard-script')
     </head>
     <body class="font-sans text-gray-900 antialiased">
         <div class="min-h-screen flex flex-col sm:justify-center items-center pt-10 pb-10 px-4 bg-gradient-to-br from-blue-50 via-white to-green-50 relative overflow-hidden">

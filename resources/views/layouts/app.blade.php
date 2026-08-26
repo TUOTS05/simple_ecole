@@ -28,6 +28,7 @@
     </script>
     
     @stack('styles')
+    @include('components.numeric-guard-script')
 </head>
 <body class="bg-gray-50">
     <div class="flex h-screen overflow-hidden">

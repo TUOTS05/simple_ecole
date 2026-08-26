@@ -66,7 +66,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">Téléphone personnel</label>
-                    <input type="text" name="user_phone" value="{{ old('user_phone', $user->phone ?? '') }}" 
+                    <input type="tel" name="user_phone" value="{{ old('user_phone', $user->phone ?? '') }}"
                            class="w-full px-4 py-3 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition @error('user_phone') border-red-500 @enderror">
                     @error('user_phone') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
@@ -127,7 +127,7 @@
 
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">Téléphone de l'école</label>
-                    <input type="text" name="school_phone" value="{{ old('school_phone', $school->phone ?? '') }}" 
+                    <input type="tel" name="school_phone" value="{{ old('school_phone', $school->phone ?? '') }}"
                            class="w-full px-4 py-3 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition @error('school_phone') border-red-500 @enderror">
                     @error('school_phone') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>

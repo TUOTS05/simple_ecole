@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Demande de compte - Simple-School</title>
+    <title>Demande de compte - Simple Ecole</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -12,6 +12,7 @@
         .input-error { border-color: #ef4444 !important; }
         .input-error:focus { ring-color: #ef4444 !important; border-color: #ef4444 !important; }
     </style>
+    @include('components.numeric-guard-script')
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen flex flex-col">
 

@@ -13,6 +13,7 @@
             background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #3b82f6 100%);
         }
     </style>
+    @include('components.numeric-guard-script')
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
 
@@ -93,7 +94,7 @@
                             <label class="block text-sm font-semibold text-gray-700 mb-2">
                                 Téléphone <span class="text-red-500">*</span>
                             </label>
-                            <input type="text" name="school_phone" value="{{ old('school_phone') }}" required
+                            <input type="tel" name="school_phone" value="{{ old('school_phone') }}" required
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                 placeholder="+225 07 00 00 00 00">
                         </div>
