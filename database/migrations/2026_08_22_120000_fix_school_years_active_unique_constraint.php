@@ -27,10 +27,19 @@ return new class extends Migration
 
         // VIRTUAL (pas STORED) : MySQL refuse d'ajouter une colonne générée STORED
         // par ALTER TABLE sur une table ayant une clé étrangère (erreur 1215).
-        DB::statement(
-            'ALTER TABLE school_years ADD COLUMN active_school_id BIGINT UNSIGNED '
-            . 'GENERATED ALWAYS AS (IF(is_active = 1, school_id, NULL)) VIRTUAL'
-        );
+        // SQLite n'a pas la fonction IF() : on utilise CASE WHEN, équivalent
+        // supporté par les deux moteurs (les tests tournent sur sqlite :memory:).
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+            DB::statement(
+                'ALTER TABLE school_years ADD COLUMN active_school_id INTEGER '
+                . 'GENERATED ALWAYS AS (CASE WHEN is_active = 1 THEN school_id ELSE NULL END) VIRTUAL'
+            );
+        } else {
+            DB::statement(
+                'ALTER TABLE school_years ADD COLUMN active_school_id BIGINT UNSIGNED '
+                . 'GENERATED ALWAYS AS (IF(is_active = 1, school_id, NULL)) VIRTUAL'
+            );
+        }
 
         Schema::table('school_years', function (Blueprint $table) {
             $table->unique('active_school_id');
