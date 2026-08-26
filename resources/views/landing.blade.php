@@ -655,67 +655,66 @@
                 </p>
             </div>
 
-            <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                <!-- Starter -->
-                <div class="bg-white rounded-2xl p-8 border-2 border-gray-100 hover:border-blue-200 transition reveal">
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Starter</h3>
-                    <p class="text-gray-500 mb-6">Pour les petites écoles</p>
-                    <div class="mb-6">
-                        <span class="text-4xl font-black text-gray-900">25 000</span>
-                        <span class="text-gray-500"> FCFA/mois</span>
-                    </div>
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-center text-gray-700"><i class="fas fa-check text-green-500 mr-2"></i>Jusqu'à 200 élèves</li>
-                        <li class="flex items-center text-gray-700"><i class="fas fa-check text-green-500 mr-2"></i>3 utilisateurs</li>
-                        <li class="flex items-center text-gray-700"><i class="fas fa-check text-green-500 mr-2"></i>Toutes les fonctionnalités</li>
-                        <li class="flex items-center text-gray-700"><i class="fas fa-check text-green-500 mr-2"></i>Support email</li>
-                    </ul>
-                    <a href="{{ route('request-account') }}" class="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-900 py-3 rounded-lg font-bold transition">
-                        Commencer
-                    </a>
-                </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+                @forelse ($plans ?? [] as $index => $plan)
+                    @php
+                        $descParts = preg_split('/\r?\n\r?\n/', trim($plan->description ?? ''), 2);
+                        $tagline = trim($descParts[0] ?? '');
+                        $bullets = isset($descParts[1])
+                            ? array_values(array_filter(array_map('trim', preg_split('/\r?\n/', $descParts[1]))))
+                            : [];
+                        $priceLine = $bullets[0] ?? null;
+                        $isQuote = $priceLine && stripos($priceLine, 'devis') !== false;
+                        $features = count($bullets) > 1
+                            ? array_slice($bullets, 1)
+                            : [
+                                "Jusqu'à " . number_format($plan->max_students, 0, ',', ' ') . ' élèves',
+                                $plan->max_teachers . ' utilisateurs',
+                                'Toutes les fonctionnalités',
+                            ];
+                        $isPopular = $index === 1;
+                    @endphp
+                    <div class="{{ $isPopular ? 'bg-gradient-to-br from-blue-600 to-blue-800 text-white transform md:scale-105 shadow-2xl' : 'bg-white border-2 border-gray-100 hover:border-blue-200' }} rounded-2xl p-8 relative transition reveal">
+                        @if ($isPopular)
+                            <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-green-500 text-white px-4 py-1 rounded-full text-sm font-bold whitespace-nowrap">
+                                ⭐ POPULAIRE
+                            </div>
+                        @endif
 
-                <!-- Pro (Recommandé) -->
-                <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-8 text-white relative transform md:scale-105 shadow-2xl reveal">
-                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-green-500 text-white px-4 py-1 rounded-full text-sm font-bold">
-                        ⭐ POPULAIRE
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Medium</h3>
-                    <p class="text-blue-100 mb-6">Pour les écoles en croissance</p>
-                    <div class="mb-6">
-                        <span class="text-4xl font-black">50 000</span>
-                        <span class="text-blue-100"> FCFA/mois</span>
-                    </div>
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-center"><i class="fas fa-check text-green-300 mr-2"></i>Jusqu'à 500 élèves</li>
-                        <li class="flex items-center"><i class="fas fa-check text-green-300 mr-2"></i>05 utilisateurs</li>
-                        <li class="flex items-center"><i class="fas fa-check text-green-300 mr-2"></i>Toutes les fonctionnalités</li>
-                        <li class="flex items-center"><i class="fas fa-check text-green-300 mr-2"></i>Support prioritaire 24/7</li>
-                        <li class="flex items-center"><i class="fas fa-check text-green-300 mr-2"></i>Formation incluse</li>
-                    </ul>
-                    <a href="{{ route('request-account') }}" class="block w-full text-center bg-white hover:bg-gray-100 text-blue-600 py-3 rounded-lg font-bold transition">
-                        Choisir ce plan
-                    </a>
-                </div>
+                        <h3 class="text-xl font-bold {{ $isPopular ? '' : 'text-gray-900' }} mb-2">{{ $plan->name }}</h3>
+                        <p class="{{ $isPopular ? 'text-blue-100' : 'text-gray-500' }} mb-6">{{ $tagline }}</p>
 
-                <!-- Enterprise -->
-                <div class="bg-white rounded-2xl p-8 border-2 border-gray-100 hover:border-blue-200 transition reveal">
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Premium</h3>
-                    <p class="text-gray-500 mb-6">Pour les grands groupes</p>
-                    <div class="mb-6">
-                        <span class="text-4xl font-black text-gray-900">Sur devis</span>
+                        <div class="mb-6">
+                            @if ($isQuote)
+                                <span class="text-4xl font-black {{ $isPopular ? '' : 'text-gray-900' }}">Sur devis</span>
+                            @else
+                                <span class="text-4xl font-black {{ $isPopular ? '' : 'text-gray-900' }}">{{ number_format($plan->monthly_price, 0, ',', ' ') }}</span>
+                                <span class="{{ $isPopular ? 'text-blue-100' : 'text-gray-500' }}"> FCFA/mois</span>
+                            @endif
+                        </div>
+
+                        <ul class="space-y-3 mb-8">
+                            @foreach ($features as $feature)
+                                <li class="flex items-start {{ $isPopular ? '' : 'text-gray-700' }}">
+                                    <i class="fas fa-check {{ $isPopular ? 'text-green-300' : 'text-green-500' }} mt-1 mr-2"></i>
+                                    <span>{{ $feature }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+
+                        @if ($isQuote)
+                            <a href="#contact" class="block w-full text-center {{ $isPopular ? 'bg-white hover:bg-gray-100 text-blue-600' : 'bg-gray-100 hover:bg-gray-200 text-gray-900' }} py-3 rounded-lg font-bold transition">
+                                Nous contacter
+                            </a>
+                        @else
+                            <a href="{{ route('request-account') }}" class="block w-full text-center {{ $isPopular ? 'bg-white hover:bg-gray-100 text-blue-600' : 'bg-gray-100 hover:bg-gray-200 text-gray-900' }} py-3 rounded-lg font-bold transition">
+                                {{ $isPopular ? 'Choisir ce plan' : 'Commencer' }}
+                            </a>
+                        @endif
                     </div>
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-center text-gray-700"><i class="fas fa-check text-green-500 mr-2"></i>Élèves illimités</li>
-                        <li class="flex items-center text-gray-700"><i class="fas fa-check text-green-500 mr-2"></i>Utilisateurs illimités</li>
-                        <li class="flex items-center text-gray-700"><i class="fas fa-check text-green-500 mr-2"></i>Multi-écoles</li>
-                        <li class="flex items-center text-gray-700"><i class="fas fa-check text-green-500 mr-2"></i>Support dédié</li>
-                        <li class="flex items-center text-gray-700"><i class="fas fa-check text-green-500 mr-2"></i>Personnalisation avancée</li>
-                    </ul>
-                    <a href="#contact" class="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-900 py-3 rounded-lg font-bold transition">
-                        Nous contacter pour Premium
-                    </a>
-                </div>
+                @empty
+                    <p class="col-span-full text-center text-gray-500">Les plans d'abonnement seront bientôt disponibles.</p>
+                @endforelse
             </div>
         </div>
     </section>

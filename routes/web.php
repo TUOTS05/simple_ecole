@@ -400,7 +400,8 @@ Route::post('/demande-compte', [App\Http\Controllers\SchoolOnboardingController:
 Route::get('/demo-login', [DemoController::class, 'login'])->name('demo.login');
 
 Route::get('/', function () {
-    return view('landing');
+    $plans = \App\Models\SubscriptionPlan::active()->orderBy('sort_order')->orderBy('monthly_price')->get();
+    return view('landing', compact('plans'));
 })->name('landing');
 
 /*
