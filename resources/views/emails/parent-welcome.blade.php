@@ -15,7 +15,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎓 Simple-School</h1>
+            <h1>🎓 Simple Ecole</h1>
             <p>Votre espace parent est prêt !</p>
         </div>
 
@@ -44,7 +44,7 @@
 
         <div class="footer">
             <p>Cet email a été envoyé automatiquement. Merci de ne pas y répondre directement.</p>
-            <p>&copy; {{ date('Y') }} Simple-School. Tous droits réservés.</p>
+            <p>&copy; {{ date('Y') }} Simple Ecole. Tous droits réservés.</p>
         </div>
     </div>
 </body>

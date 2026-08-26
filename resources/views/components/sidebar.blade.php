@@ -8,7 +8,7 @@
     <!-- Logo & Bouton de réduction -->
     <div class="h-16 flex items-center justify-between px-4 border-b border-gray-200 flex-shrink-0">
         <h1 x-show="sidebarOpen" x-transition class="text-xl font-bold text-primary tracking-tight whitespace-nowrap">
-            Simple School
+            Simple Ecole
         </h1>
         <button @click="sidebarOpen = !sidebarOpen" class="p-2 rounded-lg hover:bg-gray-100 text-gray-600 focus:outline-none transition-colors" title="Réduire/Agrandir le menu">
             <svg x-show="sidebarOpen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

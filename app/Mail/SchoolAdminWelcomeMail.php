@@ -25,7 +25,7 @@ class SchoolAdminWelcomeMail extends Mailable
 
     public function build()
     {
-        return $this->subject('🎉 Bienvenue sur Simple-School - Vos identifiants de connexion')
+        return $this->subject('🎉 Bienvenue sur Simple Ecole - Vos identifiants de connexion')
                     ->view('emails.school-admin-welcome');
     }
 }

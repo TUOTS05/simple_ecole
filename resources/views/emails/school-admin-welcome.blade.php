@@ -15,7 +15,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎓 Simple-School</h1>
+            <h1>🎓 Simple Ecole</h1>
             <p>Votre espace est prêt !</p>
         </div>
         
@@ -39,12 +39,12 @@
             </p>
 
             <p>Si vous avez des questions, notre équipe de support est à votre disposition.</p>
-            <p>Cordialement,<br>L'équipe Simple-School</p>
+            <p>Cordialement,<br>L'équipe Simple Ecole</p>
         </div>
 
         <div class="footer">
             <p>Cet email a été envoyé automatiquement. Merci de ne pas y répondre directement.</p>
-            <p>&copy; {{ date('Y') }} Simple-School. Tous droits réservés.</p>
+            <p>&copy; {{ date('Y') }} Simple Ecole. Tous droits réservés.</p>
         </div>
     </div>
 </body>

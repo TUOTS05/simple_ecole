@@ -29,7 +29,7 @@ class ParentWelcomeMail extends Mailable
 
     public function build()
     {
-        return $this->subject('🎓 Bienvenue sur Simple-School - Votre espace parent')
+        return $this->subject('🎓 Bienvenue sur Simple Ecole - Votre espace parent')
                     ->view('emails.parent-welcome');
     }
 }
