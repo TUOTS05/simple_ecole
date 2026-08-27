@@ -9,9 +9,10 @@ use App\Models\SchoolClass;
 use App\Models\SchoolYear;
 use App\Models\Student;
 use App\Models\StudentInstallment; // AJOUTÉ
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB; // AJOUTÉ
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon; // AJOUTÉ
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class PaymentController extends Controller
@@ -19,8 +20,7 @@ class PaymentController extends Controller
     /**
      * Display a listing of the resource.
      */
-
-        public function index(Request $request)
+    public function index(Request $request)
     {
         $schoolId = session('current_school_id');
 
@@ -45,7 +45,7 @@ class PaymentController extends Controller
 
         // ✅ AJOUT DU FILTRE PAR CLASSE
         if ($request->filled('class_id')) {
-            $query->whereHas('enrollment', function($q) use ($request) {
+            $query->whereHas('enrollment', function ($q) use ($request) {
                 $q->where('school_class_id', $request->class_id);
             });
         }
@@ -62,8 +62,7 @@ class PaymentController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-
-        public function create(Request $request)
+    public function create(Request $request)
     {
         $schoolId = session('current_school_id');
         $school = session('current_school');
@@ -116,7 +115,7 @@ class PaymentController extends Controller
 
         return view('app.payments.create', compact(
             'schoolYears', 'cycles', 'classes', 'students',
-            'selectedYearId', 'selectedCycle', 'selectedClassId', 
+            'selectedYearId', 'selectedCycle', 'selectedClassId',
             'selectedStudentId', 'selectedPaymentType', 'selectedEnrollment', 'pendingInstallments'
         ));
     }
@@ -124,8 +123,7 @@ class PaymentController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-
-        public function store(Request $request)
+    public function store(Request $request)
     {
         // 1. Validation des données du formulaire
         $validatedData = $request->validate([
@@ -154,7 +152,7 @@ class PaymentController extends Controller
         // Récupération de l'école et de l'utilisateur (Nettoyé des doublons)
         $school = $enrollment->school ?? $student->school;
         $user = auth()->user();
-        $userName = $user->name ?? trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?? $user->email ?? 'Administrateur';
+        $userName = $user->name ?? trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?? $user->email ?? 'Administrateur';
 
         // 3. Mise à jour de l'échéance (Montant payé et Statut)
         $totalAmount = $installment->amount;
@@ -165,7 +163,7 @@ class PaymentController extends Controller
         // suivantes, ce qui faussait leur statut. On demande un paiement séparé par échéance.
         if ($validatedData['amount'] > $remainingBeforePayment) {
             return back()->withErrors([
-                'amount' => 'Le montant saisi (' . number_format($validatedData['amount'], 0, ',', ' ') . ' FCFA) dépasse le solde restant de cette échéance (' . number_format($remainingBeforePayment, 0, ',', ' ') . ' FCFA). Enregistrez un paiement séparé pour chaque échéance.',
+                'amount' => 'Le montant saisi ('.number_format($validatedData['amount'], 0, ',', ' ').' FCFA) dépasse le solde restant de cette échéance ('.number_format($remainingBeforePayment, 0, ',', ' ').' FCFA). Enregistrez un paiement séparé pour chaque échéance.',
             ])->withInput();
         }
 
@@ -183,42 +181,42 @@ class PaymentController extends Controller
             'status' => $installmentStatus,
         ]);
 
-        // 4. Création de l'enregistrement du paiement 
+        // 4. Création de l'enregistrement du paiement
         $payment = Payment::create([
-            'school_id'              => $school->id,
-            'enrollment_id'          => $validatedData['enrollment_id'],
+            'school_id' => $school->id,
+            'enrollment_id' => $validatedData['enrollment_id'],
             'student_installment_id' => $validatedData['student_installment_id'],
-            'amount'                 => $validatedData['amount'],
-            'payment_date'           => $validatedData['payment_date'],
-            'payment_method'         => $validatedData['payment_method'],
-            'payment_type'           => $validatedData['payment_type'],
-            'reference'              => $validatedData['reference'] ?? null,
-            'notes'                  => $validatedData['notes'] ?? null,
-            'received_by'            => auth()->id(),
+            'amount' => $validatedData['amount'],
+            'payment_date' => $validatedData['payment_date'],
+            'payment_method' => $validatedData['payment_method'],
+            'payment_type' => $validatedData['payment_type'],
+            'reference' => $validatedData['reference'] ?? null,
+            'notes' => $validatedData['notes'] ?? null,
+            'received_by' => auth()->id(),
         ]);
 
         // Variable pour stocker le chemin de la carte (sera null si ce n'est pas une inscription)
         $cardPath = null;
 
-                // 5. ✅ RÈGLE SPÉCIALE : Si c'est un paiement d'inscription
+        // 5. ✅ RÈGLE SPÉCIALE : Si c'est un paiement d'inscription
         if ($validatedData['payment_type'] === 'registration') {
             $student->update(['status' => 'active']);
 
             // Récupérer le nom de la classe directement depuis l'inscription en cours de paiement
             $currentClassName = $enrollment->schoolClass->name ?? 'Non assignée';
             $qrData = $student->admission_number ?? $student->matricule ?? 'INCONNU';
-            
+
             $cardPdf = Pdf::loadView('pdf.student-card', [
-                'student'           => $student,
-                'school'            => $school,
-                'qrData'            => $qrData,
-                'currentClassName'  => $currentClassName, // ✅ Sera maintenant correctement affiché
+                'student' => $student,
+                'school' => $school,
+                'qrData' => $qrData,
+                'currentClassName' => $currentClassName, // ✅ Sera maintenant correctement affiché
             ]);
-            
-            $cardFileName = 'carte_' . ($student->admission_number ?? $student->matricule ?? 'unknown') . '.pdf';
-            $cardPath = 'student_cards/' . $cardFileName;
+
+            $cardFileName = 'carte_'.($student->admission_number ?? $student->matricule ?? 'unknown').'.pdf';
+            $cardPath = 'student_cards/'.$cardFileName;
             Storage::disk('public')->put($cardPath, $cardPdf->output());
-            
+
             $student->update(['id_card_path' => $cardPath]);
         }
         // 6. Récupérer les échéances restantes pour le reçu
@@ -229,47 +227,47 @@ class PaymentController extends Controller
 
         // 7. ✅ GÉNÉRATION DU REÇU DE PAIEMENT
         $receiptPdf = Pdf::loadView('pdf.receipt', [
-            'payment'             => $payment,
-            'student'             => $student,
-            'school'              => $school,
-            'schoolClass'         => $enrollment->schoolClass ?? null,
-            'schoolYear'          => $enrollment->schoolYear ?? null,
-            'userName'            => $userName,
+            'payment' => $payment,
+            'student' => $student,
+            'school' => $school,
+            'schoolClass' => $enrollment->schoolClass ?? null,
+            'schoolYear' => $enrollment->schoolYear ?? null,
+            'userName' => $userName,
             'pendingInstallments' => $pendingInstallments,
         ]);
 
-        $receiptFileName = 'recu_' . $payment->id . '_' . time() . '.pdf';
-        $receiptPath = 'receipts/' . $receiptFileName;
+        $receiptFileName = 'recu_'.$payment->id.'_'.time().'.pdf';
+        $receiptPath = 'receipts/'.$receiptFileName;
         Storage::disk('public')->put($receiptPath, $receiptPdf->output());
-        
+
         // Sauvegarder le chemin du reçu dans la table payments (UNE SEULE FOIS)
         $payment->update(['receipt_path' => $receiptPath]);
 
         // 8. ✅ REDIRECTION AVEC LES LIENS DE TÉLÉCHARGEMENT (Reçu + Carte)
-        $receiptUrl = asset('storage/' . $receiptPath);
-        
+        $receiptUrl = asset('storage/'.$receiptPath);
+
         $successMessage = '
             <div class="font-semibold mb-2">✅ Paiement enregistré avec succès !</div>
             <div class="flex flex-col gap-2 text-sm">
-                <a href="' . $receiptUrl . '" target="_blank" class="flex items-center text-blue-700 hover:text-blue-900 font-bold underline">
+                <a href="'.$receiptUrl.'" target="_blank" class="flex items-center text-blue-700 hover:text-blue-900 font-bold underline">
                     📥 Télécharger le Reçu de Paiement
                 </a>';
-                
+
         // Si une carte a été générée (paiement d'inscription), on ajoute le lien
         if ($cardPath) {
-            $cardUrl = asset('storage/' . $cardPath);
+            $cardUrl = asset('storage/'.$cardPath);
             $successMessage .= '
-                <a href="' . $cardUrl . '" target="_blank" class="flex items-center text-green-700 hover:text-green-900 font-bold underline">
+                <a href="'.$cardUrl.'" target="_blank" class="flex items-center text-green-700 hover:text-green-900 font-bold underline">
                     🪪 Télécharger la Carte Scolaire (avec QR Code)
                 </a>';
         }
-        
+
         $successMessage .= '</div>';
 
         return redirect()->route('app.payments.index')
             ->with('payment_success', [
                 'receipt_url' => $receiptUrl,
-                'card_url' => $cardPath ? asset('storage/' . $cardPath) : null,
+                'card_url' => $cardPath ? asset('storage/'.$cardPath) : null,
             ]);
     }
 
@@ -280,6 +278,7 @@ class PaymentController extends Controller
     {
         abort_unless(auth()->user()->can('view', $payment), 403);
         $payment->load(['enrollment.student', 'receivedBy', 'studentInstallment']);
+
         return view('app.payments.show', compact('payment'));
     }
 
@@ -297,7 +296,7 @@ class PaymentController extends Controller
                 $installment = StudentInstallment::find($payment->student_installment_id);
                 if ($installment) {
                     $installment->paid_amount -= $payment->amount;
-                    
+
                     if ($installment->paid_amount <= 0) {
                         $installment->paid_amount = 0;
                         $installment->status = 'pending';
@@ -315,37 +314,37 @@ class PaymentController extends Controller
                 ->with('success', 'Paiement supprimé et échéance mise à jour !');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Erreur : ' . $e->getMessage()]);
+
+            return back()->withErrors(['error' => 'Erreur : '.$e->getMessage()]);
         }
     }
 
     /**
      * Afficher et télécharger le reçu de paiement en PDF
      */
-    
     public function receipt(Payment $payment)
     {
         abort_unless(auth()->user()->can('view', $payment), 403);
 
         $payment->load([
-            'enrollment.student', 
-            'enrollment.schoolClass', 
-            'enrollment.schoolYear', 
+            'enrollment.student',
+            'enrollment.schoolClass',
+            'enrollment.schoolYear',
             'school',
-            'studentInstallment'
+            'studentInstallment',
         ]);
 
         // Récupérer TOUTES les échéances encore en attente pour cette inscription
-        $pendingInstallments = \App\Models\StudentInstallment::where('enrollment_id', $payment->enrollment_id)
+        $pendingInstallments = StudentInstallment::where('enrollment_id', $payment->enrollment_id)
             ->whereIn('status', ['pending', 'partial', 'overdue'])
             ->orderBy('due_date', 'asc')
             ->get();
 
         // DÉBOGAGE : Vérifier ce qui est récupéré
-        \Log::info('Pending Installments for Payment #' . $payment->id, [
+        \Log::info('Pending Installments for Payment #'.$payment->id, [
             'enrollment_id' => $payment->enrollment_id,
             'count' => $pendingInstallments->count(),
-            'installments' => $pendingInstallments->toArray()
+            'installments' => $pendingInstallments->toArray(),
         ]);
 
         $student = $payment->enrollment->student;
@@ -357,28 +356,27 @@ class PaymentController extends Controller
             'payment', 'student', 'schoolClass', 'schoolYear', 'school', 'pendingInstallments'
         ));
 
-        $filename = 'Recu_Paiement_' . str_pad($payment->id, 6, '0', STR_PAD_LEFT) . '.pdf';
+        $filename = 'Recu_Paiement_'.str_pad($payment->id, 6, '0', STR_PAD_LEFT).'.pdf';
 
         return $pdf->download($filename);
     }
 
-     
-       /**
+    /**
      * Retourne la liste des élèves d'une classe avec leurs échéances (Auto-génération si manquantes)
      */
-       public function getStudentsByClass(Request $request)
+    public function getStudentsByClass(Request $request)
     {
         try {
             $schoolId = session('current_school_id');
             $classId = $request->class_id;
             $yearId = $request->year_id;
 
-            if (!$classId || !$yearId) {
+            if (! $classId || ! $yearId) {
                 return response()->json([]);
             }
 
             // 1. Récupérer les inscriptions pour cette classe ET cette année
-            $enrollments = \App\Models\Enrollment::where('school_id', $schoolId)
+            $enrollments = Enrollment::where('school_id', $schoolId)
                 ->where('school_year_id', $yearId)
                 ->where('school_class_id', $classId)
                 ->with('student')
@@ -388,26 +386,28 @@ class PaymentController extends Controller
 
             foreach ($enrollments as $enrollment) {
                 $student = $enrollment->student;
-                if (!$student) continue;
+                if (! $student) {
+                    continue;
+                }
 
                 // 2. Vérifier si des échéances existent déjà
-                $installments = \App\Models\StudentInstallment::where('enrollment_id', $enrollment->id)
+                $installments = StudentInstallment::where('enrollment_id', $enrollment->id)
                     ->whereIn('status', ['pending', 'partial', 'overdue'])
                     ->orderBy('due_date', 'asc')
                     ->get();
 
                 // 3. AUTO-GÉNÉRATION : Si aucune échéance n'existe, on les crée maintenant à la volée
                 if ($installments->isEmpty()) {
-                    $schoolClass = \App\Models\SchoolClass::find($enrollment->school_class_id);
-                    
+                    $schoolClass = SchoolClass::find($enrollment->school_class_id);
+
                     if ($schoolClass && $schoolClass->total_tuition > 0) {
                         // Même générateur que StudentController::generateFeeSchedule() — voir
                         // StudentInstallment::generateScheduleFor() pour ne jamais faire diverger
                         // ancrage de date et calcul des échéances entre les deux appelants.
-                        \App\Models\StudentInstallment::generateScheduleFor($enrollment, $schoolClass, $enrollment->enrollment_date);
+                        StudentInstallment::generateScheduleFor($enrollment, $schoolClass, $enrollment->enrollment_date);
 
                         // Recharger les échéances fraîchement générées
-                        $installments = \App\Models\StudentInstallment::where('enrollment_id', $enrollment->id)
+                        $installments = StudentInstallment::where('enrollment_id', $enrollment->id)
                             ->whereIn('status', ['pending', 'partial', 'overdue'])
                             ->orderBy('due_date', 'asc')
                             ->get();
@@ -418,43 +418,42 @@ class PaymentController extends Controller
                 $formattedStudents->push([
                     'id' => $student->id,
                     'matricule' => $student->matricule,
-                    'name' => trim($student->last_name . ' ' . $student->first_name),
+                    'name' => trim($student->last_name.' '.$student->first_name),
                     'enrollment_id' => $enrollment->id,
                     'installments' => $installments->map(function ($inst) {
                         return [
                             'id' => $inst->id,
                             'description' => $inst->description,
-                            'due_date' => \Carbon\Carbon::parse($inst->due_date)->format('d/m/Y'),
+                            'due_date' => Carbon::parse($inst->due_date)->format('d/m/Y'),
                             'amount' => (float) $inst->amount,
                             'paid_amount' => (float) $inst->paid_amount,
                             'remaining' => (float) ($inst->amount - $inst->paid_amount),
                             'status' => $inst->status,
-                            'type' => $inst->type // <-- 🎯 AJOUT CRUCIAL ICI
+                            'type' => $inst->type, // <-- 🎯 AJOUT CRUCIAL ICI
                         ];
-                    })
+                    }),
                 ]);
             }
 
             return response()->json($formattedStudents);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'error' => true,
                 'message' => $e->getMessage(),
                 'file' => basename($e->getFile()),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
             ], 500);
         }
     }
 
-
-        /**
+    /**
      * Exporter la liste des paiements en format CSV (Compatible Excel)
      */
     public function export(Request $request)
     {
         $schoolId = session('current_school_id');
-        
+
         // 1. Reproduire la même requête que la méthode index avec les filtres
         $query = Payment::where('school_id', $schoolId)
             ->with(['enrollment.student', 'enrollment.schoolClass', 'studentInstallment', 'receivedBy']);
@@ -462,9 +461,9 @@ class PaymentController extends Controller
         if ($request->filled('payment_type')) {
             $query->where('payment_type', $request->payment_type);
         }
-                // ✅ AJOUT DU FILTRE PAR CLASSE POUR L'EXPORT DES PAIEMENTS
+        // ✅ AJOUT DU FILTRE PAR CLASSE POUR L'EXPORT DES PAIEMENTS
         if ($request->filled('class_id')) {
-            $query->whereHas('enrollment', function($q) use ($request) {
+            $query->whereHas('enrollment', function ($q) use ($request) {
                 $q->where('school_class_id', $request->class_id);
             });
         }
@@ -481,21 +480,21 @@ class PaymentController extends Controller
         $payments = $query->orderBy('payment_date', 'desc')->get();
 
         // 2. Nom du fichier avec la date du jour
-        $filename = 'export_paiements_' . date('Y-m-d_His') . '.csv';
-        
+        $filename = 'export_paiements_'.date('Y-m-d_His').'.csv';
+
         // 3. En-têtes HTTP pour forcer le téléchargement
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         // 4. Génération du flux CSV
-        $callback = function() use ($payments) {
+        $callback = function () use ($payments) {
             $file = fopen('php://output', 'w');
-            
+
             // ✅ BOM UTF-8 : Indispensable pour qu'Excel lise correctement les accents (é, à, ô)
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-            
+
             // En-têtes des colonnes
             fputcsv($file, [
                 'Date du paiement',
@@ -505,29 +504,29 @@ class PaymentController extends Controller
                 'Motif / Échéance',
                 'Montant (FCFA)',
                 'Méthode',
-                'Reçu par'
+                'Reçu par',
             ]);
-            
+
             // Données
             foreach ($payments as $payment) {
-                $studentName = trim(($payment->enrollment->student->last_name ?? '') . ' ' . ($payment->enrollment->student->first_name ?? ''));
+                $studentName = trim(($payment->enrollment->student->last_name ?? '').' '.($payment->enrollment->student->first_name ?? ''));
                 $className = $payment->enrollment->schoolClass->name ?? 'N/A';
                 $type = $payment->payment_type === 'registration' ? 'Inscription' : 'Scolarité';
                 $motif = $payment->studentInstallment->description ?? 'Paiement divers';
                 $receivedBy = $payment->receivedBy->name ?? ($payment->receivedBy->email ?? 'Système');
-                
+
                 fputcsv($file, [
-                    \Carbon\Carbon::parse($payment->payment_date)->format('d/m/Y'),
+                    Carbon::parse($payment->payment_date)->format('d/m/Y'),
                     $studentName,
                     $className,
                     $type,
                     $motif,
                     $payment->amount,
                     ucfirst($payment->payment_method ?? 'Espèces'),
-                    $receivedBy
+                    $receivedBy,
                 ]);
             }
-            
+
             fclose($file);
         };
 

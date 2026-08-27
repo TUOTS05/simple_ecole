@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\Enrollment;
 use App\Models\Payment;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -11,6 +12,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 class StudentPaymentsExport implements FromCollection, WithHeadings, WithMapping
 {
     protected $studentId;
+
     protected $schoolYearId;
 
     public function __construct($studentId, $schoolYearId)
@@ -38,12 +40,12 @@ class StudentPaymentsExport implements FromCollection, WithHeadings, WithMapping
     public function map($row): array
     {
         return [
-            \Carbon\Carbon::parse($row->payment_date)->format('d/m/Y'),
+            Carbon::parse($row->payment_date)->format('d/m/Y'),
             $row->amount,
             $row->payment_type ?? '-',
             $row->payment_method ?? '-',
             $row->reference ?? '-',
-            $row->notes ?? '-'
+            $row->notes ?? '-',
         ];
     }
 }

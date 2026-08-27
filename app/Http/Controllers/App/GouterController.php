@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
+use App\Models\Enrollment;
 use App\Models\GouterInstallment;
 use App\Models\GouterPayment;
 use App\Models\GouterRate;
@@ -60,7 +61,7 @@ class GouterController extends Controller
         $schoolYearId = $request->query('school_year_id');
         $classId = $request->query('class_id');
 
-        if (!$schoolYearId || !$classId) {
+        if (! $schoolYearId || ! $classId) {
             return response()->json([]);
         }
 
@@ -79,7 +80,7 @@ class GouterController extends Controller
                 // GouterPayment::booted() (voir GouterSubscription::recalculateAmounts()).
                 return [
                     'id' => $sub->id,
-                    'student_name' => $sub->student ? ($sub->student->last_name . ' ' . $sub->student->first_name) : 'Élève inconnu',
+                    'student_name' => $sub->student ? ($sub->student->last_name.' '.$sub->student->first_name) : 'Élève inconnu',
                     'matricule' => $sub->student->matricule ?? 'N/A',
                     'remaining' => $sub->remaining_amount,
                     'class_name' => $sub->gouterRate->schoolClass->name ?? 'N/A',
@@ -291,16 +292,17 @@ class GouterController extends Controller
             $errors = [];
 
             foreach ($validated['students'] as $studentId => $data) {
-                if (!isset($data['selected']) || !$data['selected']) {
+                if (! isset($data['selected']) || ! $data['selected']) {
                     continue;
                 }
 
-                $enrollment = \App\Models\Enrollment::where('student_id', $studentId)
+                $enrollment = Enrollment::where('student_id', $studentId)
                     ->where('school_year_id', $validated['school_year_id'])
                     ->first();
 
-                if (!$enrollment) {
+                if (! $enrollment) {
                     $errors[] = "L'élève n'est pas inscrit dans cette année scolaire.";
+
                     continue;
                 }
 
@@ -309,8 +311,9 @@ class GouterController extends Controller
                     ->where('school_class_id', $enrollment->school_class_id)
                     ->first();
 
-                if (!$rate) {
-                    $errors[] = "Aucun tarif de goûter défini pour la classe de cet élève.";
+                if (! $rate) {
+                    $errors[] = 'Aucun tarif de goûter défini pour la classe de cet élève.';
+
                     continue;
                 }
 
@@ -320,6 +323,7 @@ class GouterController extends Controller
 
                 if ($existing) {
                     $skipCount++;
+
                     continue;
                 }
 
@@ -357,7 +361,7 @@ class GouterController extends Controller
                     ]);
                 }
 
-                if ($paidNow > 0 && !empty($data['payment_method'])) {
+                if ($paidNow > 0 && ! empty($data['payment_method'])) {
                     self::recordPayment($schoolId, $subscription, $paidNow, now(), $data['payment_method'], 'initial');
                 }
 
@@ -370,15 +374,16 @@ class GouterController extends Controller
             if ($skipCount > 0) {
                 $message .= " ({$skipCount} déjà inscrit(s) ignoré(s)).";
             }
-            if (!empty($errors)) {
-                $message .= ' | ' . implode(', ', array_unique($errors));
+            if (! empty($errors)) {
+                $message .= ' | '.implode(', ', array_unique($errors));
             }
 
             return redirect()->route('gouter.subscriptions.index', ['school_year_id' => $validated['school_year_id']])
                 ->with('success', $message);
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Erreur : ' . $e->getMessage()])->withInput();
+
+            return back()->withErrors(['error' => 'Erreur : '.$e->getMessage()])->withInput();
         }
     }
 
@@ -408,7 +413,7 @@ class GouterController extends Controller
             ->orderBy('name')
             ->get();
 
-        if (!$classId) {
+        if (! $classId) {
             $payments = GouterPayment::where('id', 0)->paginate(20);
 
             return view('app.gouter.payments.index', compact(
@@ -462,7 +467,8 @@ class GouterController extends Controller
                 ->with('success', '✅ Paiement enregistré et réparti sur les échéances avec succès !');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Erreur : ' . $e->getMessage()]);
+
+            return back()->withErrors(['error' => 'Erreur : '.$e->getMessage()]);
         }
     }
 
@@ -544,7 +550,7 @@ class GouterController extends Controller
             'payment', 'student', 'school', 'schoolClass', 'schoolYear', 'subscription', 'pendingInstallments'
         ));
 
-        $filename = 'Recu_Gouter_' . str_pad($payment->id, 6, '0', STR_PAD_LEFT) . '.pdf';
+        $filename = 'Recu_Gouter_'.str_pad($payment->id, 6, '0', STR_PAD_LEFT).'.pdf';
 
         return $pdf->download($filename);
     }
@@ -584,6 +590,7 @@ class GouterController extends Controller
                 $class->recovery_rate = $class->total_expected > 0
                     ? round(($class->total_paid / $class->total_expected) * 100, 1)
                     : 0;
+
                 return $class;
             });
 

@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\School;
-use App\Models\User;
-use App\Models\Student;
 use App\Models\SchoolClass;
+use App\Models\Student;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class SaasDemoSeeder extends Seeder

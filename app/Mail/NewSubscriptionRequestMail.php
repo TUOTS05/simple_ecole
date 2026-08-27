@@ -20,7 +20,7 @@ class NewSubscriptionRequestMail extends Mailable
 
     public function build()
     {
-        return $this->subject('🔔 Nouvelle demande d\'essai : ' . $this->subRequest->school->name)
+        return $this->subject('🔔 Nouvelle demande d\'essai : '.$this->subRequest->school->name)
             ->view('emails.superadmin.new-subscription-request');
     }
 }

@@ -16,15 +16,15 @@ return new class extends Migration
             $table->foreignId('school_class_id')->nullable()->constrained('school_classes')->onDelete('set null');
             $table->enum('status', ['reserved', 'enrolled', 'withdrawn'])->default('reserved');
             $table->date('enrollment_date');
-            
+
             // Frais d'inscription
             $table->boolean('registration_fee_paid')->default(false);
-            
+
             // Frais de scolarité
             $table->decimal('tuition_fee_total', 12, 2)->default(0);
             $table->decimal('tuition_fee_paid', 12, 2)->default(0);
             $table->decimal('tuition_fee_remaining', 12, 2)->default(0);
-            
+
             $table->text('notes')->nullable();
             $table->timestamps();
 

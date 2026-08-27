@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Attendance;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -11,9 +12,13 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 class AttendanceExport implements FromCollection, WithHeadings, WithMapping
 {
     protected $classId;
+
     protected $startDate;
+
     protected $endDate;
+
     protected $isTeacher;
+
     protected $assignedClassIds;
 
     public function __construct($classId, $startDate, $endDate, $isTeacher = false, $assignedClassIds = [])
@@ -43,7 +48,7 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping
             ->orderBy('attendances.date', 'desc');
 
         // Sécurité : si c'est un enseignant, on limite à SES classes
-        if ($this->isTeacher && !empty($this->assignedClassIds)) {
+        if ($this->isTeacher && ! empty($this->assignedClassIds)) {
             $query->whereIn('attendances.school_class_id', $this->assignedClassIds);
         }
 
@@ -66,17 +71,17 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping
             'present' => 'Présent',
             'absent' => 'Absent',
             'late' => 'Retard',
-            'excused' => 'Excusé'
+            'excused' => 'Excusé',
         ];
 
         return [
-            \Carbon\Carbon::parse($row->date)->format('d/m/Y'),
+            Carbon::parse($row->date)->format('d/m/Y'),
             $row->period === 'matin' ? 'Matin' : 'Après-midi',
             $row->class_name,
             $row->matricule,
             $row->student_name,
             $statusLabels[$row->status] ?? $row->status,
-            $row->notes ?: '-'
+            $row->notes ?: '-',
         ];
     }
 }

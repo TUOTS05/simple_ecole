@@ -14,7 +14,7 @@ class ClassFeeController extends Controller
     public function index()
     {
         $schoolId = session('current_school_id');
-        
+
         $classes = SchoolClass::where('school_id', $schoolId)
             ->orderBy('name')
             ->get();
@@ -54,7 +54,7 @@ class ClassFeeController extends Controller
 
         // Calcul automatique du montant par échéance (Logique Métier)
         $remainingAmount = $validated['total_tuition'] - $validated['registration_fee'];
-        
+
         if ($validated['payment_modality'] === 'unique') {
             $validated['installment_amount'] = $remainingAmount;
             $validated['number_of_installments'] = 1;

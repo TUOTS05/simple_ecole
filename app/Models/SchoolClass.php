@@ -38,8 +38,8 @@ class SchoolClass extends Model
     public function students(): BelongsToMany
     {
         return $this->belongsToMany(Student::class, 'student_school_class', 'school_class_id', 'student_id')
-                    ->withPivot('school_year_id')
-                    ->withTimestamps();
+            ->withPivot('school_year_id')
+            ->withTimestamps();
     }
 
     public function enrollments(): HasMany
@@ -60,9 +60,10 @@ class SchoolClass extends Model
 
     public function getFillRateAttribute(): ?float
     {
-        if (!$this->capacity) {
+        if (! $this->capacity) {
             return null;
         }
+
         return ($this->students()->count() / $this->capacity) * 100;
     }
 
@@ -82,10 +83,9 @@ class SchoolClass extends Model
             ->wherePivot('school_year_id', $activeSchoolYearId);
     }
 
-
     public function teacher()
     {
-        return $this->belongsTo(\App\Models\Teacher::class, 'teacher_id');
+        return $this->belongsTo(Teacher::class, 'teacher_id');
     }
 
     public function getNextLevel(): ?string
@@ -93,21 +93,23 @@ class SchoolClass extends Model
         // Ordre logique des niveaux dans votre établissement
         $levels = ['PS', 'MS', 'GS', 'CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2'];
         $currentIndex = array_search($this->level, $levels);
-        
+
         if ($currentIndex !== false && $currentIndex < count($levels) - 1) {
             return $levels[$currentIndex + 1]; // Retourne le niveau suivant
         }
-        
+
         return null; // Fin du cycle (ex: après CM2)
     }
 
     public function getNextClassForSchoolYear($schoolYearId): ?SchoolClass
     {
         $nextLevel = $this->getNextLevel();
-        if (!$nextLevel) return null;
+        if (! $nextLevel) {
+            return null;
+        }
 
         return SchoolClass::where('school_id', $this->school_id)
-                        ->where('level', $nextLevel)
-                        ->first();
+            ->where('level', $nextLevel)
+            ->first();
     }
 }

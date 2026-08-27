@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\School;
 use App\Models\SubscriptionPlan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -15,6 +16,7 @@ class SubscriptionPlanController extends Controller
     public function index()
     {
         $plans = SubscriptionPlan::orderBy('sort_order')->orderBy('name')->paginate(15);
+
         return view('superadmin.plans.index', compact('plans'));
     }
 
@@ -29,7 +31,7 @@ class SubscriptionPlanController extends Controller
     /**
      * Sauvegarder un nouveau plan
      */
-        public function store(Request $request)
+    public function store(Request $request)
     {
         // 1. Validation (Notez que 'is_active' et 'sort_order' sont gérés après)
         $validated = $request->validate([
@@ -44,16 +46,16 @@ class SubscriptionPlanController extends Controller
 
         // 2. Traitement des champs spéciaux
         // Générer le slug si vide
-        $validated['slug'] = $validated['slug'] ?: \Illuminate\Support\Str::slug($validated['name']);
-        
+        $validated['slug'] = $validated['slug'] ?: Str::slug($validated['name']);
+
         // Gérer la checkbox : true si cochée, false sinon
         $validated['is_active'] = $request->has('is_active');
-        
+
         // Donner une valeur par défaut à sort_order s'il est vide
         $validated['sort_order'] = $request->input('sort_order', 0);
 
         // 3. Création
-        \App\Models\SubscriptionPlan::create($validated);
+        SubscriptionPlan::create($validated);
 
         return redirect()->route('superadmin.plans.index')
             ->with('success', '✅ Plan d\'abonnement créé avec succès !');
@@ -74,7 +76,7 @@ class SubscriptionPlanController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:subscription_plans,slug,' . $plan->id,
+            'slug' => 'required|string|max:255|unique:subscription_plans,slug,'.$plan->id,
             'description' => 'nullable|string',
             'max_students' => 'required|integer|min:1',
             'max_teachers' => 'required|integer|min:1',
@@ -98,11 +100,11 @@ class SubscriptionPlanController extends Controller
     public function destroy(SubscriptionPlan $plan)
     {
         // Vérifier qu'aucune école n'utilise ce plan
-        $schoolsCount = \App\Models\School::where('subscription_plan', $plan->slug)->count();
-        
+        $schoolsCount = School::where('subscription_plan', $plan->slug)->count();
+
         if ($schoolsCount > 0) {
             return redirect()->route('superadmin.plans.index')
-                ->with('error', '❌ Impossible de supprimer : ' . $schoolsCount . ' école(s) utilisent encore ce plan.');
+                ->with('error', '❌ Impossible de supprimer : '.$schoolsCount.' école(s) utilisent encore ce plan.');
         }
 
         $plan->delete();

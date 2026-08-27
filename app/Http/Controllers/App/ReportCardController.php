@@ -5,22 +5,21 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Controller;
 use App\Models\Grade;
 use App\Models\ReportCard;
+use App\Models\School;
 use App\Models\SchoolClass;
+use App\Models\SchoolYear;
 use App\Models\Student;
 use App\Models\Subject;
-use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ReportCardController extends Controller
 {
-    
-
-        public function index(Request $request)
+    public function index(Request $request)
     {
         $schoolId = session('current_school_id');
-        $currentYear = \App\Models\SchoolYear::where('school_id', $schoolId)
+        $currentYear = SchoolYear::where('school_id', $schoolId)
             ->where('is_active', true)
             ->first();
 
@@ -48,11 +47,10 @@ class ReportCardController extends Controller
         return view('app.report-cards.index', compact('reportCards'));
     }
 
-
     public function create(Request $request)
     {
         $schoolId = session('current_school_id');
-        $currentYear = \App\Models\SchoolYear::where('school_id', $schoolId)->where('is_active', true)->first();
+        $currentYear = SchoolYear::where('school_id', $schoolId)->where('is_active', true)->first();
 
         $classes = SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
         $selectedClassId = $request->get('class_id');
@@ -69,7 +67,7 @@ class ReportCardController extends Controller
         if ($selectedClassId) {
             $class = SchoolClass::find($selectedClassId);
 
-            if (!$class || ! $request->user()->can('view', $class)) {
+            if (! $class || ! $request->user()->can('view', $class)) {
                 abort(403);
             }
 
@@ -129,7 +127,7 @@ class ReportCardController extends Controller
         ]);
 
         $schoolId = session('current_school_id');
-        $currentYear = \App\Models\SchoolYear::where('school_id', $schoolId)->where('is_active', true)->first();
+        $currentYear = SchoolYear::where('school_id', $schoolId)->where('is_active', true)->first();
         $class = SchoolClass::find($validated['class_id']);
 
         // Normalisation des données pour la BDD
@@ -141,7 +139,7 @@ class ReportCardController extends Controller
             foreach ($validated['grades'] as $studentId => $subjectsData) {
                 foreach ($subjectsData as $subjectId => $data) {
                     // On n'enregistre que si une note est saisie
-                    if (!empty($data['score'])) {
+                    if (! empty($data['score'])) {
                         // Récupérer le coefficient (du formulaire ou de la matière)
                         $subject = Subject::find($subjectId);
                         $coef = $validated['coefficients'][$subjectId] ?? ($subject->coefficient ?? 1);
@@ -181,14 +179,15 @@ class ReportCardController extends Controller
             }
 
             DB::commit();
+
             return redirect()->route('app.report-cards.index')
                 ->with('success', 'Notes enregistrées et bulletins générés avec succès !');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Erreur : ' . $e->getMessage()]);
+
+            return back()->withErrors(['error' => 'Erreur : '.$e->getMessage()]);
         }
     }
-
 
     private function calculateAndCreateReportCard($schoolId, $student, $classId, $yearId, $period, $month, $quarter)
     {
@@ -260,7 +259,7 @@ class ReportCardController extends Controller
 
         $students = Student::where('school_id', $schoolId)
             ->where('status', 'active')
-            ->whereHas('classes', fn($q) => $q->where('school_classes.id', $classId))
+            ->whereHas('classes', fn ($q) => $q->where('school_classes.id', $classId))
             ->get();
 
         foreach ($students as $student) {
@@ -303,7 +302,6 @@ class ReportCardController extends Controller
         return $averages;
     }
 
-
     // public function show(ReportCard $reportCard)
     // {
     //     if ($reportCard->school_id !== session('current_school_id')) {
@@ -337,7 +335,6 @@ class ReportCardController extends Controller
 
     //     return view('app.report-cards.show', compact('reportCard'));
     // }
-
 
     public function show(ReportCard $reportCard)
     {
@@ -384,7 +381,7 @@ class ReportCardController extends Controller
         }
 
         $schoolId = session('current_school_id');
-        $currentYear = \App\Models\SchoolYear::where('school_id', $schoolId)
+        $currentYear = SchoolYear::where('school_id', $schoolId)
             ->where('is_active', true)
             ->first();
 
@@ -441,7 +438,7 @@ class ReportCardController extends Controller
         ]);
 
         $schoolId = session('current_school_id');
-        $currentYear = \App\Models\SchoolYear::where('school_id', $schoolId)
+        $currentYear = SchoolYear::where('school_id', $schoolId)
             ->where('is_active', true)
             ->first();
 
@@ -486,7 +483,8 @@ class ReportCardController extends Controller
                 ->with('success', 'Notes mises à jour avec succès !');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Erreur lors de la mise à jour: ' . $e->getMessage()]);
+
+            return back()->withErrors(['error' => 'Erreur lors de la mise à jour: '.$e->getMessage()]);
         }
     }
 
@@ -505,7 +503,6 @@ class ReportCardController extends Controller
     /**
      * Télécharger le bulletin en PDF
      */
-
     public function downloadPdf(ReportCard $reportCard)
     {
         if ($reportCard->school_id !== session('current_school_id')) {
@@ -553,29 +550,28 @@ class ReportCardController extends Controller
         ));
 
         $pdf->setPaper('a4', 'portrait');
-        $fileName = 'Bulletin_' . $student->last_name . '_' . $student->first_name . '_' . $reportCard->period . '.pdf';
+        $fileName = 'Bulletin_'.$student->last_name.'_'.$student->first_name.'_'.$reportCard->period.'.pdf';
 
         return $pdf->download($fileName);
     }
 
-
-        /**
+    /**
      * Télécharger tous les bulletins d'une classe en un seul PDF
      * (Filtres appliqués : period, month, quarter - comme dans la méthode index)
      */
     public function downloadClassBulk(Request $request)
     {
         $schoolId = session('current_school_id');
-        $currentYear = \App\Models\SchoolYear::where('school_id', $schoolId)
+        $currentYear = SchoolYear::where('school_id', $schoolId)
             ->where('is_active', true)
             ->first();
 
-        if (!$currentYear) {
+        if (! $currentYear) {
             return back()->with('error', 'Aucune année scolaire active trouvée.');
         }
 
         // 1. Construire la requête avec les mêmes filtres que la page index
-        $query = \App\Models\ReportCard::where('school_id', $schoolId)
+        $query = ReportCard::where('school_id', $schoolId)
             ->where('school_year_id', $currentYear->id)
             ->with(['student', 'schoolClass.teacher', 'schoolYear']);
 
@@ -590,10 +586,10 @@ class ReportCardController extends Controller
             $query->where('quarter', $request->quarter);
         }
         if ($request->filled('class_id')) {
-            $query->whereHas('student', function($q) use ($request) {
-                $q->whereHas('enrollments', function($q2) use ($request) {
+            $query->whereHas('student', function ($q) use ($request) {
+                $q->whereHas('enrollments', function ($q2) use ($request) {
                     $q2->where('school_class_id', $request->class_id)
-                       ->where('school_year_id', $currentYear->id);
+                        ->where('school_year_id', $currentYear->id);
                 });
             });
         }
@@ -608,12 +604,12 @@ class ReportCardController extends Controller
         $allData = [];
         foreach ($reportCards as $reportCard) {
             $student = $reportCard->student;
-            $school = \App\Models\School::find($schoolId);
+            $school = School::find($schoolId);
             $schoolYear = $reportCard->schoolYear;
             $schoolClass = $reportCard->schoolClass;
 
             // Charger les notes selon les critères (logique identique à downloadPdf)
-            $gradesQuery = \App\Models\Grade::where('school_id', $schoolId)
+            $gradesQuery = Grade::where('school_id', $schoolId)
                 ->where('student_id', $student->id)
                 ->where('school_year_id', $currentYear->id)
                 ->where('period', $reportCard->period)
@@ -629,7 +625,7 @@ class ReportCardController extends Controller
             $reportCard->setRelation('grades', $grades);
 
             // Récupérer toutes les matières de la classe
-            $allSubjects = \App\Models\Subject::where('school_id', $schoolId)
+            $allSubjects = Subject::where('school_id', $schoolId)
                 ->where('school_year_id', $currentYear->id)
                 ->where('cycle', $schoolClass->cycle)
                 ->where('level', $schoolClass->level)
@@ -641,7 +637,7 @@ class ReportCardController extends Controller
         }
 
         // 4. Générer le PDF avec la vue bulk
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.report-cards-bulk', [
+        $pdf = Pdf::loadView('pdf.report-cards-bulk', [
             'allData' => $allData,
             'currentYear' => $currentYear,
         ]);
@@ -649,18 +645,18 @@ class ReportCardController extends Controller
         // 5. Nom du fichier basé sur les filtres
         $filename = 'Bulletins';
         if ($request->filled('class_id')) {
-            $class = \App\Models\SchoolClass::find($request->class_id);
-            $filename .= '_' . ($class->name ?? 'Classe');
+            $class = SchoolClass::find($request->class_id);
+            $filename .= '_'.($class->name ?? 'Classe');
         }
         if ($request->filled('period')) {
-            $filename .= '_' . $request->period;
+            $filename .= '_'.$request->period;
             if ($request->period === 'Mensuel' && $request->filled('month')) {
-                $filename .= '_' . $request->month;
+                $filename .= '_'.$request->month;
             } elseif ($request->filled('quarter')) {
-                $filename .= '_T' . $request->quarter;
+                $filename .= '_T'.$request->quarter;
             }
         }
-        $filename .= '_' . $currentYear->name . '.pdf';
+        $filename .= '_'.$currentYear->name.'.pdf';
 
         return $pdf->download($filename);
     }

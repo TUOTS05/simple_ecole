@@ -19,7 +19,7 @@ class CheckMaintenanceMode
     {
         $settings = SystemSetting::getSettings();
 
-        if (!$settings->maintenance_mode) {
+        if (! $settings->maintenance_mode) {
             return $next($request);
         }
 

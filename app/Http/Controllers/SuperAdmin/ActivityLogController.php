@@ -11,7 +11,7 @@ class ActivityLogController extends Controller
     {
         // Récupère les 100 dernières actions, triées de la plus récente à la plus ancienne
         $logs = ActivityLog::orderBy('created_at', 'desc')->take(100)->get();
-        
+
         return view('superadmin.activity-logs.index', compact('logs'));
     }
 }

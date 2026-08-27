@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('description'); // Ex: 'A créé l\'école "Groupe Scolaire Chigata"'
             $table->string('ip_address')->nullable(); // Adresse IP pour la sécurité
             $table->timestamps();
-            
+
             // Index pour accélérer les recherches
             $table->index(['user_role', 'created_at']);
         });

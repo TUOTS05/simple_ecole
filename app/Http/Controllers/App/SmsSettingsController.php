@@ -16,8 +16,8 @@ class SmsSettingsController extends Controller
         $school = School::findOrFail($schoolId);
 
         // Déchiffrer les clés pour l'affichage
-        $clientId = !empty($school->orange_sms_client_id) ? Crypt::decryptString($school->orange_sms_client_id) : '';
-        $clientSecret = !empty($school->orange_sms_client_secret) ? Crypt::decryptString($school->orange_sms_client_secret) : '';
+        $clientId = ! empty($school->orange_sms_client_id) ? Crypt::decryptString($school->orange_sms_client_id) : '';
+        $clientSecret = ! empty($school->orange_sms_client_secret) ? Crypt::decryptString($school->orange_sms_client_secret) : '';
 
         // Historique des SMS
         $recentSms = SmsLog::where('school_id', $schoolId)
@@ -45,8 +45,8 @@ class SmsSettingsController extends Controller
         $school->update([
             'sms_enabled' => $request->boolean('sms_enabled'),
             'orange_sms_api_url' => $validated['orange_sms_api_url'] ?? 'https://api.orange.com/sms/v1',
-            'orange_sms_client_id' => !empty($validated['orange_sms_client_id']) ? Crypt::encryptString($validated['orange_sms_client_id']) : null,
-            'orange_sms_client_secret' => !empty($validated['orange_sms_client_secret']) ? Crypt::encryptString($validated['orange_sms_client_secret']) : null,
+            'orange_sms_client_id' => ! empty($validated['orange_sms_client_id']) ? Crypt::encryptString($validated['orange_sms_client_id']) : null,
+            'orange_sms_client_secret' => ! empty($validated['orange_sms_client_secret']) ? Crypt::encryptString($validated['orange_sms_client_secret']) : null,
             'orange_sms_sender_name' => $validated['orange_sms_sender_name'] ?? null,
             'sms_absence_template' => $validated['sms_absence_template'],
         ]);

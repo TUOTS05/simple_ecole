@@ -12,10 +12,10 @@ return new class extends Migration
             // Ajoute la colonne user_id avec une clé étrangère vers la table users
             // nullable() permet de ne pas casser les anciens enregistrements s'il y en a
             $table->foreignId('user_id')
-                  ->nullable()
-                  ->after('student_id')
-                  ->constrained('users')
-                  ->nullOnDelete();
+                ->nullable()
+                ->after('student_id')
+                ->constrained('users')
+                ->nullOnDelete();
         });
     }
 

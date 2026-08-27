@@ -31,8 +31,9 @@ class BroadcastMessageController extends Controller
             ->get()
             ->map(function ($parent) {
                 // Création d'un nom affichable clair : "DUPONT Jean (Parent de : Emma, Lucas)"
-                $childrenNames = $parent->children->map(fn($c) => $c->first_name . ' ' . $c->last_name)->implode(', ');
-                $parent->display_name = trim($parent->last_name . ' ' . $parent->first_name) . ' (Parent de : ' . $childrenNames . ')';
+                $childrenNames = $parent->children->map(fn ($c) => $c->first_name.' '.$c->last_name)->implode(', ');
+                $parent->display_name = trim($parent->last_name.' '.$parent->first_name).' (Parent de : '.$childrenNames.')';
+
                 return $parent;
             });
 
@@ -44,10 +45,10 @@ class BroadcastMessageController extends Controller
         // Validation conditionnelle : target_id requis si classe, receiver_id requis si parent
         $validated = $request->validate([
             'target_type' => 'required|in:all,class,parent',
-            'target_id'   => 'nullable|required_if:target_type,class|exists:school_classes,id',
+            'target_id' => 'nullable|required_if:target_type,class|exists:school_classes,id',
             'receiver_id' => 'nullable|required_if:target_type,parent|exists:users,id',
-            'subject'     => 'required|string|max:255',
-            'message'     => 'required|string',
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string',
         ]);
 
         $schoolId = auth()->user()->school_id;
@@ -57,7 +58,7 @@ class BroadcastMessageController extends Controller
         // 1. Déterminer le contexte (target_info)
         if ($validated['target_type'] === 'class') {
             $targetClass = SchoolClass::find($validated['target_id']);
-            $targetInfo = $targetClass ? 'Classe : ' . $targetClass->name : 'Classe spécifique';
+            $targetInfo = $targetClass ? 'Classe : '.$targetClass->name : 'Classe spécifique';
         } elseif ($validated['target_type'] === 'parent') {
             // Récupérer les noms des enfants de ce parent dans cette école
             $parent = User::with(['children' => function ($q) use ($schoolId) {
@@ -65,8 +66,8 @@ class BroadcastMessageController extends Controller
                 $q->where('students.school_id', $schoolId);
             }])->find($validated['receiver_id']);
 
-            $studentNames = $parent->children->map(fn($s) => $s->first_name . ' ' . $s->last_name)->implode(', ');
-            $targetInfo = 'Parent de : ' . ($studentNames ?: 'Élève non spécifié');
+            $studentNames = $parent->children->map(fn ($s) => $s->first_name.' '.$s->last_name)->implode(', ');
+            $targetInfo = 'Parent de : '.($studentNames ?: 'Élève non spécifié');
         }
 
         // 2. Créer UN SEUL message (plus de boucle foreach qui crée des doublons)
@@ -102,14 +103,15 @@ class BroadcastMessageController extends Controller
             DB::commit();
 
             $successMsg = $validated['target_type'] === 'parent'
-                ? "✅ Message envoyé avec succès."
+                ? '✅ Message envoyé avec succès.'
                 : "✅ Message de diffusion envoyé avec succès (Cible : {$targetInfo}).";
 
             return redirect()->route('app.messages.index')
                 ->with('success', $successMsg);
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Erreur lors de l\'envoi : ' . $e->getMessage()])->withInput();
+
+            return back()->withErrors(['error' => 'Erreur lors de l\'envoi : '.$e->getMessage()])->withInput();
         }
     }
 }

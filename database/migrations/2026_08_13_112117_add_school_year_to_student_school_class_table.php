@@ -4,15 +4,17 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
-    public function up(): void {
+return new class extends Migration
+{
+    public function up(): void
+    {
         Schema::table('student_school_class', function (Blueprint $table) {
             // Ajouter l'année scolaire à la pivot
             $table->foreignId('school_year_id')
-                  ->nullable()
-                  ->constrained('school_years')
-                  ->nullOnDelete()
-                  ->after('school_class_id');
+                ->nullable()
+                ->constrained('school_years')
+                ->nullOnDelete()
+                ->after('school_class_id');
 
             // La clé étrangère student_id s'appuie sur l'index unique qu'on s'apprête
             // à remplacer : on ajoute un index simple pour qu'elle reste couverte.
@@ -24,7 +26,8 @@ return new class extends Migration {
         });
     }
 
-    public function down(): void {
+    public function down(): void
+    {
         Schema::table('student_school_class', function (Blueprint $table) {
             $table->dropUnique('student_school_class_unique');
             $table->unique(['student_id', 'school_class_id']);

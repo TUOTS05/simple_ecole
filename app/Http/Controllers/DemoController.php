@@ -12,7 +12,7 @@ class DemoController extends Controller
         // Trouver l'utilisateur de démo
         $demoUser = User::where('email', 'demo@schoolmanager.com')->first();
 
-        if (!$demoUser) {
+        if (! $demoUser) {
             return redirect('/')->with('error', 'Le compte de démo n\'est pas encore configuré. Veuillez lancer le seeder.');
         }
 

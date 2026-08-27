@@ -10,12 +10,12 @@ return new class extends Migration
     {
         Schema::table('messages', function (Blueprint $table) {
             // On ajoute receiver_id UNIQUEMENT s'il n'existe pas déjà
-            if (!Schema::hasColumn('messages', 'receiver_id')) {
+            if (! Schema::hasColumn('messages', 'receiver_id')) {
                 $table->foreignId('receiver_id')
-                      ->nullable()
-                      ->after('sender_id')
-                      ->constrained('users')
-                      ->nullOnDelete();
+                    ->nullable()
+                    ->after('sender_id')
+                    ->constrained('users')
+                    ->nullOnDelete();
             }
         });
     }

@@ -21,6 +21,6 @@ class ContractExpiringSoon extends Mailable
     public function build()
     {
         return $this->subject('⚠️ Rappel : Votre abonnement expire dans 30 jours')
-                    ->view('emails.contract-expiring');
+            ->view('emails.contract-expiring');
     }
 }

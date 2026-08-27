@@ -18,33 +18,33 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $query = User::query()->with('school');
-        
+
         // Filtre par rôle
         if ($request->filled('role')) {
             $query->where('role', $request->role);
         }
-        
+
         // Filtre par école
         if ($request->filled('school_id')) {
             $query->where('school_id', $request->school_id);
         }
-        
+
         // Recherche par nom ou email
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('first_name', 'like', '%' . $search . '%')
-                  ->orWhere('last_name', 'like', '%' . $search . '%')
-                  ->orWhere('email', 'like', '%' . $search . '%');
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', '%'.$search.'%')
+                    ->orWhere('last_name', 'like', '%'.$search.'%')
+                    ->orWhere('email', 'like', '%'.$search.'%');
             });
         }
-        
+
         $users = $query->orderBy('created_at', 'desc')->paginate(15);
         $users->appends($request->query());
-        
+
         // Récupérer les écoles pour le filtre
         $schools = School::orderBy('name')->get();
-        
+
         return view('superadmin.users.index', compact('users', 'schools'));
     }
 
@@ -54,7 +54,7 @@ class UserController extends Controller
     public function create()
     {
         $schools = School::orderBy('name')->get();
-        
+
         return view('superadmin.users.create', compact('schools'));
     }
 
@@ -72,13 +72,13 @@ class UserController extends Controller
             'school_id' => 'nullable|exists:schools,id',
             'password' => ['required', 'confirmed', Password::min(8)],
         ]);
-        
+
         // Validation conditionnelle : school_id obligatoire sauf pour super_admin
         if ($validated['role'] !== 'super_admin' && empty($validated['school_id'])) {
             return back()->withErrors(['school_id' => 'Une école doit être sélectionnée pour ce rôle.'])
-                        ->withInput();
+                ->withInput();
         }
-        
+
         // Si super_admin, on met school_id à null
         if ($validated['role'] === 'super_admin') {
             $validated['school_id'] = null;
@@ -116,7 +116,7 @@ class UserController extends Controller
     public function show(User $user)
     {
         $user->load('school');
-        
+
         return view('superadmin.users.show', compact('user'));
     }
 
@@ -126,7 +126,7 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $schools = School::orderBy('name')->get();
-        
+
         return view('superadmin.users.edit', compact('user', 'schools'));
     }
 
@@ -138,31 +138,31 @@ class UserController extends Controller
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'email' => 'required|email|unique:users,email,'.$user->id,
             'phone' => 'nullable|string|max:20',
             'role' => 'required|in:super_admin,school_admin,teacher,parent',
             'school_id' => 'nullable|exists:schools,id',
             'password' => ['nullable', 'confirmed', Password::min(8)],
         ]);
-        
+
         // Validation conditionnelle : school_id obligatoire sauf pour super_admin
         if ($validated['role'] !== 'super_admin' && empty($validated['school_id'])) {
             return back()->withErrors(['school_id' => 'Une école doit être sélectionnée pour ce rôle.'])
-                        ->withInput();
+                ->withInput();
         }
-        
+
         // Si super_admin, on met school_id à null
         if ($validated['role'] === 'super_admin') {
             $validated['school_id'] = null;
         }
-        
+
         // Hasher le mot de passe seulement si fourni
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
             unset($validated['password']);
         }
-        
+
         // Supprimer password_confirmation
         unset($validated['password_confirmation']);
 
@@ -196,7 +196,7 @@ class UserController extends Controller
             return redirect()->route('superadmin.users.index')
                 ->with('error', 'Impossible de supprimer le dernier super administrateur.');
         }
-        
+
         $userEmail = $user->email;
         $user->delete();
 

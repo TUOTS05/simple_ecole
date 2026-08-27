@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,8 +10,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class CanteenInstallment extends Model
 {
     protected $fillable = [
-        'canteen_subscription_id', 'month', 'amount', 
-        'paid_amount', 'due_date', 'status'
+        'canteen_subscription_id', 'month', 'amount',
+        'paid_amount', 'due_date', 'status',
     ];
 
     protected $casts = [
@@ -42,6 +43,6 @@ class CanteenInstallment extends Model
     // Formatage du mois pour affichage
     public function getMonthLabelAttribute()
     {
-        return \Carbon\Carbon::parse($this->month . '-01')->translatedFormat('F Y');
+        return Carbon::parse($this->month.'-01')->translatedFormat('F Y');
     }
 }

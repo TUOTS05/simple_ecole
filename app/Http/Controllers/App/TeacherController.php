@@ -12,7 +12,7 @@ class TeacherController extends Controller
     public function index()
     {
         $schoolId = session('current_school_id');
-        
+
         $teachers = Teacher::where('school_id', $schoolId)
             ->orderBy('last_name')
             ->orderBy('first_name')
@@ -73,7 +73,7 @@ class TeacherController extends Controller
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $teacher->id,
+            'email' => 'required|email|unique:users,email,'.$teacher->id,
             'password' => 'nullable|string|min:6|confirmed',
             'phone' => 'nullable|string|max:20',
             'gender' => 'required|in:M,F',
@@ -85,7 +85,7 @@ class TeacherController extends Controller
         $teacher->phone = $validated['phone'] ?? null;
         $teacher->gender = $validated['gender'];
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $teacher->password = Hash::make($validated['password']);
         }
 

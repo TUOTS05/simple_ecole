@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('students', function (Blueprint $table) {
             // Ajoute la colonne JSON pour les 4 documents (déjà créée par une migration précédente sur certains environnements)
-            if (!Schema::hasColumn('students', 'documents')) {
+            if (! Schema::hasColumn('students', 'documents')) {
                 $table->json('documents')->nullable()->after('remarks');
             }
         });

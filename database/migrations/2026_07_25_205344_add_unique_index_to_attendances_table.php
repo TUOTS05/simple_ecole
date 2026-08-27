@@ -12,7 +12,7 @@ return new class extends Migration
             // ✅ Création d'un index unique combiné pour permettre le "upsert"
             // Cela garantit qu'un élève ne peut avoir qu'un seul statut par classe, date et période
             $table->unique(
-                ['school_class_id', 'student_id', 'date', 'period'], 
+                ['school_class_id', 'student_id', 'date', 'period'],
                 'attendances_unique_index'
             );
         });

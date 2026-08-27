@@ -13,10 +13,10 @@ class AttendanceController extends Controller
     public function index(Request $request, $studentId)
     {
         $parent = auth()->user();
-        
+
         // 1. Vérifier l'accès à l'enfant demandé (Votre logique, intacte)
         $student = $parent->children()->where('students.id', $studentId)->firstOrFail();
-        
+
         // 2. Récupérer TOUS les enfants pour le menu déroulant
         $siblings = $parent->children()->get();
 
@@ -48,7 +48,7 @@ class AttendanceController extends Controller
         $attendanceRate = $totalDays > 0 ? round(($presentCount / $totalDays) * 100, 1) : 0;
 
         return view('parent.attendance.index', compact(
-            'student', 'siblings', 'schoolClassName', 'attendances', 
+            'student', 'siblings', 'schoolClassName', 'attendances',
             'totalDays', 'presentCount', 'absentCount', 'lateCount', 'excusedCount', 'attendanceRate',
             'startDate', 'endDate' // Passés à la vue pour le formulaire
         ));

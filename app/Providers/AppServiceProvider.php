@@ -2,12 +2,12 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Cache\RateLimiting\Limit;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -47,7 +47,7 @@ class AppServiceProvider extends ServiceProvider
             // Intercepter la route /dashboard par défaut de Breeze
             Route::get('/dashboard', function () {
                 $user = auth()->user();
-                
+
                 return redirect()->route($user->dashboardRouteName());
             })->middleware('auth')->name('dashboard');
         });

@@ -41,13 +41,14 @@ class NotifySchoolExpiringSubscription extends Command
 
         if ($subscriptionsExpiring->isEmpty() && $trialsExpiring->isEmpty()) {
             $this->info('✅ Aucune école n\'expire dans exactement 30 jours.');
+
             return;
         }
 
         $notified = 0;
 
         foreach ($subscriptionsExpiring as $school) {
-            if (!empty($school->email)) {
+            if (! empty($school->email)) {
                 Mail::to($school->email)->send(new SchoolSubscriptionExpiringMail($school, $school->subscription_end_date, false));
                 $this->line("✅ Email envoyé (abonnement) à : {$school->email} (École: {$school->name})");
                 $notified++;
@@ -57,7 +58,7 @@ class NotifySchoolExpiringSubscription extends Command
         }
 
         foreach ($trialsExpiring as $school) {
-            if (!empty($school->email)) {
+            if (! empty($school->email)) {
                 Mail::to($school->email)->send(new SchoolSubscriptionExpiringMail($school, $school->trial_ends_at, true));
                 $this->line("✅ Email envoyé (essai gratuit) à : {$school->email} (École: {$school->name})");
                 $notified++;

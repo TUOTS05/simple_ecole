@@ -3,29 +3,32 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ParentWelcomeMail;
 use App\Models\Enrollment;
-use App\Models\Fee;
+use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\SchoolYear;
 use App\Models\Student;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class EnrollmentController extends Controller
 {
-
-         public function index(Request $request)
+    public function index(Request $request)
     {
         $schoolId = session('current_school_id');
-        
+
         $query = Enrollment::where('school_id', $schoolId)
             ->with(['student', 'schoolYear', 'schoolClass', 'studentInstallments']);
-        
+
         if ($request->filled('school_year_id')) {
             $query->where('school_year_id', $request->school_year_id);
         }
-        
+
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
@@ -34,41 +37,39 @@ class EnrollmentController extends Controller
         if ($request->filled('class_id')) {
             $query->where('school_class_id', $request->class_id);
         }
-        
+
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('student', function($q) use ($search) {
-                $q->where('first_name', 'like', '%' . $search . '%')
-                  ->orWhere('last_name', 'like', '%' . $search . '%');
+            $query->whereHas('student', function ($q) use ($search) {
+                $q->where('first_name', 'like', '%'.$search.'%')
+                    ->orWhere('last_name', 'like', '%'.$search.'%');
             });
         }
-        
+
         $enrollments = $query->orderBy('enrollment_date', 'desc')->paginate(15);
         $enrollments->appends($request->query());
-        
+
         $schoolYears = SchoolYear::where('school_id', $schoolId)->orderBy('start_date', 'desc')->get();
-        
+
         // ✅ AJOUT : Récupérer les classes pour le menu déroulant
         $classes = SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
 
         return view('app.enrollments.index', compact('enrollments', 'schoolYears', 'classes'));
     }
 
-   
-
     public function create()
     {
         $schoolId = session('current_school_id');
-        
+
         $students = Student::where('school_id', $schoolId)
             ->where('status', 'active')
             ->orderBy('last_name')
             ->get();
-            
+
         $schoolYears = SchoolYear::where('school_id', $schoolId)
             ->orderBy('start_date', 'desc')
             ->get();
-            
+
         $classes = SchoolClass::where('school_id', $schoolId)
             ->orderBy('name')
             ->get();
@@ -77,17 +78,15 @@ class EnrollmentController extends Controller
         $parentDetails = session('parent_details', []);
 
         return view('app.enrollments.create', compact(
-            'students', 
-            'schoolYears', 
+            'students',
+            'schoolYears',
             'classes',
             'parentDetails'
-           
+
         ));
     }
-    
 
-
-        public function store(Request $request)
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'first_name' => 'required|string|max:100',
@@ -103,14 +102,14 @@ class EnrollmentController extends Controller
             'admission_date' => 'required|date',
             'receipt_number' => 'required|string|max:50',
             'student_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            
+
             'father_name' => 'nullable|string|max:100',
             'father_phone' => 'nullable|string|max:20',
             'father_occupation' => 'nullable|string|max:100',
             'mother_name' => 'nullable|string|max:100',
             'mother_phone' => 'nullable|string|max:20',
             'mother_occupation' => 'nullable|string|max:100',
-            
+
             'guardian_type' => 'required|in:father,mother,other',
             'guardian_first_name' => 'required|string|max:100', // NOUVEAU
             'guardian_last_name' => 'required|string|max:100',  // NOUVEAU
@@ -119,7 +118,7 @@ class EnrollmentController extends Controller
             'guardian_relation' => 'nullable|string|max:50',
             'guardian_occupation' => 'nullable|string|max:100',
             'guardian_address' => 'nullable|string',
-            
+
             'current_address' => 'nullable|string',
             'permanent_address' => 'nullable|string',
             'previous_school' => 'nullable|string',
@@ -138,8 +137,8 @@ class EnrollmentController extends Controller
         // L'email des users est unique globalement (toutes écoles confondues) : si le tuteur
         // saisi correspond à un compte d'une autre école (ou d'un autre rôle), la création
         // plantait plus loin avec une erreur SQL brute. On le détecte ici proprement.
-        if (!empty($validated['guardian_email'])) {
-            $existingParent = \App\Models\User::where('email', $validated['guardian_email'])->first();
+        if (! empty($validated['guardian_email'])) {
+            $existingParent = User::where('email', $validated['guardian_email'])->first();
             if ($existingParent && ($existingParent->school_id !== $schoolId || $existingParent->role !== 'parent')) {
                 return back()->withErrors([
                     'guardian_email' => "Cette adresse email est déjà utilisée par un autre compte et ne peut pas servir d'email pour le tuteur.",
@@ -161,7 +160,7 @@ class EnrollmentController extends Controller
             // 1. Générer le Numéro d'Admission
             $lastStudent = Student::where('school_id', $schoolId)->whereYear('created_at', $year)->orderBy('id', 'desc')->first();
             $nextAdmissionNum = $lastStudent && $lastStudent->admission_number ? (intval(substr($lastStudent->admission_number, -4)) + 1) : 1;
-            $admissionNumber = 'ADM-' . $year . '-' . str_pad($nextAdmissionNum, 4, '0', STR_PAD_LEFT);
+            $admissionNumber = 'ADM-'.$year.'-'.str_pad($nextAdmissionNum, 4, '0', STR_PAD_LEFT);
 
             // 2. Gestion de la photo
             $photoPath = null;
@@ -185,28 +184,28 @@ class EnrollmentController extends Controller
                 'admission_date' => $validated['admission_date'],
                 'receipt_number' => $validated['receipt_number'],
                 'photo' => $photoPath,
-                
+
                 'father_name' => $validated['father_name'] ?? null,
                 'father_phone' => $validated['father_phone'] ?? null,
                 'father_occupation' => $validated['father_occupation'] ?? null,
                 'mother_name' => $validated['mother_name'] ?? null,
                 'mother_phone' => $validated['mother_phone'] ?? null,
                 'mother_occupation' => $validated['mother_occupation'] ?? null,
-                
+
                 'guardian_type' => $validated['guardian_type'],
                 // On concatène pour l'ancien champ, tout en ayant les données séparées pour le User
-                'guardian_name' => trim($validated['guardian_first_name'] . ' ' . $validated['guardian_last_name']), 
+                'guardian_name' => trim($validated['guardian_first_name'].' '.$validated['guardian_last_name']),
                 'guardian_phone' => $validated['guardian_phone'],
                 'guardian_relation' => $validated['guardian_relation'] ?? null,
                 'guardian_email' => $validated['guardian_email'],
                 'guardian_occupation' => $validated['guardian_occupation'] ?? null,
                 'guardian_address' => $validated['guardian_address'] ?? null,
-                
+
                 'current_address' => $validated['current_address'] ?? null,
                 'permanent_address' => $validated['permanent_address'] ?? null,
                 'previous_school' => $validated['previous_school'] ?? null,
                 'remarks' => $validated['remarks'] ?? null,
-                'documents' => !empty($documentsData) ? $documentsData : null,
+                'documents' => ! empty($documentsData) ? $documentsData : null,
             ]);
 
             // ==========================================
@@ -215,16 +214,16 @@ class EnrollmentController extends Controller
             $newParentPassword = 'Ecole2024!';
             $isNewParentAccount = false;
             $parentUser = null;
-            if (!empty($validated['guardian_email'])) {
+            if (! empty($validated['guardian_email'])) {
                 // a) Créer ou récupérer l'utilisateur Parent
                 // Note : role et school_id ne sont pas mass-assignables (protection contre
                 // l'élévation de privilèges) ; le where() de firstOrCreate n'est pas affecté
                 // (ce n'est pas du mass assignment), mais on affecte school_id/role
                 // explicitement après création.
-                $parentUser = \App\Models\User::firstOrCreate(
+                $parentUser = User::firstOrCreate(
                     [
                         'email' => $validated['guardian_email'],
-                        'school_id' => $schoolId
+                        'school_id' => $schoolId,
                     ],
                     [
                         'first_name' => $validated['guardian_first_name'],
@@ -242,15 +241,15 @@ class EnrollmentController extends Controller
                 }
 
                 // b) Lier ce parent à l'élève dans la table pivot (avec school_id)
-                \Illuminate\Support\Facades\DB::table('parent_student')->updateOrInsert(
+                DB::table('parent_student')->updateOrInsert(
                     [
                         'parent_id' => $parentUser->id,
-                        'student_id' => $student->id
+                        'student_id' => $student->id,
                     ],
                     [
                         'school_id' => $schoolId,
                         'created_at' => now(),
-                        'updated_at' => now()
+                        'updated_at' => now(),
                     ]
                 );
             }
@@ -267,7 +266,7 @@ class EnrollmentController extends Controller
                     'enrollment_date' => $validated['admission_date'],
                     'status' => 'enrolled',
                 ]);
-                
+
                 $student->classes()->attach($validated['class_id']);
 
                 // 6. GÉNÉRATION AUTOMATIQUE DES ÉCHÉANCES
@@ -278,18 +277,18 @@ class EnrollmentController extends Controller
 
             if ($isNewParentAccount && $parentUser) {
                 try {
-                    $school = session('current_school') ?? \App\Models\School::find($schoolId);
-                    \Illuminate\Support\Facades\Mail::to($parentUser->email)->send(
-                        new \App\Mail\ParentWelcomeMail(
-                            trim($parentUser->first_name . ' ' . $parentUser->last_name),
-                            trim($student->first_name . ' ' . $student->last_name),
+                    $school = session('current_school') ?? School::find($schoolId);
+                    Mail::to($parentUser->email)->send(
+                        new ParentWelcomeMail(
+                            trim($parentUser->first_name.' '.$parentUser->last_name),
+                            trim($student->first_name.' '.$student->last_name),
                             $school->name ?? 'votre école',
                             $parentUser->email,
                             $newParentPassword
                         )
                     );
                 } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::error('Échec envoi email de bienvenue au parent : ' . $e->getMessage());
+                    Log::error('Échec envoi email de bienvenue au parent : '.$e->getMessage());
                 }
             }
 
@@ -323,7 +322,8 @@ class EnrollmentController extends Controller
 
         } catch (\Throwable $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Erreur : ' . $e->getMessage()])->withInput();
+
+            return back()->withErrors(['error' => 'Erreur : '.$e->getMessage()])->withInput();
         }
     }
 
@@ -390,20 +390,20 @@ class EnrollmentController extends Controller
             ->with('success', 'Inscription supprimée !');
     }
 
-        /**
+    /**
      * Exporter la liste des inscriptions en format CSV (Compatible Excel)
      */
     public function export(Request $request)
     {
         $schoolId = session('current_school_id');
-        
+
         $query = Enrollment::where('school_id', $schoolId)
             ->with(['student', 'schoolYear', 'schoolClass', 'studentInstallments']);
-        
+
         if ($request->filled('school_year_id')) {
             $query->where('school_year_id', $request->school_year_id);
         }
-        
+
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
@@ -412,30 +412,30 @@ class EnrollmentController extends Controller
         if ($request->filled('class_id')) {
             $query->where('school_class_id', $request->class_id);
         }
-        
+
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('student', function($q) use ($search) {
-                $q->where('first_name', 'like', '%' . $search . '%')
-                  ->orWhere('last_name', 'like', '%' . $search . '%');
+            $query->whereHas('student', function ($q) use ($search) {
+                $q->where('first_name', 'like', '%'.$search.'%')
+                    ->orWhere('last_name', 'like', '%'.$search.'%');
             });
         }
-        
+
         $enrollments = $query->orderBy('enrollment_date', 'desc')->get();
 
-        $filename = 'export_inscriptions_' . date('Y-m-d_His') . '.csv';
-        
+        $filename = 'export_inscriptions_'.date('Y-m-d_His').'.csv';
+
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
-        $callback = function() use ($enrollments) {
+        $callback = function () use ($enrollments) {
             $file = fopen('php://output', 'w');
-            
+
             // BOM UTF-8 pour les accents dans Excel
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-            
+
             fputcsv($file, [
                 'Date d\'inscription',
                 'Nom de l\'élève',
@@ -444,40 +444,40 @@ class EnrollmentController extends Controller
                 'Classe',
                 'Statut',
                 'Frais d\'inscription',
-                'Reste à payer (Scolarité)'
+                'Reste à payer (Scolarité)',
             ]);
-            
+
             foreach ($enrollments as $enrollment) {
-                $studentName = trim(($enrollment->student->last_name ?? '') . ' ' . ($enrollment->student->first_name ?? ''));
+                $studentName = trim(($enrollment->student->last_name ?? '').' '.($enrollment->student->first_name ?? ''));
                 $matricule = $enrollment->student->matricule ?? 'N/A';
                 $yearName = $enrollment->schoolYear->name ?? 'N/A';
                 $className = $enrollment->schoolClass->name ?? 'N/A';
-                
+
                 $statusMap = [
                     'enrolled' => 'Inscrit',
                     'reserved' => 'Réservé',
-                    'withdrawn' => 'Retiré'
+                    'withdrawn' => 'Retiré',
                 ];
                 $status = $statusMap[$enrollment->status] ?? $enrollment->status;
-                
+
                 $regFeeStatus = $enrollment->registration_fee_paid ? 'Payé' : 'Non payé';
-                
+
                 $totalTuition = $enrollment->tuition_fee_total ?? 0;
                 $paidTuition = $enrollment->tuition_fee_paid ?? 0;
                 $remainingTuition = max(0, $totalTuition - $paidTuition);
-                
+
                 fputcsv($file, [
-                    \Carbon\Carbon::parse($enrollment->enrollment_date)->format('d/m/Y'),
+                    Carbon::parse($enrollment->enrollment_date)->format('d/m/Y'),
                     $studentName,
                     $matricule,
                     $yearName,
                     $className,
                     $status,
                     $regFeeStatus,
-                    $remainingTuition > 0 ? number_format($remainingTuition, 0, ',', ' ') . ' FCFA' : 'Soldé'
+                    $remainingTuition > 0 ? number_format($remainingTuition, 0, ',', ' ').' FCFA' : 'Soldé',
                 ]);
             }
-            
+
             fclose($file);
         };
 

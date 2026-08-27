@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\NewSubscriptionRequestMail;
 use App\Models\School;
-use App\Models\User;
-use App\Models\SubscriptionRequest;
 use App\Models\SubscriptionPlan;
+use App\Models\SubscriptionRequest;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class SchoolOnboardingController extends Controller
@@ -68,6 +71,7 @@ class SchoolOnboardingController extends Controller
     public function showRequestForm()
     {
         $plans = SubscriptionPlan::where('is_active', true)->get();
+
         return view('auth.request-account', compact('plans'));
     }
 
@@ -122,7 +126,7 @@ class SchoolOnboardingController extends Controller
     //         ->with('success', '✅ Votre demande de création d\'école a été envoyée avec succès ! Le Super Administrateur vous contactera sous 24h avec vos identifiants.');
     // }
 
-        /**
+    /**
      * Traite la soumission du formulaire de demande de compte
      */
     public function storeRequest(Request $request)
@@ -142,7 +146,7 @@ class SchoolOnboardingController extends Controller
             $school = School::create([
                 'name' => $validated['school_name'],
                 'email' => $validated['director_email'],
-                'slug' => \Illuminate\Support\Str::slug($validated['school_name']) . '-' . \Illuminate\Support\Str::random(4),
+                'slug' => Str::slug($validated['school_name']).'-'.Str::random(4),
                 'phone' => $validated['school_phone'],
                 'address' => $validated['school_address'],
                 'status' => 'pending',
@@ -157,14 +161,14 @@ class SchoolOnboardingController extends Controller
 
             // role et school_id ne sont pas mass-assignables (protection contre l'élévation
             // de privilèges) : on les affecte explicitement après création.
-            $director = \App\Models\User::create([
+            $director = User::create([
                 'first_name' => $firstName,
                 'last_name' => $lastName,
                 'email' => $validated['director_email'],
                 // Mot de passe aléatoire et inconnu : la connexion reste impossible tant que
                 // la demande n'est pas approuvée et qu'un vrai mot de passe n'est généré (voir
                 // SubscriptionController::approveRequest).
-                'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(32)),
+                'password' => Hash::make(Str::random(32)),
             ]);
             $director->school_id = $school->id;
             $director->role = 'school_admin';
@@ -172,7 +176,7 @@ class SchoolOnboardingController extends Controller
             $director->save();
 
             // 4. Créer la demande d'abonnement
-            $subRequest = \App\Models\SubscriptionRequest::create([
+            $subRequest = SubscriptionRequest::create([
                 'school_id' => $school->id,
                 'plan_id' => $validated['plan_id'],
                 'duration' => 'yearly',
@@ -182,13 +186,13 @@ class SchoolOnboardingController extends Controller
             // 5. Prévenir les super admins tout de suite, pour que la revue manuelle
             // n'attende pas qu'un admin pense à aller consulter la liste des demandes.
             try {
-                $superAdmins = \App\Models\User::where('role', 'super_admin')->get();
+                $superAdmins = User::where('role', 'super_admin')->get();
                 if ($superAdmins->isNotEmpty()) {
-                    \Illuminate\Support\Facades\Mail::to($superAdmins)
-                        ->send(new \App\Mail\NewSubscriptionRequestMail($subRequest->load('school.users', 'plan')));
+                    Mail::to($superAdmins)
+                        ->send(new NewSubscriptionRequestMail($subRequest->load('school.users', 'plan')));
                 }
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Erreur envoi notification nouvelle demande: ' . $e->getMessage());
+                Log::error('Erreur envoi notification nouvelle demande: '.$e->getMessage());
             }
 
             return redirect()->route('landing')
@@ -196,9 +200,9 @@ class SchoolOnboardingController extends Controller
 
         } catch (\Exception $e) {
             // En cas d'erreur, on loggue et on renvoie l'utilisateur avec le message d'erreur exact
-            \Illuminate\Support\Facades\Log::error('Erreur création demande compte: ' . $e->getMessage());
-            
-            return back()->withInput()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()]);
+            Log::error('Erreur création demande compte: '.$e->getMessage());
+
+            return back()->withInput()->withErrors(['error' => 'Une erreur est survenue : '.$e->getMessage()]);
         }
     }
 }

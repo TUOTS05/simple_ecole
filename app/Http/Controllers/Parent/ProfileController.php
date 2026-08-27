@@ -16,7 +16,7 @@ class ProfileController extends Controller
     public function edit()
     {
         return view('parent.profile.edit', [
-            'user' => auth()->user()
+            'user' => auth()->user(),
         ]);
     }
 
@@ -45,6 +45,7 @@ class ProfileController extends Controller
     public function editPassword()
     {
         $user = auth()->user();
+
         return view('parent.profile.password', compact('user'));
     }
 
@@ -61,7 +62,7 @@ class ProfileController extends Controller
         $user = auth()->user();
 
         // Vérifier que l'ancien mot de passe est correct
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             return back()->withErrors(['current_password' => 'Le mot de passe actuel est incorrect.']);
         }
 

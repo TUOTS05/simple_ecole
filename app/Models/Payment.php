@@ -22,7 +22,7 @@ class Payment extends Model
         'received_by',
         'notes',
         'receipt_path',
-        
+
     ];
 
     protected $casts = [
@@ -59,7 +59,7 @@ class Payment extends Model
 
     public function getFormattedAmountAttribute(): string
     {
-        return number_format($this->amount, 0, ',', ' ') . ' FCFA';
+        return number_format($this->amount, 0, ',', ' ').' FCFA';
     }
 
     // Boot : après création OU suppression d'un paiement, recalculer les montants de l'enrollment
@@ -76,7 +76,7 @@ class Payment extends Model
 
         static::deleted(function ($payment) {
             $enrollment = $payment->enrollment;
-            if (!$enrollment) {
+            if (! $enrollment) {
                 return;
             }
 
@@ -90,7 +90,6 @@ class Payment extends Model
             }
         });
     }
-
 
     public function studentInstallment()
     {

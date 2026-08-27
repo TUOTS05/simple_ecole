@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('schools', function (Blueprint $table) {
             // Ajoute la colonne deleted_at si elle n'existe pas déjà
-            if (!Schema::hasColumn('schools', 'deleted_at')) {
+            if (! Schema::hasColumn('schools', 'deleted_at')) {
                 $table->softDeletes();
             }
         });

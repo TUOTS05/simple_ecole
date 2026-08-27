@@ -103,7 +103,7 @@ class Enrollment extends Model
         return $this->hasMany(StudentInstallment::class);
     }
 
-        public function canteenSubscriptions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function canteenSubscriptions(): HasMany
     {
         return $this->hasMany(CanteenSubscription::class);
     }

@@ -5,12 +5,14 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-
 class OrangeSmsService
 {
     private $clientId;
+
     private $clientSecret;
+
     private $senderName;
+
     private $devMode;
 
     public function __construct()
@@ -32,10 +34,10 @@ class OrangeSmsService
         // Si en mode dev, on simule l'envoi
         if ($this->devMode) {
             Log::info("📱 [DEV MODE] SMS simulé vers {$phoneNumber}: {$message}");
-            
+
             return [
                 'success' => true,
-                'message_id' => 'DEV-' . uniqid(),
+                'message_id' => 'DEV-'.uniqid(),
                 'status' => 'sent',
                 'dev_mode' => true,
                 'message' => $message,
@@ -49,12 +51,12 @@ class OrangeSmsService
 
             // Envoyer le SMS
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $token,
+                'Authorization' => 'Bearer '.$token,
                 'Content-Type' => 'application/json',
             ])->post('https://api.orange.com/sms/v1/sms/outbound', [
                 'outboundSMSMessageRequest' => [
-                    'address' => 'tel:+' . $phoneNumber,
-                    'senderAddress' => 'tel:' . $this->senderName,
+                    'address' => 'tel:+'.$phoneNumber,
+                    'senderAddress' => 'tel:'.$this->senderName,
                     'outboundSMSTextMessage' => [
                         'message' => $message,
                     ],
@@ -63,7 +65,7 @@ class OrangeSmsService
 
             if ($response->successful()) {
                 $data = $response->json();
-                
+
                 Log::info("✅ SMS envoyé avec succès vers {$phoneNumber}", [
                     'response' => $data,
                 ]);
@@ -86,7 +88,7 @@ class OrangeSmsService
             }
 
         } catch (\Exception $e) {
-            Log::error("❌ Exception lors de l'envoi SMS: " . $e->getMessage());
+            Log::error("❌ Exception lors de l'envoi SMS: ".$e->getMessage());
 
             return [
                 'success' => false,
@@ -102,15 +104,15 @@ class OrangeSmsService
     private function getAccessToken(): string
     {
         $response = Http::withHeaders([
-            'Authorization' => 'Basic ' . base64_encode($this->clientId . ':' . $this->clientSecret),
+            'Authorization' => 'Basic '.base64_encode($this->clientId.':'.$this->clientSecret),
             'Content-Type' => 'application/x-www-form-urlencoded',
             'Accept' => 'application/json',
         ])->asForm()->post('https://api.orange.com/oauth/v3/token', [
             'grant_type' => 'client_credentials',
         ]);
 
-        if (!$response->successful()) {
-            throw new \Exception('Impossible d\'obtenir le token Orange SMS: ' . $response->body());
+        if (! $response->successful()) {
+            throw new \Exception('Impossible d\'obtenir le token Orange SMS: '.$response->body());
         }
 
         return $response->json()['access_token'];
@@ -133,7 +135,7 @@ class OrangeSmsService
             // 223 = Mali
             // 226 = Burkina Faso
             $countryCode = '221'; // ← Changez ici selon votre pays
-            $phone = $countryCode . substr($phone, 1);
+            $phone = $countryCode.substr($phone, 1);
         }
 
         return $phone;

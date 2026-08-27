@@ -2,20 +2,23 @@
 
 namespace App\Http\Controllers\App;
 
+use App\Exports\StudentsExport;
 use App\Http\Controllers\Controller;
-use App\Models\Student;
+use App\Mail\ParentWelcomeMail;
 use App\Models\Enrollment;
-use App\Models\SchoolYear;
+use App\Models\ReportCard;
+use App\Models\School;
 use App\Models\SchoolClass;
+use App\Models\SchoolYear;
+use App\Models\Student;
+use App\Models\StudentInstallment;
+use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\StudentInstallment;
-use App\Models\ReportCard;
-use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\StudentsExport;
-use Barryvdh\DomPDF\Facade\Pdf;
-
 
 class StudentController extends Controller
 {
@@ -50,9 +53,9 @@ class StudentController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', '%' . $search . '%')
-                    ->orWhere('last_name', 'like', '%' . $search . '%')
-                    ->orWhere('matricule', 'like', '%' . $search . '%');
+                $q->where('first_name', 'like', '%'.$search.'%')
+                    ->orWhere('last_name', 'like', '%'.$search.'%')
+                    ->orWhere('matricule', 'like', '%'.$search.'%');
             });
         }
 
@@ -79,8 +82,6 @@ class StudentController extends Controller
 
         return view('app.enrollments.create', compact('classes', 'schoolYears', 'parentDetails'));
     }
-
-
 
     public function store(Request $request)
     {
@@ -134,7 +135,7 @@ class StudentController extends Controller
 
         // Plafond d'élèves de l'abonnement : jusqu'ici School.max_students n'était jamais vérifié
         // nulle part, rendant le plafonnement du plan purement décoratif.
-        $school = \App\Models\School::find($schoolId);
+        $school = School::find($schoolId);
         if ($school && $school->max_students) {
             $activeStudentCount = Student::where('school_id', $schoolId)->where('status', 'active')->count();
             if ($activeStudentCount >= $school->max_students) {
@@ -146,14 +147,14 @@ class StudentController extends Controller
 
         // Si le client n'a pas envoyé de numéro de reçu, on en génère un côté serveur.
         if (empty($validated['receipt_number'])) {
-            $validated['receipt_number'] = 'REC-' . $year . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+            $validated['receipt_number'] = 'REC-'.$year.'-'.str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
         }
 
         // L'email des users est unique globalement (toutes écoles confondues) : si le tuteur
         // saisi correspond à un compte d'une autre école (ou d'un autre rôle), la création
         // plantait plus loin avec une erreur SQL brute. On le détecte ici proprement.
-        if (!empty($validated['guardian_email'])) {
-            $existingParent = \App\Models\User::where('email', $validated['guardian_email'])->first();
+        if (! empty($validated['guardian_email'])) {
+            $existingParent = User::where('email', $validated['guardian_email'])->first();
             if ($existingParent && ($existingParent->school_id !== $schoolId || $existingParent->role !== 'parent')) {
                 return back()->withErrors([
                     'guardian_email' => "Cette adresse email est déjà utilisée par un autre compte et ne peut pas servir d'email pour le tuteur.",
@@ -175,7 +176,7 @@ class StudentController extends Controller
             // 1. Générer le Numéro d'Admission
             $lastStudent = Student::where('school_id', $schoolId)->whereYear('created_at', $year)->orderBy('id', 'desc')->first();
             $nextAdmissionNum = $lastStudent && $lastStudent->admission_number ? (intval(substr($lastStudent->admission_number, -4)) + 1) : 1;
-            $admissionNumber = 'ADM-' . $year . '-' . str_pad($nextAdmissionNum, 4, '0', STR_PAD_LEFT);
+            $admissionNumber = 'ADM-'.$year.'-'.str_pad($nextAdmissionNum, 4, '0', STR_PAD_LEFT);
 
             // 2. Gestion de la photo
             $photoPath = null;
@@ -209,7 +210,7 @@ class StudentController extends Controller
 
                 'guardian_type' => $validated['guardian_type'],
                 // On concatène pour l'ancien champ, tout en ayant les données séparées pour le User
-                'guardian_name' => trim($validated['guardian_first_name'] . ' ' . $validated['guardian_last_name']),
+                'guardian_name' => trim($validated['guardian_first_name'].' '.$validated['guardian_last_name']),
                 'guardian_phone' => $validated['guardian_phone'],
                 'guardian_relation' => $validated['guardian_relation'] ?? null,
                 'guardian_email' => $validated['guardian_email'],
@@ -220,7 +221,7 @@ class StudentController extends Controller
                 'permanent_address' => $validated['permanent_address'] ?? null,
                 'previous_school' => $validated['previous_school'] ?? null,
                 'remarks' => $validated['remarks'] ?? null,
-                'documents' => !empty($documentsData) ? $documentsData : null,
+                'documents' => ! empty($documentsData) ? $documentsData : null,
             ]);
 
             // ==========================================
@@ -229,14 +230,14 @@ class StudentController extends Controller
             $newParentPassword = 'Ecole2024!';
             $isNewParentAccount = false;
             $parentUser = null;
-            if (!empty($validated['guardian_email'])) {
+            if (! empty($validated['guardian_email'])) {
                 // a) Créer ou récupérer l'utilisateur Parent
                 // Note : role et school_id ne sont pas mass-assignables (protection contre
                 // l'élévation de privilèges) ; on les affecte explicitement après création.
-                $parentUser = \App\Models\User::firstOrCreate(
+                $parentUser = User::firstOrCreate(
                     [
                         'email' => $validated['guardian_email'],
-                        'school_id' => $schoolId
+                        'school_id' => $schoolId,
                     ],
                     [
                         'first_name' => $validated['guardian_first_name'],
@@ -254,15 +255,15 @@ class StudentController extends Controller
                 }
 
                 // b) Lier ce parent à l'élève dans la table pivot (avec school_id)
-                \Illuminate\Support\Facades\DB::table('parent_student')->updateOrInsert(
+                DB::table('parent_student')->updateOrInsert(
                     [
                         'parent_id' => $parentUser->id,
-                        'student_id' => $student->id
+                        'student_id' => $student->id,
                     ],
                     [
                         'school_id' => $schoolId,
                         'created_at' => now(),
-                        'updated_at' => now()
+                        'updated_at' => now(),
                     ]
                 );
             }
@@ -290,17 +291,17 @@ class StudentController extends Controller
 
             if ($isNewParentAccount && $parentUser) {
                 try {
-                    \Illuminate\Support\Facades\Mail::to($parentUser->email)->send(
-                        new \App\Mail\ParentWelcomeMail(
-                            trim($parentUser->first_name . ' ' . $parentUser->last_name),
-                            trim($student->first_name . ' ' . $student->last_name),
+                    Mail::to($parentUser->email)->send(
+                        new ParentWelcomeMail(
+                            trim($parentUser->first_name.' '.$parentUser->last_name),
+                            trim($student->first_name.' '.$student->last_name),
                             $school->name ?? 'votre école',
                             $parentUser->email,
                             $newParentPassword
                         )
                     );
                 } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::error('Échec envoi email de bienvenue au parent : ' . $e->getMessage());
+                    Log::error('Échec envoi email de bienvenue au parent : '.$e->getMessage());
                 }
             }
 
@@ -333,7 +334,8 @@ class StudentController extends Controller
                 ->with('success', "✅ Inscription réussie ! Matricule : {$student->matricule}. Un compte parent a été créé/lié.");
         } catch (\Throwable $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Erreur : ' . $e->getMessage()])->withInput();
+
+            return back()->withErrors(['error' => 'Erreur : '.$e->getMessage()])->withInput();
         }
     }
 
@@ -342,10 +344,12 @@ class StudentController extends Controller
      */
     private function generateFeeSchedule($enrollment, $classId)
     {
-        $schoolClass = \App\Models\SchoolClass::find($classId);
-        if (!$schoolClass) return;
+        $schoolClass = SchoolClass::find($classId);
+        if (! $schoolClass) {
+            return;
+        }
 
-        \App\Models\StudentInstallment::generateScheduleFor($enrollment, $schoolClass, $enrollment->enrollment_date);
+        StudentInstallment::generateScheduleFor($enrollment, $schoolClass, $enrollment->enrollment_date);
     }
 
     /**
@@ -362,7 +366,7 @@ class StudentController extends Controller
         $student->load([
             'classes',
             'enrollments.schoolYear',
-            'parents'
+            'parents',
         ]);
 
         return view('app.students.show', compact('student'));
@@ -418,7 +422,7 @@ class StudentController extends Controller
         $classes = SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
         $schoolYears = SchoolYear::where('school_id', $schoolId)->orderBy('start_date', 'desc')->get();
 
-        // 2. AJOUT CRUCIAL : On charge explicitement la relation 'classes' 
+        // 2. AJOUT CRUCIAL : On charge explicitement la relation 'classes'
         // pour que $student->classes->first()?->id fonctionne parfaitement dans la vue
         $student->load('classes');
 
@@ -448,7 +452,6 @@ class StudentController extends Controller
     //     return redirect()->route('app.students.index')
     //         ->with('success', 'Informations de l\'élève mises à jour avec succès !');
     // }
-
 
     // public function update(Request $request, Student $student)
     // {
@@ -512,7 +515,7 @@ class StudentController extends Controller
 
     //             // ✅ AJOUT : Gestion intelligente des 4 documents
     //         $documentsData = $student->documents ?? []; // Récupère les anciens ou un tableau vide
-            
+
     //         for ($i = 1; $i <= 4; $i++) {
     //             if ($request->hasFile("documents.$i")) {
     //                 // Supprimer l'ancien fichier s'il existe
@@ -614,8 +617,7 @@ class StudentController extends Controller
     //     }
     // }
 
-
-        public function update(Request $request, Student $student)
+    public function update(Request $request, Student $student)
     {
         if ($student->school_id !== session('current_school_id')) {
             abort(403);
@@ -668,8 +670,8 @@ class StudentController extends Controller
         // L'email des users est unique globalement (toutes écoles confondues) : si le tuteur
         // saisi correspond à un compte d'une autre école (ou d'un autre rôle), la mise à jour
         // plantait plus loin avec une erreur SQL brute. On le détecte ici proprement.
-        if (!empty($validated['guardian_email'])) {
-            $existingParent = \App\Models\User::where('email', $validated['guardian_email'])->first();
+        if (! empty($validated['guardian_email'])) {
+            $existingParent = User::where('email', $validated['guardian_email'])->first();
             if ($existingParent && ($existingParent->school_id !== $schoolId || $existingParent->role !== 'parent')) {
                 return back()->withErrors([
                     'guardian_email' => "Cette adresse email est déjà utilisée par un autre compte et ne peut pas servir d'email pour le tuteur.",
@@ -689,8 +691,8 @@ class StudentController extends Controller
             }
 
             // 2. ✅ Gestion intelligente des 4 documents (HORS du bloc photo, bien indenté)
-            $documentsData = $student->documents ?? []; 
-            
+            $documentsData = $student->documents ?? [];
+
             for ($i = 1; $i <= 4; $i++) {
                 if ($request->hasFile("documents.$i") && $request->file("documents.$i")->isValid()) {
                     // Supprimer l'ancien fichier s'il existe
@@ -726,7 +728,7 @@ class StudentController extends Controller
                 'mother_occupation' => $validated['mother_occupation'],
 
                 'guardian_type' => $validated['guardian_type'],
-                'guardian_name' => trim($validated['guardian_first_name'] . ' ' . $validated['guardian_last_name']),
+                'guardian_name' => trim($validated['guardian_first_name'].' '.$validated['guardian_last_name']),
                 'guardian_phone' => $validated['guardian_phone'],
                 'guardian_relation' => $validated['guardian_relation'],
                 'guardian_email' => $validated['guardian_email'],
@@ -744,9 +746,9 @@ class StudentController extends Controller
             $student->classes()->sync([$validated['class_id']]);
 
             // Mise à jour de l'inscription active
-            $activeYear = \App\Models\SchoolYear::where('school_id', $schoolId)->where('is_active', true)->first();
+            $activeYear = SchoolYear::where('school_id', $schoolId)->where('is_active', true)->first();
             if ($activeYear) {
-                \App\Models\Enrollment::updateOrCreate(
+                Enrollment::updateOrCreate(
                     [
                         'school_id' => $schoolId,
                         'student_id' => $student->id,
@@ -764,13 +766,13 @@ class StudentController extends Controller
             $newParentPassword = 'Ecole2024!';
             $isNewParentAccount = false;
             $parentUser = null;
-            if (!empty($validated['guardian_email'])) {
+            if (! empty($validated['guardian_email'])) {
                 // Note : role et school_id ne sont pas mass-assignables (protection contre
                 // l'élévation de privilèges) ; on les affecte explicitement après création.
-                $parentUser = \App\Models\User::firstOrCreate(
+                $parentUser = User::firstOrCreate(
                     [
                         'email' => $validated['guardian_email'],
-                        'school_id' => $schoolId
+                        'school_id' => $schoolId,
                     ],
                     [
                         'first_name' => $validated['guardian_first_name'],
@@ -795,7 +797,7 @@ class StudentController extends Controller
                 ])->save();
 
                 $student->parents()->syncWithoutDetaching([
-                    $parentUser->id => ['school_id' => $schoolId]
+                    $parentUser->id => ['school_id' => $schoolId],
                 ]);
             }
 
@@ -803,18 +805,18 @@ class StudentController extends Controller
 
             if ($isNewParentAccount && $parentUser) {
                 try {
-                    $school = session('current_school') ?? \App\Models\School::find($schoolId);
-                    \Illuminate\Support\Facades\Mail::to($parentUser->email)->send(
-                        new \App\Mail\ParentWelcomeMail(
-                            trim($parentUser->first_name . ' ' . $parentUser->last_name),
-                            trim($student->first_name . ' ' . $student->last_name),
+                    $school = session('current_school') ?? School::find($schoolId);
+                    Mail::to($parentUser->email)->send(
+                        new ParentWelcomeMail(
+                            trim($parentUser->first_name.' '.$parentUser->last_name),
+                            trim($student->first_name.' '.$student->last_name),
                             $school->name ?? 'votre école',
                             $parentUser->email,
                             $newParentPassword
                         )
                     );
                 } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::error('Échec envoi email de bienvenue au parent : ' . $e->getMessage());
+                    Log::error('Échec envoi email de bienvenue au parent : '.$e->getMessage());
                 }
             }
 
@@ -822,7 +824,8 @@ class StudentController extends Controller
                 ->with('success', "✅ Informations de {$student->first_name} mises à jour avec succès ! Le compte parent a été synchronisé.");
         } catch (\Throwable $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Erreur lors de la mise à jour : ' . $e->getMessage()])->withInput();
+
+            return back()->withErrors(['error' => 'Erreur lors de la mise à jour : '.$e->getMessage()])->withInput();
         }
     }
 
@@ -847,33 +850,31 @@ class StudentController extends Controller
             ->with('success', 'Élève supprimé avec succès !');
     }
 
-    public function exportExcel(\Illuminate\Http\Request $request)
+    public function exportExcel(Request $request)
     {
         $schoolId = session('current_school_id');
         $classId = $request->get('class_id'); // Récupère la classe filtrée
 
-        $filename = $classId ? 'eleves_classe_' . $classId . '_' . date('Y-m-d') : 'tous_les_eleves_' . date('Y-m-d');
+        $filename = $classId ? 'eleves_classe_'.$classId.'_'.date('Y-m-d') : 'tous_les_eleves_'.date('Y-m-d');
 
-        return Excel::download(new StudentsExport($schoolId, $classId), $filename . '.xlsx');
+        return Excel::download(new StudentsExport($schoolId, $classId), $filename.'.xlsx');
     }
 
-
-
-    public function exportPdf(\Illuminate\Http\Request $request)
+    public function exportPdf(Request $request)
     {
         $schoolId = session('current_school_id');
         $classId = $request->get('class_id');
         $user = auth()->user();
 
         // 1. Récupération des élèves
-        $query = \App\Models\Student::where('school_id', $schoolId);
+        $query = Student::where('school_id', $schoolId);
 
         $className = 'Toutes les classes';
         if ($classId) {
             $query->whereHas('enrollments', function ($q) use ($classId) {
                 $q->where('school_class_id', $classId);
             });
-            $class = \App\Models\SchoolClass::find($classId);
+            $class = SchoolClass::find($classId);
             $className = $class ? $class->name : 'Classe inconnue';
         }
 
@@ -888,7 +889,7 @@ class StudentController extends Controller
         $femaleRate = $totalStudents > 0 ? round(($femaleCount / $totalStudents) * 100) : 0;
 
         // 3. Nom de l'utilisateur connecté
-        $userName = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: ($user->name ?? 'Non spécifié');
+        $userName = trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'Non spécifié');
 
         // 4. Année scolaire et Logo
         $schoolYear = '2025-2026'; // Adaptez si vous avez une relation dynamique
@@ -896,14 +897,14 @@ class StudentController extends Controller
         $schoolLogoPath = null;
         // Adaptez 'school->logo' selon votre modèle réel (ex: $user->school->logo)
         if (isset($user->school) && $user->school->logo) {
-            $schoolLogoPath = public_path('storage/' . $user->school->logo);
+            $schoolLogoPath = public_path('storage/'.$user->school->logo);
         }
-        if (!$schoolLogoPath || !file_exists($schoolLogoPath)) {
+        if (! $schoolLogoPath || ! file_exists($schoolLogoPath)) {
             $schoolLogoPath = public_path('images/default-logo.png'); // Fallback
         }
 
         // 5. Génération du PDF
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('app.exports.students_pdf', compact(
+        $pdf = Pdf::loadView('app.exports.students_pdf', compact(
             'students',
             'className',
             'totalStudents',
@@ -918,7 +919,8 @@ class StudentController extends Controller
 
         $pdf->setPaper('a4', 'portrait');
 
-        $filename = $classId ? 'liste_classe_' . $classId . '_' . date('Y-m-d') : 'tous_les_eleves_' . date('Y-m-d');
-        return $pdf->download($filename . '.pdf');
+        $filename = $classId ? 'liste_classe_'.$classId.'_'.date('Y-m-d') : 'tous_les_eleves_'.date('Y-m-d');
+
+        return $pdf->download($filename.'.pdf');
     }
 }

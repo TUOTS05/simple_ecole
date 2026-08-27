@@ -44,6 +44,6 @@ class Fee extends Model
 
     public function getFormattedAmountAttribute(): string
     {
-        return number_format($this->amount, 0, ',', ' ') . ' FCFA';
+        return number_format($this->amount, 0, ',', ' ').' FCFA';
     }
 }

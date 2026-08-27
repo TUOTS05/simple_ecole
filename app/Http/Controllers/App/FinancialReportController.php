@@ -2,11 +2,20 @@
 
 namespace App\Http\Controllers\App;
 
+use App\Exports\ClassDetailExport;
+use App\Exports\StudentDetailExport;
+use App\Exports\UnpaidByClassExport;
 use App\Http\Controllers\Controller;
+use App\Models\Enrollment;
+use App\Models\Payment;
 use App\Models\SchoolClass;
 use App\Models\SchoolYear;
+use App\Models\Student;
+use App\Models\StudentInstallment;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 
 class FinancialReportController extends Controller
 {
@@ -37,9 +46,10 @@ class FinancialReportController extends Controller
             ->orderBy('school_classes.name')
             ->get()
             ->map(function ($class) {
-                $class->recovery_rate = $class->total_expected > 0 
-                    ? round(($class->total_paid / $class->total_expected) * 100, 1) 
+                $class->recovery_rate = $class->total_expected > 0
+                    ? round(($class->total_paid / $class->total_expected) * 100, 1)
                     : 0;
+
                 return $class;
             });
 
@@ -48,8 +58,8 @@ class FinancialReportController extends Controller
             'total_expected' => $classes->sum('total_expected'),
             'total_paid' => $classes->sum('total_paid'),
             'total_unpaid' => $classes->sum('total_unpaid'),
-            'recovery_rate' => $classes->sum('total_expected') > 0 
-                ? round(($classes->sum('total_paid') / $classes->sum('total_expected')) * 100, 1) 
+            'recovery_rate' => $classes->sum('total_expected') > 0
+                ? round(($classes->sum('total_paid') / $classes->sum('total_expected')) * 100, 1)
                 : 0,
         ];
 
@@ -92,11 +102,11 @@ class FinancialReportController extends Controller
             ->map(function ($student) {
                 $total = (float) $student->total_du;
                 $paye = (float) $student->total_paye;
-                
-                $student->payment_rate = $total > 0 
-                    ? round(($paye / $total) * 100, 1) 
+
+                $student->payment_rate = $total > 0
+                    ? round(($paye / $total) * 100, 1)
                     : 0;
-                    
+
                 return $student;
             });
 
@@ -105,8 +115,7 @@ class FinancialReportController extends Controller
         return view('app.financial.class_detail', compact('class', 'students', 'schoolYears', 'schoolYearId'));
     }
 
-
-        /**
+    /**
      * Export Excel des impayés par classe
      */
     public function exportUnpaidByClassExcel(Request $request)
@@ -114,9 +123,9 @@ class FinancialReportController extends Controller
         $schoolId = session('current_school_id');
         $schoolYearId = $request->get('school_year_id', SchoolYear::where('school_id', $schoolId)->where('is_active', true)->value('id'));
 
-        return \Maatwebsite\Excel\Facades\Excel::download(
-            new \App\Exports\UnpaidByClassExport($schoolId, $schoolYearId),
-            'impayes_par_classe_' . date('Y-m-d') . '.xlsx'
+        return Excel::download(
+            new UnpaidByClassExport($schoolId, $schoolYearId),
+            'impayes_par_classe_'.date('Y-m-d').'.xlsx'
         );
     }
 
@@ -126,8 +135,8 @@ class FinancialReportController extends Controller
     public function exportUnpaidByClassPdf(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', \App\Models\SchoolYear::where('school_id', $schoolId)->where('is_active', true)->value('id'));
-        $schoolYear = \App\Models\SchoolYear::find($schoolYearId);
+        $schoolYearId = $request->get('school_year_id', SchoolYear::where('school_id', $schoolId)->where('is_active', true)->value('id'));
+        $schoolYear = SchoolYear::find($schoolYearId);
         $user = auth()->user();
 
         // 1. Réutiliser la même logique d'agrégation
@@ -149,9 +158,10 @@ class FinancialReportController extends Controller
             ->orderBy('school_classes.name')
             ->get()
             ->map(function ($class) {
-                $class->recovery_rate = $class->total_expected > 0 
-                    ? round(($class->total_paid / $class->total_expected) * 100, 1) 
+                $class->recovery_rate = $class->total_expected > 0
+                    ? round(($class->total_paid / $class->total_expected) * 100, 1)
                     : 0;
+
                 return $class;
             });
 
@@ -160,35 +170,35 @@ class FinancialReportController extends Controller
             'total_expected' => $classes->sum('total_expected'),
             'total_paid' => $classes->sum('total_paid'),
             'total_unpaid' => $classes->sum('total_unpaid'),
-            'recovery_rate' => $classes->sum('total_expected') > 0 
-                ? round(($classes->sum('total_paid') / $classes->sum('total_expected')) * 100, 1) 
+            'recovery_rate' => $classes->sum('total_expected') > 0
+                ? round(($classes->sum('total_paid') / $classes->sum('total_expected')) * 100, 1)
                 : 0,
         ];
 
         // 3. Nom de l'utilisateur connecté
-        $userName = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: ($user->name ?? 'Non spécifié');
+        $userName = trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'Non spécifié');
 
         // 4. Chemin absolu du logo de l'école (Indispensable pour DomPDF)
         $schoolLogoPath = null;
         if (isset($user->school) && $user->school->logo) {
-            $schoolLogoPath = public_path('storage/' . $user->school->logo);
+            $schoolLogoPath = public_path('storage/'.$user->school->logo);
         }
-        if (!$schoolLogoPath || !file_exists($schoolLogoPath)) {
+        if (! $schoolLogoPath || ! file_exists($schoolLogoPath)) {
             $schoolLogoPath = public_path('images/default-logo.png'); // Fallback
         }
 
         // 5. Génération du PDF
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('app.financial.exports.unpaid_by_class_pdf', compact(
-            'classes', 
-            'globalStats', 
-            'schoolYear', 
-            'userName', 
+        $pdf = Pdf::loadView('app.financial.exports.unpaid_by_class_pdf', compact(
+            'classes',
+            'globalStats',
+            'schoolYear',
+            'userName',
             'schoolLogoPath'
         ));
-        
+
         $pdf->setPaper('a4', 'portrait');
 
-        return $pdf->download('etat_impayes_par_classe_' . date('Y-m-d') . '.pdf');
+        return $pdf->download('etat_impayes_par_classe_'.date('Y-m-d').'.pdf');
     }
 
     /**
@@ -203,9 +213,9 @@ class FinancialReportController extends Controller
         $class = SchoolClass::findOrFail($classId);
         abort_unless($request->user()->can('view', $class), 404);
 
-        return \Maatwebsite\Excel\Facades\Excel::download(
-            new \App\Exports\ClassDetailExport($classId, $schoolYearId, $schoolId),
-            'detail_classe_' . $classId . '_' . date('Y-m-d') . '.xlsx'
+        return Excel::download(
+            new ClassDetailExport($classId, $schoolYearId, $schoolId),
+            'detail_classe_'.$classId.'_'.date('Y-m-d').'.xlsx'
         );
     }
 
@@ -215,9 +225,9 @@ class FinancialReportController extends Controller
     public function exportClassDetailPdf(Request $request, $classId)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', \App\Models\SchoolYear::where('school_id', $schoolId)->where('is_active', true)->value('id'));
-        $schoolYear = \App\Models\SchoolYear::find($schoolYearId);
-        $class = \App\Models\SchoolClass::findOrFail($classId);
+        $schoolYearId = $request->get('school_year_id', SchoolYear::where('school_id', $schoolId)->where('is_active', true)->value('id'));
+        $schoolYear = SchoolYear::find($schoolYearId);
+        $class = SchoolClass::findOrFail($classId);
         abort_unless($request->user()->can('view', $class), 404);
         $user = auth()->user();
 
@@ -244,6 +254,7 @@ class FinancialReportController extends Controller
                 $total = (float) $student->total_du;
                 $paye = (float) $student->total_paye;
                 $student->payment_rate = $total > 0 ? round(($paye / $total) * 100, 1) : 0;
+
                 return $student;
             });
 
@@ -261,32 +272,31 @@ class FinancialReportController extends Controller
         ];
 
         // Variables pour l'en-tête
-        $userName = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: ($user->name ?? 'Non spécifié');
-        
+        $userName = trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'Non spécifié');
+
         $schoolLogoPath = null;
         if (isset($user->school) && $user->school->logo) {
-            $schoolLogoPath = public_path('storage/' . $user->school->logo);
+            $schoolLogoPath = public_path('storage/'.$user->school->logo);
         }
-        if (!$schoolLogoPath || !file_exists($schoolLogoPath)) {
+        if (! $schoolLogoPath || ! file_exists($schoolLogoPath)) {
             $schoolLogoPath = public_path('images/default-logo.png');
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('app.financial.exports.class_detail_pdf', compact(
-            'class', 
-            'students', 
-            'schoolYear', 
-            'userName', 
+        $pdf = Pdf::loadView('app.financial.exports.class_detail_pdf', compact(
+            'class',
+            'students',
+            'schoolYear',
+            'userName',
             'schoolLogoPath',
             'classStats' // ✅ Nouvelle variable passée à la vue
         ));
-        
+
         $pdf->setPaper('a4', 'portrait');
 
-        return $pdf->download('detail_classe_' . $classId . '_' . date('Y-m-d') . '.pdf');
+        return $pdf->download('detail_classe_'.$classId.'_'.date('Y-m-d').'.pdf');
     }
 
-
-        /**
+    /**
      * Détail financier d'un élève spécifique
      */
     public function studentDetail(Request $request, $studentId)
@@ -294,26 +304,26 @@ class FinancialReportController extends Controller
         $schoolId = session('current_school_id');
         $schoolYearId = $request->get('school_year_id', SchoolYear::where('school_id', $schoolId)->where('is_active', true)->value('id'));
 
-        $student = \App\Models\Student::findOrFail($studentId);
+        $student = Student::findOrFail($studentId);
         abort_unless($request->user()->can('view', $student), 404);
 
         // Récupérer l'inscription de l'élève
-        $enrollment = \App\Models\Enrollment::where('student_id', $studentId)
+        $enrollment = Enrollment::where('student_id', $studentId)
             ->where('school_year_id', $schoolYearId)
             ->with('schoolClass')
             ->first();
 
-        if (!$enrollment) {
+        if (! $enrollment) {
             return back()->with('error', 'Aucune inscription trouvée pour cet élève cette année.');
         }
 
         // Récupérer les échéances (installments)
-        $installments = \App\Models\StudentInstallment::where('enrollment_id', $enrollment->id)
+        $installments = StudentInstallment::where('enrollment_id', $enrollment->id)
             ->orderBy('due_date')
             ->get();
 
         // Récupérer l'historique des paiements
-        $payments = \App\Models\Payment::where('enrollment_id', $enrollment->id)
+        $payments = Payment::where('enrollment_id', $enrollment->id)
             ->orderBy('payment_date', 'desc')
             ->get();
 
@@ -341,12 +351,12 @@ class FinancialReportController extends Controller
         $schoolYearId = $request->get('school_year_id', SchoolYear::where('school_id', $schoolId)->where('is_active', true)->value('id'));
 
         // Vérifie que l'élève appartient bien à l'école courante avant tout export.
-        $student = \App\Models\Student::findOrFail($studentId);
+        $student = Student::findOrFail($studentId);
         abort_unless($request->user()->can('view', $student), 404);
 
-        return \Maatwebsite\Excel\Facades\Excel::download(
-            new \App\Exports\StudentDetailExport($studentId, $schoolYearId),
-            'detail_eleve_' . $studentId . '_' . date('Y-m-d') . '.xlsx'
+        return Excel::download(
+            new StudentDetailExport($studentId, $schoolYearId),
+            'detail_eleve_'.$studentId.'_'.date('Y-m-d').'.xlsx'
         );
     }
 
@@ -356,27 +366,27 @@ class FinancialReportController extends Controller
     public function exportStudentDetailPdf(Request $request, $studentId)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', \App\Models\SchoolYear::where('school_id', $schoolId)->where('is_active', true)->value('id'));
-        $schoolYear = \App\Models\SchoolYear::find($schoolYearId);
+        $schoolYearId = $request->get('school_year_id', SchoolYear::where('school_id', $schoolId)->where('is_active', true)->value('id'));
+        $schoolYear = SchoolYear::find($schoolYearId);
         $user = auth()->user();
 
-        $student = \App\Models\Student::findOrFail($studentId);
+        $student = Student::findOrFail($studentId);
         abort_unless($request->user()->can('view', $student), 404);
 
-        $enrollment = \App\Models\Enrollment::where('student_id', $studentId)
+        $enrollment = Enrollment::where('student_id', $studentId)
             ->where('school_year_id', $schoolYearId)
             ->with('schoolClass')
             ->first();
 
-        if (!$enrollment) {
+        if (! $enrollment) {
             abort(404, 'Aucune inscription trouvée.');
         }
 
-        $installments = \App\Models\StudentInstallment::where('enrollment_id', $enrollment->id)
+        $installments = StudentInstallment::where('enrollment_id', $enrollment->id)
             ->orderBy('due_date')
             ->get();
 
-        $payments = \App\Models\Payment::where('enrollment_id', $enrollment->id)
+        $payments = Payment::where('enrollment_id', $enrollment->id)
             ->orderBy('payment_date', 'desc')
             ->get();
 
@@ -386,25 +396,25 @@ class FinancialReportController extends Controller
         $paymentRate = $totalDue > 0 ? round(($totalPaid / $totalDue) * 100, 1) : 0;
 
         // ✅ Ajout des variables pour l'en-tête uniforme
-        $userName = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: ($user->name ?? 'Non spécifié');
-        
+        $userName = trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'Non spécifié');
+
         $schoolLogoPath = null;
         if (isset($user->school) && $user->school->logo) {
-            $schoolLogoPath = public_path('storage/' . $user->school->logo);
+            $schoolLogoPath = public_path('storage/'.$user->school->logo);
         }
-        if (!$schoolLogoPath || !file_exists($schoolLogoPath)) {
+        if (! $schoolLogoPath || ! file_exists($schoolLogoPath)) {
             $schoolLogoPath = public_path('images/default-logo.png'); // Fallback
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('app.financial.exports.student_detail_pdf', compact(
-            'student', 
-            'enrollment', 
-            'installments', 
+        $pdf = Pdf::loadView('app.financial.exports.student_detail_pdf', compact(
+            'student',
+            'enrollment',
+            'installments',
             'payments',
-            'totalDue', 
-            'totalPaid', 
-            'totalRemaining', 
-            'paymentRate', 
+            'totalDue',
+            'totalPaid',
+            'totalRemaining',
+            'paymentRate',
             'schoolYear',
             'userName',
             'schoolLogoPath'
@@ -412,6 +422,6 @@ class FinancialReportController extends Controller
 
         $pdf->setPaper('a4', 'portrait');
 
-        return $pdf->download('detail_eleve_' . $studentId . '_' . date('Y-m-d') . '.pdf');
+        return $pdf->download('detail_eleve_'.$studentId.'_'.date('Y-m-d').'.pdf');
     }
 }

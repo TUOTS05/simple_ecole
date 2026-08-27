@@ -11,6 +11,7 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 class UnpaidByClassExport implements FromCollection, WithHeadings, WithMapping, WithTitle
 {
     protected $schoolId;
+
     protected $schoolYearId;
 
     public function __construct($schoolId, $schoolYearId)
@@ -39,9 +40,10 @@ class UnpaidByClassExport implements FromCollection, WithHeadings, WithMapping, 
             ->orderBy('school_classes.name')
             ->get()
             ->map(function ($class) {
-                $class->recovery_rate = $class->total_expected > 0 
-                    ? round(($class->total_paid / $class->total_expected) * 100, 1) 
+                $class->recovery_rate = $class->total_expected > 0
+                    ? round(($class->total_paid / $class->total_expected) * 100, 1)
                     : 0;
+
                 return $class;
             });
     }
@@ -54,7 +56,7 @@ class UnpaidByClassExport implements FromCollection, WithHeadings, WithMapping, 
             'Total Attendu (FCFA)',
             'Total Payé (FCFA)',
             'Total Impayé (FCFA)',
-            'Taux de Recouvrement (%)'
+            'Taux de Recouvrement (%)',
         ];
     }
 
@@ -66,7 +68,7 @@ class UnpaidByClassExport implements FromCollection, WithHeadings, WithMapping, 
             $row->total_expected,
             $row->total_paid,
             $row->total_unpaid,
-            $row->recovery_rate
+            $row->recovery_rate,
         ];
     }
 

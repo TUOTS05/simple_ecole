@@ -17,7 +17,7 @@ class CheckRole
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         // 1. Vérifier si l'utilisateur est connecté
-        if (!$request->user()) {
+        if (! $request->user()) {
             return redirect()->route('login');
         }
 
@@ -27,7 +27,7 @@ class CheckRole
         $userRole = strtolower(trim($request->user()->role ?? ''));
         $allowedRoles = array_map(fn ($role) => strtolower(trim($role)), $roles);
 
-        if (!in_array($userRole, $allowedRoles, true)) {
+        if (! in_array($userRole, $allowedRoles, true)) {
             abort(403, 'Accès non autorisé. Vous n\'avez pas les permissions requises.');
         }
 

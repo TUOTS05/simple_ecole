@@ -12,7 +12,7 @@ class EnsureTeacherRole
     {
         // Vérifier si l'utilisateur est connecté et a le rôle 'teacher' (insensible à la casse,
         // cohérent avec CheckRole et User::isParent()).
-        if (!auth()->check() || strtolower(trim(auth()->user()->role ?? '')) !== 'teacher') {
+        if (! auth()->check() || strtolower(trim(auth()->user()->role ?? '')) !== 'teacher') {
             abort(403, 'Accès réservé aux enseignants.');
         }
 

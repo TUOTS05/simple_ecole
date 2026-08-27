@@ -48,10 +48,10 @@ class SystemSetting extends Model
         });
 
         // On hydrate une nouvelle instance avec les données mises en cache
-        $instance = new self();
+        $instance = new self;
         $instance->setRawAttributes($attributes);
-        
-        if (!empty($attributes)) {
+
+        if (! empty($attributes)) {
             $instance->exists = true; // Indique que l'enregistrement existe en BDD
         }
 
@@ -66,7 +66,7 @@ class SystemSetting extends Model
         static::saved(function () {
             Cache::forget('system_settings_data');
         });
-        
+
         static::deleted(function () {
             Cache::forget('system_settings_data');
         });

@@ -22,7 +22,7 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-        public function store(LoginRequest $request)
+    public function store(LoginRequest $request)
     {
         $request->authenticate();
         $request->session()->regenerate();
@@ -36,7 +36,6 @@ class AuthenticatedSessionController extends Controller
         if (method_exists($user, 'isTeacher') && $user->isTeacher()) {
             return redirect()->intended(route('teacher.dashboard'));
         }
-
 
         // Le personnel comptable n'a pas accès au tableau de bord général (réservé à school_admin,
         // teacher, parent) : il est envoyé directement sur les inscriptions.
@@ -55,6 +54,7 @@ class AuthenticatedSessionController extends Controller
         // Fallback par défaut si aucune condition n'est remplie
         return redirect()->intended(route('app.dashboard'));
     }
+
     /**
      * Destroy an authenticated session.
      */

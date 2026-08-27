@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
-use App\Models\TeacherAssignment;
 use App\Models\SchoolClass;
-use App\Models\User;
 use App\Models\SchoolYear;
+use App\Models\TeacherAssignment;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class TeacherAssignmentController extends Controller
@@ -21,7 +21,7 @@ class TeacherAssignmentController extends Controller
             ->where('is_active', true)
             ->first();
 
-        if (!$currentYear) {
+        if (! $currentYear) {
             return redirect()->route('app.dashboard')->with('error', 'Aucune année scolaire active.');
         }
 

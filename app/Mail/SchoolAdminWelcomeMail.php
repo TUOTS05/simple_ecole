@@ -11,8 +11,11 @@ class SchoolAdminWelcomeMail extends Mailable
     use Queueable, SerializesModels;
 
     public $schoolName;
+
     public $email;
+
     public $password;
+
     public $loginUrl;
 
     public function __construct($schoolName, $email, $password)
@@ -26,6 +29,6 @@ class SchoolAdminWelcomeMail extends Mailable
     public function build()
     {
         return $this->subject('🎉 Bienvenue sur Simple Ecole - Vos identifiants de connexion')
-                    ->view('emails.school-admin-welcome');
+            ->view('emails.school-admin-welcome');
     }
 }

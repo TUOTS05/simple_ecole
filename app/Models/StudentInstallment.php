@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,8 +10,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class StudentInstallment extends Model
 {
     protected $fillable = [
-        'school_id', 'enrollment_id', 'type', 'description', 
-        'amount', 'paid_amount', 'due_date', 'status'
+        'school_id', 'enrollment_id', 'type', 'description',
+        'amount', 'paid_amount', 'due_date', 'status',
     ];
 
     protected $casts = [
@@ -44,7 +45,7 @@ class StudentInstallment extends Model
      */
     public static function generateScheduleFor(Enrollment $enrollment, SchoolClass $schoolClass, $startDate): void
     {
-        $startDate = \Carbon\Carbon::parse($startDate);
+        $startDate = Carbon::parse($startDate);
 
         static::create([
             'school_id' => $enrollment->school_id,

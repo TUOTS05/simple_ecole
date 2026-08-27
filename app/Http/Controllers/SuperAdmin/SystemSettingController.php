@@ -16,6 +16,7 @@ class SystemSettingController extends Controller
     public function edit()
     {
         $settings = SystemSetting::getSettings();
+
         return view('superadmin.settings.edit', compact('settings'));
     }
 

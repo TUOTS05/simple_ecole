@@ -3,11 +3,9 @@
 namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
-use App\Models\TeacherAssignment;
-use App\Models\SchoolYear;
 use App\Models\Attendance;
-use App\Models\Student;
-use Illuminate\Http\Request;
+use App\Models\SchoolYear;
+use App\Models\TeacherAssignment;
 
 class DashboardController extends Controller
 {
@@ -25,15 +23,15 @@ class DashboardController extends Controller
         // Récupérer les classes assignées à cet enseignant pour l'année en cours
         $assignments = TeacherAssignment::where('user_id', $teacherId)
             ->where('school_year_id', $currentYear->id)
-            ->with(['schoolClass' => function($query) {
-                $query->withCount(['students' => function($q) {
+            ->with(['schoolClass' => function ($query) {
+                $query->withCount(['students' => function ($q) {
                     $q->where('status', 'active');
                 }]);
             }])
             ->get();
 
         // Statistiques rapides
-        $totalStudents = $assignments->sum(function($assignment) {
+        $totalStudents = $assignments->sum(function ($assignment) {
             return $assignment->schoolClass->students_count;
         });
 
@@ -58,8 +56,8 @@ class DashboardController extends Controller
 
         $assignments = TeacherAssignment::where('user_id', $teacherId)
             ->where('school_year_id', $currentYear->id)
-            ->with(['schoolClass' => function($query) {
-                $query->withCount(['students' => function($q) {
+            ->with(['schoolClass' => function ($query) {
+                $query->withCount(['students' => function ($q) {
                     $q->where('status', 'active');
                 }]);
             }])

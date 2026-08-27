@@ -22,7 +22,7 @@ class PreventDemoWrites
         if (
             $user
             && $user->email === self::DEMO_EMAIL
-            && !$request->isMethodCacheable()
+            && ! $request->isMethodCacheable()
             && $request->route()?->getName() !== 'logout'
         ) {
             return back()->with('error', '🔒 Action désactivée en mode démonstration : les données ne peuvent pas être modifiées.');

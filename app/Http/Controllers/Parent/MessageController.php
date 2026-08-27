@@ -24,20 +24,20 @@ class MessageController extends Controller
 
         return view('parent.messages.index', compact('messages', 'unreadCount'));
     }
-    
+
     public function create()
     {
         $parent = auth()->user();
-        
+
         $schools = $parent->children()
             ->with('school')
             ->get()
             ->pluck('school')
             ->unique('id');
-        
+
         return view('parent.messages.create', compact('schools'));
     }
-    
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -45,18 +45,18 @@ class MessageController extends Controller
             'subject' => 'required|string|max:255',
             'message' => 'required|string|min:10',
         ]);
-        
+
         $parent = auth()->user();
-        
+
         $hasChildInSchool = $parent->children()
             ->where('students.school_id', $validated['school_id'])
             ->exists();
-        
-        if (!$hasChildInSchool) {
+
+        if (! $hasChildInSchool) {
             return back()->withErrors(['school_id' => 'Vous n\'avez pas d\'enfant dans cette école.'])
-                        ->withInput();
+                ->withInput();
         }
-        
+
         Message::create([
             'school_id' => $validated['school_id'],
             'sender_id' => $parent->id,
@@ -65,27 +65,27 @@ class MessageController extends Controller
             'message' => $validated['message'],
             'is_read' => false,
         ]);
-        
+
         return redirect()->route('parent.messages.index')
             ->with('success', 'Message envoyé avec succès !');
     }
-    
+
     public function show(Message $message)
     {
         $parent = auth()->user();
 
         // Sécurité : le parent ne peut voir que ses propres messages et les diffusions qui le concernent
-        if (!Message::visibleToParent($parent)->where('id', $message->id)->exists()) {
+        if (! Message::visibleToParent($parent)->where('id', $message->id)->exists()) {
             abort(403, 'Vous n\'êtes pas autorisé à voir ce message.');
         }
 
         $message->load('school');
-        
+
         // Marquer automatiquement comme lu si le parent est le destinataire
-        if ($message->receiver_id === $parent->id && !$message->is_read) {
+        if ($message->receiver_id === $parent->id && ! $message->is_read) {
             $message->update(['is_read' => true]);
         }
-        
+
         return view('parent.messages.show', compact('message'));
     }
 }

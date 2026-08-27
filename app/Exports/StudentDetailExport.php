@@ -2,16 +2,12 @@
 
 namespace App\Exports;
 
-use App\Models\Enrollment;
-use App\Models\Payment;
-use App\Models\Student;
-use App\Models\StudentInstallment;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
-
 
 class StudentDetailExport implements WithMultipleSheets
 {
     protected $studentId;
+
     protected $schoolYearId;
 
     public function __construct($studentId, $schoolYearId)
@@ -23,13 +19,13 @@ class StudentDetailExport implements WithMultipleSheets
     public function sheets(): array
     {
         $sheets = [];
-        
+
         // Feuille 1 : Résumé
         $sheets[] = new StudentSummaryExport($this->studentId, $this->schoolYearId);
-        
+
         // Feuille 2 : Échéances
         $sheets[] = new StudentInstallmentsExport($this->studentId, $this->schoolYearId);
-        
+
         // Feuille 3 : Paiements
         $sheets[] = new StudentPaymentsExport($this->studentId, $this->schoolYearId);
 

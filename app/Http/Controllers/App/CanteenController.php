@@ -7,6 +7,7 @@ use App\Models\CanteenInstallment;
 use App\Models\CanteenPayment;
 use App\Models\CanteenRate;
 use App\Models\CanteenSubscription;
+use App\Models\Enrollment;
 use App\Models\SchoolClass;
 use App\Models\SchoolYear;
 use App\Models\Student;
@@ -71,8 +72,8 @@ class CanteenController extends Controller
     //             $q->where('school_class_id', $classId);
     //         })
     //         ->with([
-    //             'student', 
-    //             'canteenRate.schoolClass', 
+    //             'student',
+    //             'canteenRate.schoolClass',
     //             'installments' => function($q) {
     //                 $q->where('status', '!=', 'paid')->orderBy('due_date', 'asc');
     //             }
@@ -150,7 +151,7 @@ class CanteenController extends Controller
 
         if ($existingRate) {
             return back()->withErrors([
-                'school_class_id' => 'Un tarif existe déjà pour cette classe durant cette année scolaire.'
+                'school_class_id' => 'Un tarif existe déjà pour cette classe durant cette année scolaire.',
             ])->withInput();
         }
 
@@ -214,7 +215,7 @@ class CanteenController extends Controller
             ->with(['student', 'canteenRate.schoolClass']);
 
         if ($classId) {
-            $query->whereHas('canteenRate', fn($q) => $q->where('school_class_id', $classId));
+            $query->whereHas('canteenRate', fn ($q) => $q->where('school_class_id', $classId));
         }
 
         $subscriptions = $query->get();
@@ -288,7 +289,7 @@ class CanteenController extends Controller
 
     //     $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
     //     $classes = \App\Models\SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
-        
+
     //     // Récupérer la liste des élèves inscrits à la cantine cette année pour le filtre
     //     $students = \App\Models\CanteenSubscription::where('school_id', $schoolId)
     //         ->where('school_year_id', $schoolYearId)
@@ -304,7 +305,6 @@ class CanteenController extends Controller
     //         'payments', 'schoolYears', 'schoolYearId', 'classId', 'studentId', 'classes', 'students'
     //     ));
     // }
-
 
     //     public function paymentsIndex(Request $request)
     // {
@@ -353,7 +353,7 @@ class CanteenController extends Controller
     //     ));
     // }
 
-        public function paymentsIndex(Request $request)
+    public function paymentsIndex(Request $request)
     {
         $schoolId = session('current_school_id');
         $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
@@ -361,7 +361,7 @@ class CanteenController extends Controller
         $month = $request->get('month', '');
 
         $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
-        $classes = \App\Models\SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
+        $classes = SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
 
         $availableMonths = [
             '2026-09' => 'Septembre 2026', '2026-10' => 'Octobre 2026', '2026-11' => 'Novembre 2026',
@@ -370,9 +370,9 @@ class CanteenController extends Controller
         ];
 
         // ✅ CORRECTION : Retourner un paginateur vide (et non une collection) pour que hasPages() fonctionne
-        if (!$classId && !$month) {
-            $payments = \App\Models\CanteenPayment::where('id', 0)->paginate(20); 
-            
+        if (! $classId && ! $month) {
+            $payments = CanteenPayment::where('id', 0)->paginate(20);
+
             return view('app.canteen.payments.index', compact(
                 'payments', 'schoolYears', 'schoolYearId', 'classId', 'month', 'classes', 'availableMonths'
             ));
@@ -380,16 +380,16 @@ class CanteenController extends Controller
 
         // Construction de la requête avec filtres
         $query = CanteenPayment::where('school_id', $schoolId)
-            ->whereHas('subscription', fn($q) => $q->where('school_year_id', $schoolYearId))
+            ->whereHas('subscription', fn ($q) => $q->where('school_year_id', $schoolYearId))
             ->with(['subscription.student', 'subscription.canteenRate.schoolClass', 'receivedByUser'])
             ->orderBy('payment_date', 'desc');
 
         if ($classId) {
-            $query->whereHas('subscription.canteenRate', fn($q) => $q->where('school_class_id', $classId));
+            $query->whereHas('subscription.canteenRate', fn ($q) => $q->where('school_class_id', $classId));
         }
 
         if ($month) {
-            $query->whereHas('subscription.installments', fn($q) => $q->where('month', $month));
+            $query->whereHas('subscription.installments', fn ($q) => $q->where('month', $month));
         }
 
         $payments = $query->paginate(20);
@@ -437,7 +437,9 @@ class CanteenController extends Controller
             $remainingPayment = $paymentAmount;
 
             foreach ($installments as $inst) {
-                if ($remainingPayment <= 0) break;
+                if ($remainingPayment <= 0) {
+                    break;
+                }
 
                 $dueAmount = $inst->amount - $inst->paid_amount;
 
@@ -459,7 +461,8 @@ class CanteenController extends Controller
                 ->with('success', '✅ Paiement enregistré et réparti sur les échéances avec succès !');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Erreur : ' . $e->getMessage()]);
+
+            return back()->withErrors(['error' => 'Erreur : '.$e->getMessage()]);
         }
     }
 
@@ -477,7 +480,7 @@ class CanteenController extends Controller
 
         $subscriptions = CanteenSubscription::where('school_id', $schoolId)
             ->where('school_year_id', $schoolYearId)
-            ->whereHas('canteenRate', fn($q) => $q->where('school_class_id', $classId))
+            ->whereHas('canteenRate', fn ($q) => $q->where('school_class_id', $classId))
             ->with(['student', 'installments' => function ($q) use ($selectedMonth) {
                 if ($selectedMonth) {
                     $q->where('month', $selectedMonth);
@@ -531,7 +534,7 @@ class CanteenController extends Controller
             ->with(['canteenRate.schoolClass', 'installments', 'payments'])
             ->first();
 
-        if (!$subscription) {
+        if (! $subscription) {
             return back()->with('error', 'Cet élève n\'est pas inscrit à la cantine pour cette année.');
         }
 
@@ -603,6 +606,7 @@ class CanteenController extends Controller
                 $class->recovery_rate = $class->total_expected > 0
                     ? round(($class->total_paid / $class->total_expected) * 100, 1)
                     : 0;
+
                 return $class;
             });
 
@@ -628,8 +632,7 @@ class CanteenController extends Controller
         return view('app.canteen.reports.unpaid_by_class', compact('classes', 'globalStats', 'schoolYears', 'schoolYearId', 'allClasses', 'filterClassId', 'filterMonth', 'availableMonths'));
     }
 
-
-        // ==========================================
+    // ==========================================
     // 1. CORRECTION DE LA LISTE DES PAIEMENTS
     // ==========================================
     public function getSubscriptionsByClass(Request $request)
@@ -638,7 +641,7 @@ class CanteenController extends Controller
         $schoolYearId = $request->query('school_year_id');
         $classId = $request->query('class_id');
 
-        if (!$schoolYearId || !$classId) {
+        if (! $schoolYearId || ! $classId) {
             return response()->json([]);
         }
 
@@ -646,34 +649,34 @@ class CanteenController extends Controller
         // On cherche les abonnements qui ont AU MOINS un mois impayé ou partiel
         $subscriptions = CanteenSubscription::where('school_id', $schoolId)
             ->where('school_year_id', $schoolYearId)
-            ->whereHas('canteenRate', function($q) use ($classId) {
+            ->whereHas('canteenRate', function ($q) use ($classId) {
                 $q->where('school_class_id', $classId);
             })
-            ->whereHas('installments', function($q) {
+            ->whereHas('installments', function ($q) {
                 $q->where('status', '!=', 'paid'); // C'est la vraie condition : il reste des mois à payer
             })
             ->with([
-                'student', 
-                'canteenRate.schoolClass', 
-                'installments' => function($q) {
+                'student',
+                'canteenRate.schoolClass',
+                'installments' => function ($q) {
                     $q->where('status', '!=', 'paid')->orderBy('due_date', 'asc');
-                }
+                },
             ])
             ->get()
-            ->map(function($sub) {
+            ->map(function ($sub) {
                 // remaining_amount est maintenu à jour automatiquement par le hook
                 // CanteenPayment::booted() (voir CanteenSubscription::recalculateAmounts()).
-                $unpaidMonths = $sub->installments->map(function($inst) {
-                    return \Carbon\Carbon::parse($inst->month . '-01')->translatedFormat('F Y');
+                $unpaidMonths = $sub->installments->map(function ($inst) {
+                    return Carbon::parse($inst->month.'-01')->translatedFormat('F Y');
                 })->toArray();
 
                 return [
                     'id' => $sub->id,
-                    'student_name' => $sub->student ? ($sub->student->last_name . ' ' . $sub->student->first_name) : 'Élève inconnu',
+                    'student_name' => $sub->student ? ($sub->student->last_name.' '.$sub->student->first_name) : 'Élève inconnu',
                     'matricule' => $sub->student ? $sub->student->matricule : 'N/A',
                     'remaining' => $sub->remaining_amount,
                     'class_name' => $sub->canteenRate && $sub->canteenRate->schoolClass ? $sub->canteenRate->schoolClass->name : 'N/A',
-                    'unpaid_months' => $unpaidMonths
+                    'unpaid_months' => $unpaidMonths,
                 ];
             });
 
@@ -704,16 +707,17 @@ class CanteenController extends Controller
             $errors = [];
 
             foreach ($validated['enrollments'] as $studentId => $data) {
-                if (!isset($data['selected']) || !$data['selected']) {
+                if (! isset($data['selected']) || ! $data['selected']) {
                     continue;
                 }
 
-                $enrollment = \App\Models\Enrollment::where('student_id', $studentId)
+                $enrollment = Enrollment::where('student_id', $studentId)
                     ->where('school_year_id', $validated['school_year_id'])
                     ->first();
 
-                if (!$enrollment) {
+                if (! $enrollment) {
                     $errors[] = "L'élève n'est pas inscrit dans cette année scolaire.";
+
                     continue;
                 }
 
@@ -722,8 +726,9 @@ class CanteenController extends Controller
                     ->where('school_class_id', $enrollment->school_class_id)
                     ->first();
 
-                if (!$rate) {
-                    $errors[] = "Aucun tarif défini pour la classe de cet élève.";
+                if (! $rate) {
+                    $errors[] = 'Aucun tarif défini pour la classe de cet élève.';
+
                     continue;
                 }
 
@@ -765,20 +770,20 @@ class CanteenController extends Controller
                         ->where('month', $month)
                         ->exists();
 
-                    if (!$instExists) {
+                    if (! $instExists) {
                         CanteenInstallment::create([
                             'canteen_subscription_id' => $subscriptionId,
                             'month' => $month,
                             'amount' => $rate->monthly_rate,
                             'paid_amount' => 0,
-                            'due_date' => Carbon::parse($month . '-01')->day(5),
+                            'due_date' => Carbon::parse($month.'-01')->day(5),
                             'status' => 'pending',
                         ]);
                     }
                 }
 
                 // Traitement du paiement
-                if ($paidNow > 0 && !empty($data['payment_method'])) {
+                if ($paidNow > 0 && ! empty($data['payment_method'])) {
                     CanteenPayment::create([
                         'school_id' => $schoolId,
                         'canteen_subscription_id' => $subscriptionId,
@@ -797,7 +802,9 @@ class CanteenController extends Controller
                     $remainingPaymentToAllocate = $paidNow;
 
                     foreach ($installments as $inst) {
-                        if ($remainingPaymentToAllocate <= 0) break;
+                        if ($remainingPaymentToAllocate <= 0) {
+                            break;
+                        }
                         $dueAmount = $inst->amount - $inst->paid_amount;
 
                         if ($remainingPaymentToAllocate >= $dueAmount) {
@@ -819,14 +826,19 @@ class CanteenController extends Controller
             DB::commit();
 
             $message = "✅ $successCount élève(s) traité(s) avec succès !";
-            if ($skipCount > 0) $message .= " ($skipCount déjà totalement inscrits ignorés).";
-            if (!empty($errors)) $message .= " | Erreurs: " . implode(', ', array_unique($errors));
+            if ($skipCount > 0) {
+                $message .= " ($skipCount déjà totalement inscrits ignorés).";
+            }
+            if (! empty($errors)) {
+                $message .= ' | Erreurs: '.implode(', ', array_unique($errors));
+            }
 
             return redirect()->route('canteen.subscriptions.index', ['school_year_id' => $validated['school_year_id']])
                 ->with('success', $message);
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Erreur système : ' . $e->getMessage()])->withInput();
+
+            return back()->withErrors(['error' => 'Erreur système : '.$e->getMessage()])->withInput();
         }
     }
 }

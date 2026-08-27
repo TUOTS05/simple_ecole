@@ -12,6 +12,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 class StudentSummaryExport implements FromCollection, WithHeadings, WithMapping
 {
     protected $studentId;
+
     protected $schoolYearId;
 
     public function __construct($studentId, $schoolYearId)
@@ -34,13 +35,13 @@ class StudentSummaryExport implements FromCollection, WithHeadings, WithMapping
         return collect([
             (object) [
                 'matricule' => $student->matricule,
-                'nom' => $student->last_name . ' ' . $student->first_name,
+                'nom' => $student->last_name.' '.$student->first_name,
                 'classe' => $enrollment->schoolClass->name ?? 'N/A',
                 'total_du' => $totalDue,
                 'total_paye' => $totalPaid,
                 'reste' => $totalDue - $totalPaid,
-                'taux' => $totalDue > 0 ? round(($totalPaid / $totalDue) * 100, 1) : 0
-            ]
+                'taux' => $totalDue > 0 ? round(($totalPaid / $totalDue) * 100, 1) : 0,
+            ],
         ]);
     }
 
@@ -58,7 +59,7 @@ class StudentSummaryExport implements FromCollection, WithHeadings, WithMapping
             $row->total_du,
             $row->total_paye,
             $row->reste,
-            $row->taux
+            $row->taux,
         ];
     }
 }

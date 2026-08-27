@@ -11,6 +11,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 class StudentInstallmentsExport implements FromCollection, WithHeadings, WithMapping
 {
     protected $studentId;
+
     protected $schoolYearId;
 
     public function __construct($studentId, $schoolYearId)
@@ -43,7 +44,7 @@ class StudentInstallmentsExport implements FromCollection, WithHeadings, WithMap
             $row->amount,
             $row->paid_amount,
             $row->due_date->format('d/m/Y'),
-            ucfirst($row->status)
+            ucfirst($row->status),
         ];
     }
 }

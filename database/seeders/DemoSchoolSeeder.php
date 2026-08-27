@@ -2,14 +2,14 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\School;
-use App\Models\User;
-use App\Models\SchoolYear;
-use App\Models\SchoolClass;
-use App\Models\Student;
 use App\Models\Enrollment;
+use App\Models\School;
+use App\Models\SchoolClass;
+use App\Models\SchoolYear;
+use App\Models\Student;
 use App\Models\StudentInstallment;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class DemoSchoolSeeder extends Seeder
@@ -21,7 +21,7 @@ class DemoSchoolSeeder extends Seeder
             ['email' => 'demo-ecole@schoolmanager.com'],
             [
                 'name' => 'École Les Mirabelles (Démo)',
-                'slug' => 'ecole-les-mirabelles-demo-' . time(),
+                'slug' => 'ecole-les-mirabelles-demo-'.time(),
                 'phone' => '+225 07 00 00 00 00',
                 'address' => 'Cocody, Abidjan, Côte d\'Ivoire',
                 'school_type' => 'both',
@@ -37,7 +37,7 @@ class DemoSchoolSeeder extends Seeder
 
         // 2. Créer l'utilisateur Admin de démo
         $admin = User::updateOrCreate(
-            ['email' => 'demo@schoolmanager.com'], 
+            ['email' => 'demo@schoolmanager.com'],
             [
                 'school_id' => $school->id,
                 'first_name' => 'Administrateur',
@@ -61,24 +61,24 @@ class DemoSchoolSeeder extends Seeder
         $classCP1 = SchoolClass::updateOrCreate(
             ['school_id' => $school->id, 'name' => 'CP1 A'],
             [
-                'level' => 'CP', 
-                'registration_fee' => 50000, 
+                'level' => 'CP',
+                'registration_fee' => 50000,
                 'total_tuition' => 120000,
                 'payment_modality' => 'trimestriel',
                 'number_of_installments' => 3,
-                'installment_amount' => 40000
+                'installment_amount' => 40000,
             ]
         );
-        
+
         $classCM1 = SchoolClass::updateOrCreate(
             ['school_id' => $school->id, 'name' => 'CM1 A'],
             [
-                'level' => 'CM1', 
-                'registration_fee' => 50000, 
+                'level' => 'CM1',
+                'registration_fee' => 50000,
                 'total_tuition' => 150000,
                 'payment_modality' => 'trimestriel',
                 'number_of_installments' => 3,
-                'installment_amount' => 50000
+                'installment_amount' => 50000,
             ]
         );
 
@@ -112,9 +112,9 @@ class DemoSchoolSeeder extends Seeder
             $enrollment = Enrollment::updateOrCreate(
                 ['school_id' => $school->id, 'student_id' => $student->id, 'school_year_id' => $schoolYear->id],
                 [
-                    'school_class_id' => $data['class']->id, 
-                    'enrollment_date' => '2025-09-01', 
-                    'status' => 'enrolled'
+                    'school_class_id' => $data['class']->id,
+                    'enrollment_date' => '2025-09-01',
+                    'status' => 'enrolled',
                 ]
             );
 
@@ -125,9 +125,9 @@ class DemoSchoolSeeder extends Seeder
                     'school_id' => $school->id,
                     'type' => 'installment', // <-- CORRECTION APPLIQUÉE
                     'amount' => 300000,
-                    'paid_amount' => 150000, 
+                    'paid_amount' => 150000,
                     'due_date' => '2025-12-31',
-                    'status' => 'partial'
+                    'status' => 'partial',
                 ]
             );
         }

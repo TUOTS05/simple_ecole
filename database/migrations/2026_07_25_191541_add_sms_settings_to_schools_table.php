@@ -22,8 +22,8 @@ return new class extends Migration
     {
         Schema::table('schools', function (Blueprint $table) {
             $table->dropColumn([
-                'sms_enabled', 'orange_sms_api_url', 'orange_sms_client_id', 
-                'orange_sms_client_secret', 'orange_sms_sender_name', 'sms_absence_template'
+                'sms_enabled', 'orange_sms_api_url', 'orange_sms_client_id',
+                'orange_sms_client_secret', 'orange_sms_sender_name', 'sms_absence_template',
             ]);
         });
     }

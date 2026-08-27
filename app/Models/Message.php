@@ -78,16 +78,16 @@ class Message extends Model
 
         return $query->where(function (Builder $q) use ($parentId, $schoolIds, $childClassIds) {
             $q->where('sender_id', $parentId)
-              ->orWhere('receiver_id', $parentId)
-              ->orWhere(function (Builder $broadcast) use ($parentId, $schoolIds, $childClassIds) {
-                  $broadcast->whereNull('receiver_id')
-                      ->where('sender_id', '!=', $parentId)
-                      ->whereIn('school_id', $schoolIds)
-                      ->where(function (Builder $target) use ($childClassIds) {
-                          $target->whereNull('target_class_id')
-                                 ->orWhereIn('target_class_id', $childClassIds);
-                      });
-              });
+                ->orWhere('receiver_id', $parentId)
+                ->orWhere(function (Builder $broadcast) use ($parentId, $schoolIds, $childClassIds) {
+                    $broadcast->whereNull('receiver_id')
+                        ->where('sender_id', '!=', $parentId)
+                        ->whereIn('school_id', $schoolIds)
+                        ->where(function (Builder $target) use ($childClassIds) {
+                            $target->whereNull('target_class_id')
+                                ->orWhereIn('target_class_id', $childClassIds);
+                        });
+                });
         });
     }
 

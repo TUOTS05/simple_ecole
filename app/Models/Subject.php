@@ -19,7 +19,7 @@ class Subject extends Model
         'is_active',
     ];
 
-        protected $casts = [
+    protected $casts = [
         'is_active' => 'boolean',
         'coefficient' => 'float',
         'max_score' => 'float',

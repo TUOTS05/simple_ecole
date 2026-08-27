@@ -30,16 +30,16 @@ class ParentController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', '%' . $search . '%')
-                    ->orWhere('last_name', 'like', '%' . $search . '%')
-                    ->orWhere('email', 'like', '%' . $search . '%')
-                    ->orWhere('phone', 'like', '%' . $search . '%');
+                $q->where('first_name', 'like', '%'.$search.'%')
+                    ->orWhere('last_name', 'like', '%'.$search.'%')
+                    ->orWhere('email', 'like', '%'.$search.'%')
+                    ->orWhere('phone', 'like', '%'.$search.'%');
             });
         }
 
         $parents = $query->with(['children' => function ($q) {
-                $q->with('classes')->orderBy('first_name');
-            }])
+            $q->with('classes')->orderBy('first_name');
+        }])
             ->orderBy('last_name')
             ->orderBy('first_name')
             ->paginate(15);

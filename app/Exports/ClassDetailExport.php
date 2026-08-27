@@ -11,7 +11,9 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 class ClassDetailExport implements FromCollection, WithHeadings, WithMapping, WithTitle
 {
     protected $classId;
+
     protected $schoolYearId;
+
     protected $schoolId;
 
     public function __construct($classId, $schoolYearId, $schoolId = null)
@@ -45,6 +47,7 @@ class ClassDetailExport implements FromCollection, WithHeadings, WithMapping, Wi
                 $total = (float) $student->total_du;
                 $paye = (float) $student->total_paye;
                 $student->payment_rate = $total > 0 ? round(($paye / $total) * 100, 1) : 0;
+
                 return $student;
             });
     }
@@ -57,7 +60,7 @@ class ClassDetailExport implements FromCollection, WithHeadings, WithMapping, Wi
             'Total Dû (FCFA)',
             'Total Payé (FCFA)',
             'Reste à Payer (FCFA)',
-            'Taux de Paiement (%)'
+            'Taux de Paiement (%)',
         ];
     }
 
@@ -69,7 +72,7 @@ class ClassDetailExport implements FromCollection, WithHeadings, WithMapping, Wi
             $row->total_du,
             $row->total_paye,
             $row->total_reste,
-            $row->payment_rate
+            $row->payment_rate,
         ];
     }
 

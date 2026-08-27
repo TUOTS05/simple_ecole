@@ -3,14 +3,18 @@
 namespace App\Exports;
 
 use App\Models\Student;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithTitle; // Optionnel : pour nommer l'onglet Excel
+use Maatwebsite\Excel\Concerns\WithTitle;
+
+ // Optionnel : pour nommer l'onglet Excel
 
 class StudentsExport implements FromCollection, WithHeadings, WithMapping, WithTitle
 {
     protected $schoolId;
+
     protected $classId;
 
     public function __construct($schoolId, $classId = null)
@@ -30,7 +34,7 @@ class StudentsExport implements FromCollection, WithHeadings, WithMapping, WithT
             $query->whereHas('enrollments', function ($q) {
                 $q->where('school_class_id', $this->classId);
             });
-            
+
             // 💡 OPTIONNEL : Si vous voulez aussi exporter le nom de la classe dans une colonne, décommentez les lignes ci-dessous :
             // $query->with(['enrollments' => function($q) {
             //     $q->where('school_class_id', $this->classId)->with('schoolClass');
@@ -43,13 +47,13 @@ class StudentsExport implements FromCollection, WithHeadings, WithMapping, WithT
     public function headings(): array
     {
         return [
-            'Matricule', 
-            'Nom', 
-            'Prénom', 
-            'Genre', 
-            'Date de naissance', 
-            'Tél. Responsable', 
-            'Nom de la Mère'
+            'Matricule',
+            'Nom',
+            'Prénom',
+            'Genre',
+            'Date de naissance',
+            'Tél. Responsable',
+            'Nom de la Mère',
         ];
     }
 
@@ -63,7 +67,7 @@ class StudentsExport implements FromCollection, WithHeadings, WithMapping, WithT
             strtoupper($student->last_name ?? 'N/A'),
             ucfirst($student->first_name ?? 'N/A'),
             $student->gender === 'M' ? 'Masculin' : ($student->gender === 'F' ? 'Féminin' : 'N/A'),
-            $student->birth_date ? \Carbon\Carbon::parse($student->birth_date)->format('d/m/Y') : 'N/A',
+            $student->birth_date ? Carbon::parse($student->birth_date)->format('d/m/Y') : 'N/A',
             $phone,
             $student->mother_name ?? 'N/A',
         ];

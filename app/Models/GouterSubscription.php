@@ -59,6 +59,7 @@ class GouterSubscription extends Model
     public function getPaymentRateAttribute(): float
     {
         $total = (float) $this->total_amount;
+
         return $total > 0 ? round(((float) $this->paid_amount / $total) * 100, 1) : 0;
     }
 

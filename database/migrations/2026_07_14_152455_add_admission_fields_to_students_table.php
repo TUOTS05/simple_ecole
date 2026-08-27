@@ -59,14 +59,14 @@ return new class extends Migration
     {
         Schema::table('students', function (Blueprint $table) {
             $table->dropColumn([
-                'admission_number', 'section', 'large_family', 'staff_child', 
+                'admission_number', 'section', 'large_family', 'staff_child',
                 'religion', 'admission_date', 'receipt_number', 'photo',
                 'father_name', 'father_phone', 'father_occupation',
                 'mother_name', 'mother_phone', 'mother_occupation',
-                'guardian_type', 'guardian_name', 'guardian_phone', 
+                'guardian_type', 'guardian_name', 'guardian_phone',
                 'guardian_relation', 'guardian_email', 'guardian_occupation', 'guardian_address',
                 'current_address', 'permanent_address', 'previous_school', 'remarks',
-                'documents'
+                'documents',
             ]);
         });
     }

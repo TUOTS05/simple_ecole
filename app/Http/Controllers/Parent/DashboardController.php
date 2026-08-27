@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Parent;
 
 use App\Http\Controllers\Controller;
-use App\Models\Student;
-use App\Models\SchoolYear;
-use App\Models\Enrollment;
 use App\Models\Attendance;
+use App\Models\Enrollment;
 use App\Models\ReportCard;
+use App\Models\SchoolYear;
+use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -29,49 +29,49 @@ class DashboardController extends Controller
         $children = $parent->children()->with('school')->get();
 
         // Pour chaque enfant, récupérer les données de l'année scolaire de son école
-        $childrenData = $children->map(function($child) use ($selectedYearId) {
+        $childrenData = $children->map(function ($child) use ($selectedYearId) {
             $currentYear = $this->resolveYearForChild($child, $selectedYearId);
 
             return $this->resolveChildStats($child, $currentYear);
         });
-        
+
         // Grouper par école
-        $childrenBySchool = $childrenData->groupBy(function($data) {
+        $childrenBySchool = $childrenData->groupBy(function ($data) {
             return $data['student']->school_id;
         });
-        
+
         // Années scolaires des écoles où ce parent a effectivement des enfants (pas toutes les
         // écoles de la plateforme)
         $schoolYears = SchoolYear::whereIn('school_id', $children->pluck('school_id')->unique())
             ->orderBy('start_date', 'desc')
             ->get();
-        
+
         // Statistiques globales
         $globalStats = [
             'totalChildren' => $childrenData->count(),
-            'totalFees' => $childrenData->sum(function($data) {
+            'totalFees' => $childrenData->sum(function ($data) {
                 return $data['enrollment']->tuition_fee_total ?? 0;
             }),
-            'totalPaid' => $childrenData->sum(function($data) {
+            'totalPaid' => $childrenData->sum(function ($data) {
                 return $data['enrollment']->tuition_fee_paid ?? 0;
             }),
             'averageAttendance' => $childrenData->avg('attendanceRate'),
         ];
-        
+
         return view('parent.dashboard', compact(
             'childrenBySchool',
             'schoolYears',
             'globalStats'
         ));
     }
-    
+
     /**
      * Détails d'un enfant spécifique
      */
     public function childDetails(Request $request, $studentId)
     {
         $parent = auth()->user();
-        
+
         // Vérifier que ce parent a bien accès à cet élève
         $student = $parent->children()
             ->where('students.id', $studentId)
@@ -121,7 +121,7 @@ class DashboardController extends Controller
             'presentDays' => 0,
         ];
 
-        if (!$currentYear) {
+        if (! $currentYear) {
             return $data;
         }
 
@@ -131,7 +131,7 @@ class DashboardController extends Controller
             ->with('schoolClass')
             ->first();
 
-        if (!$enrollment) {
+        if (! $enrollment) {
             return $data;
         }
 

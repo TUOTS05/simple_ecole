@@ -3,12 +3,10 @@
 namespace App\Http\Controllers\Parent;
 
 use App\Http\Controllers\Controller;
-use App\Models\Student;
-use App\Models\Payment;
 use App\Models\Enrollment;
+use App\Models\Payment;
 use App\Models\StudentInstallment;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
@@ -18,78 +16,78 @@ class PaymentController extends Controller
     public function index($studentId)
     {
         $parent = auth()->user();
-        
+
         // 1. Vérifier l'accès : l'enfant doit appartenir à ce parent
         $student = $parent->children()
             ->where('students.id', $studentId)
             ->with('school')
             ->firstOrFail();
-        
+
         // ✅ AJOUT : Récupérer TOUS les enfants pour le menu déroulant
         $siblings = $parent->children()->get();
-        
+
         // 2. Récupérer l'inscription de l'élève pour l'année active de SON école (un parent peut
         // avoir des enfants dans des écoles différentes, donc "l'année active" n'est pas globale)
         $enrollment = Enrollment::where('student_id', $studentId)
-            ->whereHas('schoolYear', function($q) use ($student) {
+            ->whereHas('schoolYear', function ($q) use ($student) {
                 $q->where('is_active', true)->where('school_id', $student->school_id);
             })
             ->with('schoolClass') // On charge aussi la classe pour l'afficher
             ->first();
-        
+
         // 3. Récupérer les échéances (tranches) de cette inscription, triées par date
         $installments = [];
         $totalExpected = 0;
         $totalPaid = 0;
-        
+
         if ($enrollment) {
-            $installments = \App\Models\StudentInstallment::where('enrollment_id', $enrollment->id)
+            $installments = StudentInstallment::where('enrollment_id', $enrollment->id)
                 ->orderBy('due_date', 'asc')
                 ->get();
-            
+
             $totalExpected = $installments->sum('amount');
             $totalPaid = $installments->sum('paid_amount');
         }
-        
+
         $remaining = max(0, $totalExpected - $totalPaid);
-        
+
         // 4. Récupérer l'historique des reçus pour les téléchargements
         $payments = collect(); // Par défaut, une collection vide
-        
+
         if ($enrollment) {
             // On utilise enrollment_id au lieu de student_id
-            $payments = \App\Models\Payment::where('enrollment_id', $enrollment->id)
+            $payments = Payment::where('enrollment_id', $enrollment->id)
                 ->orderBy('payment_date', 'desc')
                 ->get();
         }
-        
+
         return view('parent.payments.index', compact(
-            'student', 
+            'student',
             'siblings',         // ✅ AJOUTÉ ICI POUR CORRIGER L'ERREUR
-            'enrollment', 
-            'installments',    
-            'payments',        
-            'totalPaid', 
-            'totalExpected', 
+            'enrollment',
+            'installments',
+            'payments',
+            'totalPaid',
+            'totalExpected',
             'remaining'
         ));
     }
-    
+
     /**
      * Télécharger un reçu de paiement
      */
     public function downloadReceipt($studentId, $paymentId)
     {
         $parent = auth()->user();
-        
+
         // 1. Vérifier l'accès : l'enfant doit appartenir à ce parent
         $student = $parent->children()
             ->where('students.id', $studentId)
             ->firstOrFail();
-        
+
         // 2. Récupérer le paiement et vérifier qu'il appartient bien à cet élève via son inscription
         $payment = Payment::where('id', $paymentId)
-            ->whereHas('enrollment', function($q) use ($studentId) {
+            ->whereHas('enrollment', function ($q) use ($studentId) {
                 $q->where('student_id', $studentId);
             })
             ->with(['enrollment.schoolYear', 'enrollment.schoolClass', 'school'])
@@ -110,7 +108,7 @@ class PaymentController extends Controller
             'payment', 'student', 'schoolClass', 'schoolYear', 'school', 'pendingInstallments'
         ));
 
-        $filename = 'Recu_Paiement_' . str_pad($payment->id, 6, '0', STR_PAD_LEFT) . '.pdf';
+        $filename = 'Recu_Paiement_'.str_pad($payment->id, 6, '0', STR_PAD_LEFT).'.pdf';
 
         return $pdf->download($filename);
     }

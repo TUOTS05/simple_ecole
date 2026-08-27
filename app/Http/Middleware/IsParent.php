@@ -10,7 +10,7 @@ class IsParent
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (!auth()->check() || !auth()->user()->isParent()) {
+        if (! auth()->check() || ! auth()->user()->isParent()) {
             abort(403, 'Accès réservé aux parents');
         }
 

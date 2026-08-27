@@ -79,6 +79,6 @@ class DemoTeacherParentSeeder extends Seeder
 
         $this->command->info('✅ Comptes démo enseignant et parent créés avec succès !');
         $this->command->info('📧 Enseignant: teacher@schoolmanager.com / teacher1234');
-        $this->command->info('📧 Parent: parent@schoolmanager.com / parent1234 (enfant: ' . $students->first()->first_name . ' ' . $students->first()->last_name . ')');
+        $this->command->info('📧 Parent: parent@schoolmanager.com / parent1234 (enfant: '.$students->first()->first_name.' '.$students->first()->last_name.')');
     }
 }

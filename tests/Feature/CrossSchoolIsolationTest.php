@@ -26,7 +26,7 @@ class CrossSchoolIsolationTest extends TestCase
     private function makeSchool(string $slug): School
     {
         return School::create([
-            'name' => 'École ' . $slug,
+            'name' => 'École '.$slug,
             'slug' => $slug,
             'status' => 'active',
         ]);
@@ -39,7 +39,7 @@ class CrossSchoolIsolationTest extends TestCase
         $user = new User([
             'first_name' => 'Compta',
             'last_name' => $school->slug,
-            'email' => 'compta-' . $school->slug . '@example.test',
+            'email' => 'compta-'.$school->slug.'@example.test',
             'password' => bcrypt('password'),
         ]);
         $user->role = 'accountant';
@@ -54,7 +54,7 @@ class CrossSchoolIsolationTest extends TestCase
         $user = new User([
             'first_name' => 'Admin',
             'last_name' => $school->slug,
-            'email' => 'admin-' . $school->slug . '@example.test',
+            'email' => 'admin-'.$school->slug.'@example.test',
             'password' => bcrypt('password'),
         ]);
         $user->role = 'school_admin';

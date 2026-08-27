@@ -63,12 +63,12 @@ class ReportCard extends Model
     //     return $this->hasMany(Grade::class);
     // }
 
-        public function grades()
+    public function grades()
     {
         return $this->hasMany(Grade::class, 'student_id', 'student_id')
             ->where('school_year_id', $this->school_year_id)
             ->where('period', $this->period)
-            ->where(function($query) {
+            ->where(function ($query) {
                 if ($this->period === 'mensuel') {
                     $query->where('month', $this->month);
                 } else {

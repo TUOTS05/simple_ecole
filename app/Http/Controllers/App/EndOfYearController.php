@@ -16,12 +16,12 @@ class EndOfYearController extends Controller
     public function index()
     {
         $currentYear = SchoolYear::where('is_active', true)->first();
-        
+
         $classes = SchoolClass::where('school_id', auth()->user()->school_id)
             ->withCount(['students' => function ($q) use ($currentYear) {
-                $q->where(function($query) use ($currentYear) {
+                $q->where(function ($query) use ($currentYear) {
                     $query->where('student_school_class.school_year_id', $currentYear->id)
-                          ->orWhereNull('student_school_class.school_year_id');
+                        ->orWhereNull('student_school_class.school_year_id');
                 });
             }])
             ->get();
@@ -36,18 +36,18 @@ class EndOfYearController extends Controller
         $nextClass = $class->getNextClassForSchoolYear($currentYear->id);
 
         $students = $class->students()
-            ->where(function($q) use ($currentYear) {
+            ->where(function ($q) use ($currentYear) {
                 $q->where('student_school_class.school_year_id', $currentYear->id)
-                  ->orWhereNull('student_school_class.school_year_id');
+                    ->orWhereNull('student_school_class.school_year_id');
             })
             ->with(['reportCards' => function ($q) use ($currentYear) {
                 $q->where('school_year_id', $currentYear->id)
-                  ->where(function($query) {
-                      // ✅ Recherche insensible à la casse (Trimestriel ou trimestriel)
-                      $query->where('period', 'Trimestriel')
+                    ->where(function ($query) {
+                        // ✅ Recherche insensible à la casse (Trimestriel ou trimestriel)
+                        $query->where('period', 'Trimestriel')
                             ->orWhere('period', 'trimestriel');
-                  })
-                  ->where('quarter', 3);
+                    })
+                    ->where('quarter', 3);
             }])
             ->orderBy('last_name')
             ->get();
@@ -65,19 +65,19 @@ class EndOfYearController extends Controller
         ]);
 
         $currentYear = SchoolYear::where('is_active', true)->first();
-        
+
         $currentClassId = DB::table('student_school_class')
             ->where('student_id', $student->id)
-            ->where(function($q) use ($currentYear) {
+            ->where(function ($q) use ($currentYear) {
                 $q->where('school_year_id', $currentYear->id)
-                  ->orWhereNull('school_year_id');
+                    ->orWhereNull('school_year_id');
             })
             ->value('school_class_id');
 
         // ✅ CORRECTION : On cherche d'abord si le bulletin T3 existe déjà
         $existingReportCard = ReportCard::where('student_id', $student->id)
             ->where('school_year_id', $currentYear->id)
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->where('period', 'Trimestriel')->orWhere('period', 'trimestriel');
             })
             ->where('quarter', 3)
@@ -111,38 +111,39 @@ class EndOfYearController extends Controller
             ]);
         }
 
-        $userName = $student->first_name . ' ' . $student->last_name;
-        return redirect()->back()->with('success', 'Décision enregistrée pour ' . $userName);
+        $userName = $student->first_name.' '.$student->last_name;
+
+        return redirect()->back()->with('success', 'Décision enregistrée pour '.$userName);
     }
 
     // 4. Migration en masse vers l'année supérieure
     public function migrateClass(SchoolClass $class)
     {
         $currentYear = SchoolYear::where('is_active', true)->first();
-        
+
         $parts = explode('-', $currentYear->name);
         if (count($parts) === 2 && is_numeric($parts[0]) && is_numeric($parts[1])) {
-            $nextYearName = ((int)$parts[0] + 1) . '-' . ((int)$parts[1] + 1);
+            $nextYearName = ((int) $parts[0] + 1).'-'.((int) $parts[1] + 1);
         } else {
-            $nextYearName = $currentYear->name . ' (Suite)'; 
+            $nextYearName = $currentYear->name.' (Suite)';
         }
 
         $nextYear = SchoolYear::firstOrCreate(
             [
                 'name' => $nextYearName,
-                'school_id' => $class->school_id
+                'school_id' => $class->school_id,
             ],
             [
                 'start_date' => now()->addYear()->startOfYear(),
                 'end_date' => now()->addYear()->endOfYear(),
-                'is_active' => false
+                'is_active' => false,
             ]
         );
 
         $nextClass = $class->getNextClassForSchoolYear($currentYear->id);
 
-        if (!$nextClass) {
-            return redirect()->back()->with('error', 'Aucune classe supérieure trouvée. Veuillez d\'abord créer la classe pour l\'année ' . $nextYearName . '.');
+        if (! $nextClass) {
+            return redirect()->back()->with('error', 'Aucune classe supérieure trouvée. Veuillez d\'abord créer la classe pour l\'année '.$nextYearName.'.');
         }
 
         // Toutes les décisions prises pour cette classe, y compris "redouble" : un redoublant doit
@@ -167,7 +168,7 @@ class EndOfYearController extends Controller
         DB::beginTransaction();
         try {
             foreach ($reportCards as $reportCard) {
-                if (!$reportCard->student) {
+                if (! $reportCard->student) {
                     continue;
                 }
 
@@ -177,8 +178,9 @@ class EndOfYearController extends Controller
                 $targetClassId = $reportCard->next_school_class_id
                     ?? ($reportCard->end_of_year_decision === 'redouble' ? $class->id : $nextClass->id);
 
-                if (!$targetClassId) {
+                if (! $targetClassId) {
                     $skipped++;
+
                     continue;
                 }
 
@@ -197,7 +199,8 @@ class EndOfYearController extends Controller
             return redirect()->back()->with('success', $message);
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Erreur lors de la migration : ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Erreur lors de la migration : '.$e->getMessage());
         }
     }
 }

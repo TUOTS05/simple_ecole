@@ -25,7 +25,7 @@ return new class extends Migration
                 'registration_fee',
                 'payment_modality',
                 'number_of_installments',
-                'installment_amount'
+                'installment_amount',
             ]);
         });
     }

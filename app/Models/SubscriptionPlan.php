@@ -50,7 +50,7 @@ class SubscriptionPlan extends Model
      */
     public function getFormattedMonthlyPriceAttribute()
     {
-        return number_format($this->monthly_price, 0, ',', ' ') . ' FCFA';
+        return number_format($this->monthly_price, 0, ',', ' ').' FCFA';
     }
 
     /**
@@ -58,6 +58,6 @@ class SubscriptionPlan extends Model
      */
     public function getFormattedYearlyPriceAttribute()
     {
-        return number_format($this->yearly_price, 0, ',', ' ') . ' FCFA';
+        return number_format($this->yearly_price, 0, ',', ' ').' FCFA';
     }
 }

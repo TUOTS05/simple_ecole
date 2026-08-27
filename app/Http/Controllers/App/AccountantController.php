@@ -73,7 +73,7 @@ class AccountantController extends Controller
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $accountant->id,
+            'email' => 'required|email|unique:users,email,'.$accountant->id,
             'password' => 'nullable|string|min:6|confirmed',
             'phone' => 'nullable|string|max:20',
             'gender' => 'required|in:M,F',
@@ -85,7 +85,7 @@ class AccountantController extends Controller
         $accountant->phone = $validated['phone'] ?? null;
         $accountant->gender = $validated['gender'];
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $accountant->password = Hash::make($validated['password']);
         }
 

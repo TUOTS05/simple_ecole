@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
+use App\Models\Contract;
 use App\Models\School;
-use App\Models\User;
 use App\Models\SubscriptionPlan;
+use App\Models\User;
 use Carbon\Carbon;
-use App\Models\Contract;        
-use App\Models\ActivityLog;      
 
 class DashboardController extends Controller
 {
@@ -20,7 +20,7 @@ class DashboardController extends Controller
     //         $q->whereNull('subscription_end_date')
     //           ->orWhereDate('subscription_end_date', '>=', Carbon::today());
     //     })->count();
-        
+
     //     $suspendedSchools = School::where('status', 'suspended')->count();
     //     $expiredSchools = School::where(function($q) {
     //         $q->where('status', 'expired')
@@ -52,7 +52,7 @@ class DashboardController extends Controller
     //     $plans = SubscriptionPlan::active()->get();
     //     $monthlyRevenue = 0;
     //     $yearlyRevenue = 0;
-        
+
     //     foreach ($schoolsByPlan as $planSlug => $count) {
     //         $plan = $plans->where('slug', $planSlug)->first();
     //         if ($plan) {

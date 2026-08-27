@@ -13,7 +13,7 @@ class Contract extends Model
     // ✅ Colonnes qui existent réellement dans votre table 'contracts'
     protected $fillable = [
         'school_id',
-        'contract_number', 
+        'contract_number',
         'plan_name',      // <-- Texte (ex: "Premium") au lieu de plan_id
         'amount',
         'start_date',

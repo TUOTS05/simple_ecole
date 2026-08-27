@@ -10,15 +10,15 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             // Ajout du rôle si non existant (par défaut 'teacher' pour ce module)
-            if (!Schema::hasColumn('users', 'role')) {
+            if (! Schema::hasColumn('users', 'role')) {
                 $table->string('role')->default('teacher')->after('email');
             }
             // Ajout du téléphone
-            if (!Schema::hasColumn('users', 'phone')) {
+            if (! Schema::hasColumn('users', 'phone')) {
                 $table->string('phone')->nullable()->after('role');
             }
             // Ajout du genre (M/F)
-            if (!Schema::hasColumn('users', 'gender')) {
+            if (! Schema::hasColumn('users', 'gender')) {
                 $table->char('gender', 1)->nullable()->after('phone');
             }
         });

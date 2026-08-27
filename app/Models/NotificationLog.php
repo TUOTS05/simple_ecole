@@ -9,7 +9,6 @@ class NotificationLog extends Model
 {
     protected $table = 'notifications_log';
 
-    
     protected $fillable = [
         'school_id',
         'student_id',
@@ -23,8 +22,7 @@ class NotificationLog extends Model
         'status',
         'error_message',
         'provider_response_id',
-        ];
-    
+    ];
 
     protected $casts = [];
 

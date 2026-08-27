@@ -5,10 +5,11 @@ namespace App\Listeners;
 use App\Events\StudentMarkedAbsent;
 use App\Models\SmsLog;
 use App\Services\Sms\OrangeSmsGateway;
-use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 use Illuminate\Events\Listeners\Listening;
+use Illuminate\Support\Facades\Log;
 
-//[Listening(events: [StudentMarkedAbsent::class])]
+// [Listening(events: [StudentMarkedAbsent::class])]
 class SendAbsenceSmsToParent
 {
     public function handle(StudentMarkedAbsent $event): void
@@ -21,7 +22,7 @@ class SendAbsenceSmsToParent
         }
 
         $student = $attendance->student;
-        if (!$student) {
+        if (! $student) {
             return;
         }
 
@@ -32,11 +33,12 @@ class SendAbsenceSmsToParent
         $parents = $student->parents;
         if ($parents->isEmpty()) {
             Log::warning("Aucun parent trouvé pour l'élève {$student->id}");
+
             return;
         }
 
         // ✅ MODIFICATION ICI : On lit le template directement depuis la table schools
-        $template = $school->sms_absence_template 
+        $template = $school->sms_absence_template
             ?? 'Cher(e) parent, nous vous informons que votre enfant {student_name} ({class_name}) a été absent(e) le {date}. Merci de contacter l\'établissement. {school_name}';
 
         $schoolClass = $attendance->schoolClass;
@@ -50,10 +52,10 @@ class SendAbsenceSmsToParent
             $message = str_replace(
                 ['{parent_name}', '{student_name}', '{class_name}', '{date}', '{school_name}', '{school_phone}'],
                 [
-                    trim(($parent->first_name ?? '') . ' ' . ($parent->last_name ?? '')) ?: 'Parent',
-                    trim(($student->first_name ?? '') . ' ' . ($student->last_name ?? '')) ?: 'Élève',
+                    trim(($parent->first_name ?? '').' '.($parent->last_name ?? '')) ?: 'Parent',
+                    trim(($student->first_name ?? '').' '.($student->last_name ?? '')) ?: 'Élève',
                     $schoolClass->name ?? 'N/A',
-                    \Carbon\Carbon::parse($attendance->date)->isoFormat('DD/MM/YYYY'),
+                    Carbon::parse($attendance->date)->isoFormat('DD/MM/YYYY'),
                     $school->name ?? 'L\'école',
                     $school->phone ?? '',
                 ],
@@ -65,7 +67,7 @@ class SendAbsenceSmsToParent
                 'school_id' => $student->school_id,
                 'student_id' => $student->id,
                 'recipient_phone' => $parent->phone,
-                'recipient_name' => trim(($parent->first_name ?? '') . ' ' . ($parent->last_name ?? '')),
+                'recipient_name' => trim(($parent->first_name ?? '').' '.($parent->last_name ?? '')),
                 'message' => $message,
                 'gateway' => 'orange_sms',
                 'status' => 'pending',

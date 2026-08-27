@@ -9,17 +9,17 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-       public function up(): void
-   {
-       Schema::table('students', function (Blueprint $table) {
-           $table->string('id_card_path')->nullable()->after('remarks'); // ou après une autre colonne
-       });
-   }
-   public function down(): void
-   {
-       Schema::table('students', function (Blueprint $table) {
-           $table->dropColumn('id_card_path');
-       });
-   }
-    
+    public function up(): void
+    {
+        Schema::table('students', function (Blueprint $table) {
+            $table->string('id_card_path')->nullable()->after('remarks'); // ou après une autre colonne
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('students', function (Blueprint $table) {
+            $table->dropColumn('id_card_path');
+        });
+    }
 };

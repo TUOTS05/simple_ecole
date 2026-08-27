@@ -10,7 +10,7 @@ class CanteenSubscription extends Model
 {
     protected $fillable = [
         'school_id', 'student_id', 'school_year_id', 'canteen_rate_id',
-        'total_amount', 'paid_amount', 'remaining_amount', 'status', 'notes'
+        'total_amount', 'paid_amount', 'remaining_amount', 'status', 'notes',
     ];
 
     protected $casts = [

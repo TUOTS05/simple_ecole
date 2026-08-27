@@ -65,7 +65,7 @@ return new class extends Migration
             $table->foreignId('student_id')->constrained('students')->cascadeOnDelete();
             $table->string('academic_year');
             $table->timestamps();
-            
+
             $table->unique(['school_class_id', 'student_id', 'academic_year']);
         });
 

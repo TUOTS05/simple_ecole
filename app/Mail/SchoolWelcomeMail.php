@@ -2,18 +2,20 @@
 
 namespace App\Mail;
 
+use App\Models\School;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use App\Models\School;
 
 class SchoolWelcomeMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public $school;
+
     public $password;
 
     /**
@@ -31,7 +33,7 @@ class SchoolWelcomeMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Bienvenue sur ' . config('app.name') . ' - Activez votre compte',
+            subject: 'Bienvenue sur '.config('app.name').' - Activez votre compte',
         );
     }
 
@@ -48,7 +50,7 @@ class SchoolWelcomeMail extends Mailable
     /**
      * Get the attachments for the message.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {

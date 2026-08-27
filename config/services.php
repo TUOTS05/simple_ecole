@@ -35,7 +35,7 @@ return [
         ],
     ],
 
-        'orange_sms' => [
+    'orange_sms' => [
         'client_id' => env('ORANGE_SMS_CLIENT_ID'),
         'client_secret' => env('ORANGE_SMS_CLIENT_SECRET'),
         'sender_name' => env('ORANGE_SMS_SENDER_NAME', 'MIRABELLES'),

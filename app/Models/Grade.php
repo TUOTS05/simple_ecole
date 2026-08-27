@@ -70,6 +70,7 @@ class Grade extends Model
         if ($this->max_score == 20) {
             return $this->score;
         }
+
         return ($this->score / $this->max_score) * 20;
     }
 }

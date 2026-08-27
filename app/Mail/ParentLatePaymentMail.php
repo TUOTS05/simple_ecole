@@ -13,6 +13,7 @@ class ParentLatePaymentMail extends Mailable
     use Queueable, SerializesModels;
 
     public $student;
+
     public $installment;
 
     /**
@@ -29,9 +30,9 @@ class ParentLatePaymentMail extends Mailable
      */
     public function build()
     {
-        $studentName = $this->student->first_name . ' ' . $this->student->last_name;
-        
-        return $this->subject('⚠️ Rappel : Échéance en retard pour ' . $studentName)
-                    ->view('emails.parent-late-payment');
+        $studentName = $this->student->first_name.' '.$this->student->last_name;
+
+        return $this->subject('⚠️ Rappel : Échéance en retard pour '.$studentName)
+            ->view('emails.parent-late-payment');
     }
 }

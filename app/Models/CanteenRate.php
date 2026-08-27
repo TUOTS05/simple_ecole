@@ -10,7 +10,7 @@ class CanteenRate extends Model
 {
     protected $fillable = [
         'school_id', 'school_year_id', 'school_class_id',
-        'monthly_rate', 'months_count', 'start_month', 'end_month', 'description'
+        'monthly_rate', 'months_count', 'start_month', 'end_month', 'description',
     ];
 
     protected $casts = [

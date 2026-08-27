@@ -2,15 +2,16 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use App\Models\StudentInstallment;
 use App\Models\NotificationLog;
+use App\Models\StudentInstallment;
 use App\Services\OrangeSmsService;
-use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+use Illuminate\Console\Command;
 
 class SendLatePaymentNotifications extends Command
 {
     protected $signature = 'notifications:late-payments';
+
     protected $description = 'Envoyer des notifications SMS aux parents pour les paiements en retard';
 
     private $smsService;
@@ -42,14 +43,16 @@ class SendLatePaymentNotifications extends Command
             if (NotificationLog::alreadySentForInstallment($installment->id, 'sms')) {
                 $this->line("⏭️  Échéance #{$installment->id} déjà notifiée, on passe.");
                 $skippedCount++;
+
                 continue;
             }
 
             $student = $installment->enrollment->student;
             $parent = $student->parents->first();
 
-            if (!$parent || !$parent->phone) {
+            if (! $parent || ! $parent->phone) {
                 $this->warn("⚠️  Pas de téléphone pour le parent de {$student->first_name} {$student->last_name}");
+
                 continue;
             }
 
@@ -86,7 +89,7 @@ class SendLatePaymentNotifications extends Command
         }
 
         $this->newLine();
-        $this->info("📊 Résumé :");
+        $this->info('📊 Résumé :');
         $this->line("   ✅ Envoyés : {$sentCount}");
         $this->line("   ⏭️  Déjà notifiés : {$skippedCount}");
         $this->line("   ❌ Échecs : {$failedCount}");
@@ -97,12 +100,12 @@ class SendLatePaymentNotifications extends Command
     private function buildMessage($student, $installment, $remainingAmount): string
     {
         $schoolName = $student->school->name ?? 'L\'école';
-        $dueDate = \Carbon\Carbon::parse($installment->due_date)->format('d/m/Y');
+        $dueDate = Carbon::parse($installment->due_date)->format('d/m/Y');
         $description = $installment->description;
 
-        return "Bonjour, nous vous rappelons que l'échéance '{$description}' de " .
-               number_format($remainingAmount, 0, ',', ' ') . " FCFA pour " .
-               "{$student->first_name} {$student->last_name} était prévue le {$dueDate}. " .
+        return "Bonjour, nous vous rappelons que l'échéance '{$description}' de ".
+               number_format($remainingAmount, 0, ',', ' ').' FCFA pour '.
+               "{$student->first_name} {$student->last_name} était prévue le {$dueDate}. ".
                "Merci de régulariser la situation. - {$schoolName}";
     }
 }

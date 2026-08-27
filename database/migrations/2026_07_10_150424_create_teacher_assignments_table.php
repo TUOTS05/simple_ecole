@@ -9,7 +9,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-        public function up(): void
+    public function up(): void
     {
         Schema::create('teacher_assignments', function (Blueprint $table) {
             $table->id();
@@ -17,10 +17,10 @@ return new class extends Migration
             $table->foreignId('school_class_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete(); // L'enseignant
             $table->foreignId('school_year_id')->constrained()->cascadeOnDelete();
-            
+
             // Distinguer le titulaire de l'adjoint (si 2 enseignants par classe)
-            $table->boolean('is_main_teacher')->default(true); 
-            
+            $table->boolean('is_main_teacher')->default(true);
+
             $table->timestamps();
 
             // Un enseignant ne peut pas être deux fois dans la même classe pour la même année

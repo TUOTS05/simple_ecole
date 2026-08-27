@@ -10,7 +10,7 @@ class CanteenPayment extends Model
     protected $fillable = [
         'school_id', 'canteen_subscription_id', 'canteen_installment_id',
         'amount', 'payment_date', 'payment_method', 'payment_type',
-        'reference', 'received_by', 'notes', 'receipt_path'
+        'reference', 'received_by', 'notes', 'receipt_path',
     ];
 
     protected $casts = [

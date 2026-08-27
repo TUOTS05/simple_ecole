@@ -15,10 +15,10 @@ return new class extends Migration
             // Le modèle School les référence déjà (fillable/casts, isTrialActive()) mais
             // aucune migration ne les avait jamais créées, ce qui fait planter toute
             // insertion/mise à jour qui les renseigne (ex: demande de compte, approbation).
-            if (!Schema::hasColumn('schools', 'is_active')) {
+            if (! Schema::hasColumn('schools', 'is_active')) {
                 $table->boolean('is_active')->default(true)->after('status');
             }
-            if (!Schema::hasColumn('schools', 'trial_ends_at')) {
+            if (! Schema::hasColumn('schools', 'trial_ends_at')) {
                 $table->date('trial_ends_at')->nullable()->after('is_active');
             }
         });

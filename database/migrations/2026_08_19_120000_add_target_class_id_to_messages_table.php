@@ -9,12 +9,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('messages', function (Blueprint $table) {
-            if (!Schema::hasColumn('messages', 'target_class_id')) {
+            if (! Schema::hasColumn('messages', 'target_class_id')) {
                 $table->foreignId('target_class_id')
-                      ->nullable()
-                      ->after('target_info')
-                      ->constrained('school_classes')
-                      ->nullOnDelete();
+                    ->nullable()
+                    ->after('target_info')
+                    ->constrained('school_classes')
+                    ->nullOnDelete();
             }
         });
     }

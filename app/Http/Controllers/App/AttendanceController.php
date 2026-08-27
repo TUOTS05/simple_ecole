@@ -12,8 +12,7 @@ use Illuminate\Support\Facades\Schema;
 
 class AttendanceController extends Controller
 {
-
-        public function index(Request $request)
+    public function index(Request $request)
     {
         $schoolId = session('current_school_id');
         $classes = SchoolClass::where('school_id', $schoolId)->orderBy('cycle')->orderBy('name')->get();
@@ -40,7 +39,7 @@ class AttendanceController extends Controller
 
         switch ($groupBy) {
             case 'week':
-                $groupByRaw = "DATE(DATE_SUB(attendances.date, INTERVAL WEEKDAY(attendances.date) DAY))";
+                $groupByRaw = 'DATE(DATE_SUB(attendances.date, INTERVAL WEEKDAY(attendances.date) DAY))';
                 break;
             case 'month':
                 $groupByRaw = "DATE(DATE_FORMAT(attendances.date, '%Y-%m-01'))";
@@ -49,7 +48,7 @@ class AttendanceController extends Controller
                 $groupByRaw = "DATE(DATE_FORMAT(attendances.date, '%Y-01-01'))";
                 break;
             default:
-                $groupByRaw = "DATE(attendances.date)";
+                $groupByRaw = 'DATE(attendances.date)';
                 $groupBy = 'day';
                 break;
         }
@@ -98,19 +97,19 @@ class AttendanceController extends Controller
     {
         $schoolId = session('current_school_id');
         $classes = SchoolClass::where('school_id', $schoolId)->orderBy('cycle')->orderBy('name')->get();
-        
+
         $selectedClassId = $request->get('class_id');
         $selectedDate = $request->get('date', now()->format('Y-m-d'));
         $selectedPeriod = $request->get('period', 'matin');
         $attendanceHasPeriod = Schema::hasColumn('attendances', 'period');
-        
+
         $students = collect();
         $existingAttendances = collect();
 
         if ($selectedClassId && $selectedDate) {
             $class = SchoolClass::find($selectedClassId);
             $students = $class->students()->orderBy('last_name')->get();
-            
+
             // Récupérer les présences existantes pour cette date (pour pré-cocher)
             $query = Attendance::where('school_id', $schoolId)
                 ->where('date', $selectedDate)
@@ -181,15 +180,15 @@ class AttendanceController extends Controller
             $records[] = $record;
         }
 
-        if (!empty($records)) {
+        if (! empty($records)) {
             Attendance::insert($records);
         }
 
         return redirect()->route('app.attendances.index')
-            ->with('success', 'Appel enregistré avec succès pour le ' . Carbon::parse($date)->format('d/m/Y') . ' !');
+            ->with('success', 'Appel enregistré avec succès pour le '.Carbon::parse($date)->format('d/m/Y').' !');
     }
 
-        public function showByDate(string $date)
+    public function showByDate(string $date)
     {
         $schoolId = session('current_school_id');
 
