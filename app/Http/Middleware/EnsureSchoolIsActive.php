@@ -2,10 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\School;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use App\Models\School;
 
 class EnsureSchoolIsActive
 {
@@ -33,9 +33,9 @@ class EnsureSchoolIsActive
                     auth()->logout();
                     $request->session()->invalidate();
                     $request->session()->regenerateToken();
-                    
+
                     return redirect()->route('login')->withErrors([
-                        'email' => '🚫 Votre compte a été suspendu par l\'administrateur. Veuillez nous contacter pour régulariser la situation.'
+                        'email' => '🚫 Votre compte a été suspendu par l\'administrateur. Veuillez nous contacter pour régulariser la situation.',
                     ]);
                 }
 
@@ -44,9 +44,11 @@ class EnsureSchoolIsActive
                     auth()->logout();
                     $request->session()->invalidate();
                     $request->session()->regenerateToken();
-                    
+
+                    $expiryDate = $school->subscription_end_date ?? $school->trial_ends_at;
+
                     return redirect()->route('login')->withErrors([
-                        'email' => '⏳ L\'abonnement de votre école a expiré le ' . $school->subscription_end_date->format('d/m/Y') . '. Veuillez contacter le support pour le renouveler.'
+                        'email' => '⏳ L\'abonnement de votre école a expiré'.($expiryDate ? ' le '.$expiryDate->format('d/m/Y') : '').'. Veuillez contacter le support pour le renouveler.',
                     ]);
                 }
             }

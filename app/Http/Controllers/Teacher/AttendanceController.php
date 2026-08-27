@@ -2,18 +2,16 @@
 
 namespace App\Http\Controllers\Teacher;
 
+use App\Events\StudentMarkedAbsent;
+use App\Exports\AttendanceExport;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\SchoolClass;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
-use App\Events\StudentMarkedAbsent;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\AttendanceExport;
-use Barryvdh\DomPDF\Facade\Pdf;
-
-
 
 class AttendanceController extends Controller
 {
@@ -47,9 +45,13 @@ class AttendanceController extends Controller
         // Fonctions MySQL (le projet n'utilise pas PostgreSQL) : TO_CHAR faisait planter la page
         // dès qu'un enseignant choisissait un regroupement autre que "Jour".
         $groupByClause = 'DATE(date)';
-        if ($groupBy === 'week') $groupByClause = "DATE(DATE_SUB(date, INTERVAL WEEKDAY(date) DAY))";
-        elseif ($groupBy === 'month') $groupByClause = "DATE(DATE_FORMAT(date, '%Y-%m-01'))";
-        elseif ($groupBy === 'year') $groupByClause = "DATE(DATE_FORMAT(date, '%Y-01-01'))";
+        if ($groupBy === 'week') {
+            $groupByClause = 'DATE(DATE_SUB(date, INTERVAL WEEKDAY(date) DAY))';
+        } elseif ($groupBy === 'month') {
+            $groupByClause = "DATE(DATE_FORMAT(date, '%Y-%m-01'))";
+        } elseif ($groupBy === 'year') {
+            $groupByClause = "DATE(DATE_FORMAT(date, '%Y-01-01'))";
+        }
 
         // 1. Requête pour le tableau de bilan global
         $query = Attendance::query()
@@ -69,8 +71,8 @@ class AttendanceController extends Controller
             ->leftJoin('users', 'attendances.user_id', '=', 'users.id')
             ->whereIn('attendances.school_class_id', $assignedClassIds)
             ->whereBetween('attendances.date', [$startDate, $endDate])
-            ->when($selectedClassId, fn($q) => $q->where('attendances.school_class_id', $selectedClassId))
-            ->when($selectedPeriod !== 'all', fn($q) => $q->where('attendances.period', $selectedPeriod))
+            ->when($selectedClassId, fn ($q) => $q->where('attendances.school_class_id', $selectedClassId))
+            ->when($selectedPeriod !== 'all', fn ($q) => $q->where('attendances.period', $selectedPeriod))
             ->groupBy('period_date', 'attendances.school_class_id', 'attendances.period', 'school_classes.name')
             ->orderBy('period_date', 'desc')
             ->orderBy('school_classes.name', 'asc');
@@ -113,7 +115,7 @@ class AttendanceController extends Controller
     public function create(Request $request)
     {
         $teacher = auth()->user();
-        $teacherClasses = SchoolClass::whereHas('teacherAssignments', fn($q) => $q->where('user_id', $teacher->id))->orderBy('name')->get();
+        $teacherClasses = SchoolClass::whereHas('teacherAssignments', fn ($q) => $q->where('user_id', $teacher->id))->orderBy('name')->get();
 
         $selectedClassId = $request->get('class_id') ?? $request->route('classId') ?? ($teacherClasses->first()->id ?? null);
         $selectedDate = $request->get('date', Carbon::today()->format('Y-m-d'));
@@ -124,10 +126,10 @@ class AttendanceController extends Controller
         $existingAttendances = collect();
 
         if ($selectedClassId) {
-            if (!$teacher->teacherAssignments()->where('school_class_id', $selectedClassId)->first()) {
+            if (! $teacher->teacherAssignments()->where('school_class_id', $selectedClassId)->first()) {
                 abort(403, 'Accès non autorisé.');
             }
-            $class = SchoolClass::with(['students' => fn($q) => $q->where('status', 'active')->orderBy('last_name')->orderBy('first_name')])->findOrFail($selectedClassId);
+            $class = SchoolClass::with(['students' => fn ($q) => $q->where('status', 'active')->orderBy('last_name')->orderBy('first_name')])->findOrFail($selectedClassId);
             $students = $class->students;
             $existingAttendances = Attendance::where('school_class_id', $selectedClassId)
                 ->where('date', $selectedDate)
@@ -141,11 +143,11 @@ class AttendanceController extends Controller
     public function history($classId = null)
     {
         $teacher = auth()->user();
-        $teacherClasses = SchoolClass::whereHas('teacherAssignments', fn($q) => $q->where('user_id', $teacher->id))->orderBy('name')->get();
+        $teacherClasses = SchoolClass::whereHas('teacherAssignments', fn ($q) => $q->where('user_id', $teacher->id))->orderBy('name')->get();
 
         $classId = $classId ?? $teacherClasses->first()->id ?? null;
 
-        if (!$classId || !$teacher->teacherAssignments()->where('school_class_id', $classId)->first()) {
+        if (! $classId || ! $teacher->teacherAssignments()->where('school_class_id', $classId)->first()) {
             abort(403, 'Accès non autorisé.');
         }
 
@@ -165,7 +167,7 @@ class AttendanceController extends Controller
             ->groupBy('date', 'period')
             ->orderBy('date', 'desc')
             ->get()
-            ->map(fn($row) => (array) $row);
+            ->map(fn ($row) => (array) $row);
 
         return view('teacher.attendance.history', compact('class', 'attendances'));
     }
@@ -185,14 +187,23 @@ class AttendanceController extends Controller
 
         $periodNormalise = str_replace('-', '_', $validated['period']);
 
-        if (!$teacher->teacherAssignments()->where('school_class_id', $validated['class_id'])->first()) {
+        if (! $teacher->teacherAssignments()->where('school_class_id', $validated['class_id'])->first()) {
             abort(403, 'Action non autorisée.');
         }
+
+        // Roster de la classe : seuls ces élèves peuvent être pointés ici, pour empêcher
+        // un enseignant de créer une présence (et déclencher le SMS parent) pour un élève
+        // d'une autre école.
+        $validStudentIds = SchoolClass::findOrFail($validated['class_id'])->students()->pluck('students.id')->all();
 
         DB::beginTransaction();
         try {
             $attendancesData = [];
             foreach ($validated['attendances'] as $studentId => $data) {
+                if (! in_array((int) $studentId, $validStudentIds, true)) {
+                    continue;
+                }
+
                 $attendancesData[] = [
                     'school_id' => $teacher->school_id,
                     'school_class_id' => $validated['class_id'],
@@ -207,7 +218,7 @@ class AttendanceController extends Controller
                 ];
             }
 
-            if (!empty($attendancesData)) {
+            if (! empty($attendancesData)) {
                 Attendance::upsert(
                     $attendancesData,
                     ['school_class_id', 'student_id', 'date', 'period'],
@@ -223,7 +234,9 @@ class AttendanceController extends Controller
                         ->where('date', $validated['date'])
                         ->where('period', $periodNormalise)
                         ->first();
-                    if ($attendance) event(new StudentMarkedAbsent($attendance));
+                    if ($attendance) {
+                        event(new StudentMarkedAbsent($attendance));
+                    }
                 }
             }
 
@@ -232,10 +245,10 @@ class AttendanceController extends Controller
                 ->with('success', '✅ Appel enregistré avec succès !');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Erreur : ' . $e->getMessage()])->withInput();
+
+            return back()->withErrors(['error' => 'Erreur : '.$e->getMessage()])->withInput();
         }
     }
-
 
     public function exportAttendanceExcel(Request $request)
     {
@@ -248,7 +261,7 @@ class AttendanceController extends Controller
 
         return Excel::download(
             new AttendanceExport($classId, $startDate, $endDate, true, $assignedClassIds),
-            'presences_' . date('Y-m-d') . '.xlsx'
+            'presences_'.date('Y-m-d').'.xlsx'
         );
     }
 
@@ -320,26 +333,26 @@ class AttendanceController extends Controller
     //     }
 
     //     $attendances = $query->get();
-        
+
     //     $className = $classId ? \App\Models\SchoolClass::find($classId)->name : 'Toutes mes classes';
-        
+
     //     // ✅ 3. Année scolaire (à adapter si vous avez une relation school_year sur la classe)
-    //     $schoolYear = '2025-2026'; 
+    //     $schoolYear = '2025-2026';
 
     //     // ✅ 4. Passage de toutes les variables à la vue, y compris teacherName
     //     $pdf = Pdf::loadView('teacher.exports.attendance_pdf', compact(
-    //         'attendances', 
-    //         'className', 
-    //         'startDate', 
+    //         'attendances',
+    //         'className',
+    //         'startDate',
     //         'endDate',
     //         'teacherName',
     //         'schoolYear'
     //     ));
-        
+
     //     return $pdf->download('rapport_presences_absences_' . date('Y-m-d') . '.pdf');
     // }
 
-        public function exportAttendancePdf(Request $request)
+    public function exportAttendancePdf(Request $request)
     {
         $teacher = auth()->user();
         $assignedClassIds = $teacher->teacherAssignments()->pluck('school_class_id')->toArray();
@@ -348,7 +361,7 @@ class AttendanceController extends Controller
         $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->get('end_date', now()->format('Y-m-d'));
 
-        $teacherName = trim(($teacher->first_name ?? '') . ' ' . ($teacher->last_name ?? '')) ?: ($teacher->name ?? 'Enseignant non spécifié');
+        $teacherName = trim(($teacher->first_name ?? '').' '.($teacher->last_name ?? '')) ?: ($teacher->name ?? 'Enseignant non spécifié');
         $schoolYear = '2025-2026'; // Adaptez si vous avez une relation school_year
 
         // ✅ 1. Récupération du chemin absolu du logo de l'école
@@ -356,18 +369,18 @@ class AttendanceController extends Controller
         $schoolLogoPath = null;
         if (isset($teacher->school) && $teacher->school->logo) {
             // Si le logo est stocké dans storage/app/public
-            $schoolLogoPath = public_path('storage/' . $teacher->school->logo);
-            
+            $schoolLogoPath = public_path('storage/'.$teacher->school->logo);
+
             // OU si le logo est directement dans public/images/
             // $schoolLogoPath = public_path('images/' . $teacher->school->logo);
         }
-        
+
         // Fallback vers un logo par défaut si aucun n'est trouvé
-        if (!$schoolLogoPath || !file_exists($schoolLogoPath)) {
+        if (! $schoolLogoPath || ! file_exists($schoolLogoPath)) {
             $schoolLogoPath = public_path('images/default-logo.png'); // Créez ce fichier dans public/images/
         }
 
-        $query = \App\Models\Attendance::query()
+        $query = Attendance::query()
             ->select(
                 'attendances.date',
                 'attendances.period',
@@ -388,21 +401,21 @@ class AttendanceController extends Controller
         }
 
         $attendances = $query->get();
-        $className = $classId ? \App\Models\SchoolClass::find($classId)->name : 'Toutes mes classes';
+        $className = $classId ? SchoolClass::find($classId)->name : 'Toutes mes classes';
 
         $pdf = Pdf::loadView('teacher.exports.attendance_pdf', compact(
-            'attendances', 
-            'className', 
-            'startDate', 
+            'attendances',
+            'className',
+            'startDate',
             'endDate',
             'teacherName',
             'schoolYear',
             'schoolLogoPath' // ✅ 2. Passage du chemin absolu à la vue
         ));
-        
+
         // Optionnel : pour forcer le format A4 et l'orientation
         $pdf->setPaper('a4', 'portrait');
-        
-        return $pdf->download('rapport_presences_absences_' . date('Y-m-d') . '.pdf');
+
+        return $pdf->download('rapport_presences_absences_'.date('Y-m-d').'.pdf');
     }
 }

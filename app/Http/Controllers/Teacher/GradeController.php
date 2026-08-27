@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
-use App\Models\SchoolClass;
-use App\Models\Subject;
 use App\Models\Grade;
+use App\Models\SchoolClass;
 use App\Models\SchoolYear;
+use App\Models\Subject;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\User;
+use Illuminate\Validation\Rule;
 
 class GradeController extends Controller
 {
@@ -56,7 +57,7 @@ class GradeController extends Controller
     //     return view('teacher.grades.index', compact('class', 'subjects', 'recentGrades'));
     // }
 
-     public function index($classId)
+    public function index($classId)
     {
         $teacher = auth()->user();
         $schoolYearId = SchoolYear::where('school_id', $teacher->school_id)->where('is_active', true)->value('id');
@@ -90,7 +91,7 @@ class GradeController extends Controller
                 ->where('subject_id', $selectedSubjectId)
                 ->where('school_year_id', $schoolYearId)
                 ->where('period', $selectedPeriod);
-                
+
             if ($selectedPeriod === 'Trimestriel' && $selectedQuarter) {
                 $query->where('quarter', $selectedQuarter);
             } elseif ($selectedPeriod === 'Mensuel' && $selectedMonth) {
@@ -101,7 +102,7 @@ class GradeController extends Controller
         }
 
         return view('teacher.grades.index', compact(
-            'class', 'subjects', 'students', 'existingGrades', 
+            'class', 'subjects', 'students', 'existingGrades',
             'selectedSubjectId', 'selectedPeriod', 'selectedQuarter', 'selectedMonth'
         ));
     }
@@ -205,8 +206,15 @@ class GradeController extends Controller
             ->where('school_year_id', $schoolYearId)
             ->firstOrFail();
 
+        // Roster de la classe : seuls ces élèves peuvent recevoir une note ici,
+        // pour empêcher un enseignant de saisir une note pour un élève d'une autre école.
+        $validStudentIds = SchoolClass::findOrFail($classId)->students()->pluck('students.id')->all();
+
         $validated = $request->validate([
-            'subject_id' => 'required|exists:subjects,id',
+            'subject_id' => [
+                'required',
+                Rule::exists('subjects', 'id')->where('school_id', $teacher->school_id),
+            ],
             'period' => 'required|in:Mensuel,Trimestriel',
             'month' => 'nullable|string|max:255',
             'quarter' => 'nullable|integer|in:1,2,3',
@@ -219,10 +227,14 @@ class GradeController extends Controller
         DB::beginTransaction();
         try {
             foreach ($validated['grades'] as $studentId => $gradeData) {
+                if (! in_array((int) $studentId, $validStudentIds, true)) {
+                    continue;
+                }
+
                 // On ne traite que les lignes où une note est saisie
                 if ($gradeData['score'] !== null && $gradeData['score'] !== '') {
-                    $score = min((float)$gradeData['score'], (float)$validated['max_score']);
-                    
+                    $score = min((float) $gradeData['score'], (float) $validated['max_score']);
+
                     // ✅ UPDATE OR CREATE : Met à jour si la combinaison existe, sinon crée.
                     Grade::updateOrCreate(
                         [
@@ -246,12 +258,14 @@ class GradeController extends Controller
             }
 
             DB::commit();
+
             return redirect()->route('teacher.grades.index', $classId)
                 ->with('success', '✅ Notes enregistrées ou mises à jour avec succès !');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Erreur : ' . $e->getMessage()])->withInput();
+
+            return back()->withErrors(['error' => 'Erreur : '.$e->getMessage()])->withInput();
         }
     }
 }
