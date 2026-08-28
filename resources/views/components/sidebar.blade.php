@@ -144,6 +144,52 @@
             <span class="text-xl min-w-[24px] text-center">💳</span>
             <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Paiements</span>
         </a>
+        <a href="{{ route('extras.subscriptions.index') }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('extras.subscriptions.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+            <span class="text-xl min-w-[24px] text-center">🧩</span>
+            <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Inscriptions Extras</span>
+        </a>
+        <a href="{{ route('extras.payments.index') }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('extras.payments.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+            <span class="text-xl min-w-[24px] text-center">💰</span>
+            <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Paiements Extras</span>
+        </a>
+        <a href="{{ route('extras.refunds.index') }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('extras.refunds.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+            <span class="text-xl min-w-[24px] text-center">💸</span>
+            <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Remboursements Extras</span>
+        </a>
+
+        @elseif(method_exists(auth()->user(), 'isCanteenManager') && auth()->user()->isCanteenManager())
+        <!-- ========================================== -->
+        <!-- MENU RESPONSABLE CANTINE (accès restreint)  -->
+        <!-- ========================================== -->
+        <a href="{{ route('extras.attendances.index') }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('extras.attendances.index') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+            <span class="text-xl min-w-[24px] text-center">✅</span>
+            <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Présences / Consommations</span>
+        </a>
+        <a href="{{ route('extras.attendances.scan') }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('extras.attendances.scan') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+            <span class="text-xl min-w-[24px] text-center">📷</span>
+            <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Pointage rapide (QR)</span>
+        </a>
+        <a href="{{ route('extras.menus.index') }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('extras.menus.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+            <span class="text-xl min-w-[24px] text-center">🍽️</span>
+            <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Menus Cantine</span>
+        </a>
+
+        @elseif(method_exists(auth()->user(), 'isTransportManager') && auth()->user()->isTransportManager())
+        <!-- ========================================== -->
+        <!-- MENU RESPONSABLE TRANSPORT (accès restreint) -->
+        <!-- ========================================== -->
+        <a href="{{ route('extras.transport.vehicles.index') }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('extras.transport.vehicles.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+            <span class="text-xl min-w-[24px] text-center">🚐</span>
+            <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Véhicules</span>
+        </a>
+        <a href="{{ route('extras.transport.routes.index') }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('extras.transport.routes.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+            <span class="text-xl min-w-[24px] text-center">🗺️</span>
+            <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Circuits</span>
+        </a>
+        <a href="{{ route('extras.transport.assignments.index') }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('extras.transport.assignments.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+            <span class="text-xl min-w-[24px] text-center">🎒</span>
+            <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Affectations élèves</span>
+        </a>
 
         @else
         <!-- ========================================== -->
@@ -197,7 +243,7 @@
 
         @if(auth()->user()->isSchoolAdmin())
         <!-- Groupe : Ressources Humaines -->
-        <div x-data="{ open: {{ request()->routeIs('app.teachers.*') || request()->routeIs('app.teacher-assignments.*') || request()->routeIs('app.accountants.*') ? 'true' : 'false' }} }" class="space-y-1">
+        <div x-data="{ open: {{ request()->routeIs('app.teachers.*') || request()->routeIs('app.teacher-assignments.*') || request()->routeIs('app.accountants.*') || request()->routeIs('app.extra-staff.*') ? 'true' : 'false' }} }" class="space-y-1">
             <button @click="if(!sidebarOpen) sidebarOpen = true; open = !open" title="Personnel Enseignant"
                 class="w-full flex items-center justify-between px-3 py-3 rounded-lg transition text-gray-700 hover:bg-gray-100 focus:outline-none">
                 <div class="flex items-center">
@@ -212,6 +258,8 @@
                 <a href="{{ route('app.teachers.index') }}" title="Liste des Enseignants" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.teachers.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Enseignants</a>
                 <a href="{{ route('app.teacher-assignments.index') }}" title="Assignations" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.teacher-assignments.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Assignations</a>
                 <a href="{{ route('app.accountants.index') }}" title="Personnel Comptable" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.accountants.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Comptables</a>
+                <a href="{{ route('app.extra-staff.index', 'canteen') }}" title="Responsables Cantine" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.extra-staff.*') && request()->route('type') === 'canteen' ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Responsables Cantine</a>
+                <a href="{{ route('app.extra-staff.index', 'transport') }}" title="Responsables Transport" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.extra-staff.*') && request()->route('type') === 'transport' ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Responsables Transport</a>
             </div>
         </div>
 
@@ -401,6 +449,14 @@
 
         @elseif(method_exists(auth()->user(), 'isAccountant') && auth()->user()->isAccountant())
             <a href="{{ route('app.accountant-profile.edit') }}" title="Mon Profil" class="flex items-center justify-center px-3 py-2 rounded-lg hover:bg-gray-100 transition text-gray-700 text-sm font-medium">
+                <svg class="w-5 h-5 min-w-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                <span x-show="sidebarOpen" class="ml-2 whitespace-nowrap">Mon Profil</span>
+            </a>
+
+        @elseif((method_exists(auth()->user(), 'isCanteenManager') && auth()->user()->isCanteenManager()) || (method_exists(auth()->user(), 'isTransportManager') && auth()->user()->isTransportManager()))
+            <a href="{{ route('profile.edit') }}" title="Mon Profil" class="flex items-center justify-center px-3 py-2 rounded-lg hover:bg-gray-100 transition text-gray-700 text-sm font-medium">
                 <svg class="w-5 h-5 min-w-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                 </svg>

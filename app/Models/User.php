@@ -67,6 +67,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return strtolower(trim($this->role ?? '')) === 'accountant';
     }
 
+    public function isCanteenManager(): bool
+    {
+        return strtolower(trim($this->role ?? '')) === 'canteen_manager';
+    }
+
+    public function isTransportManager(): bool
+    {
+        return strtolower(trim($this->role ?? '')) === 'transport_manager';
+    }
+
     public function dashboardRouteName(): string
     {
         return match ($this->role) {
@@ -76,6 +86,10 @@ class User extends Authenticatable implements MustVerifyEmail
             // Le personnel comptable n'a accès qu'aux inscriptions et paiements : pas de tableau
             // de bord général à sa disposition, on l'envoie directement sur les inscriptions.
             'accountant' => 'app.enrollments.index',
+            // Rôles Extras à accès restreint (spec §30) : pas de tableau de bord général non
+            // plus, on envoie directement sur leur écran de travail principal.
+            'canteen_manager' => 'extras.attendances.index',
+            'transport_manager' => 'extras.transport.vehicles.index',
             default => 'app.dashboard',
         };
     }

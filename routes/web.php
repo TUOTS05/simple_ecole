@@ -13,6 +13,7 @@ use App\Http\Controllers\App\ExtraAttendanceController;
 use App\Http\Controllers\App\ExtraController;
 use App\Http\Controllers\App\ExtraMenuController;
 use App\Http\Controllers\App\ExtraRefundController;
+use App\Http\Controllers\App\ExtraStaffController;
 use App\Http\Controllers\App\ExtraStockController;
 use App\Http\Controllers\App\ExtraTransportController;
 use App\Http\Controllers\App\FeeController;
@@ -174,6 +175,17 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent,ac
         Route::resource('/accountants', AccountantController::class)
             ->except(['show'])
             ->middleware('role:school_admin');
+
+        // Personnel Extras à accès restreint (responsable cantine / responsable transport) :
+        // réservé à l'admin école, {type} contraint à canteen|transport (voir ExtraStaffController).
+        Route::middleware('role:school_admin')->where(['type' => 'canteen|transport'])->group(function () {
+            Route::get('/extra-staff/{type}', [ExtraStaffController::class, 'index'])->name('extra-staff.index');
+            Route::get('/extra-staff/{type}/create', [ExtraStaffController::class, 'create'])->name('extra-staff.create');
+            Route::post('/extra-staff/{type}', [ExtraStaffController::class, 'store'])->name('extra-staff.store');
+            Route::get('/extra-staff/{type}/{user}/edit', [ExtraStaffController::class, 'edit'])->name('extra-staff.edit');
+            Route::put('/extra-staff/{type}/{user}', [ExtraStaffController::class, 'update'])->name('extra-staff.update');
+            Route::delete('/extra-staff/{type}/{user}', [ExtraStaffController::class, 'destroy'])->name('extra-staff.destroy');
+        });
 
         // Classes
         Route::resource('/classes', SchoolClassController::class);
@@ -407,87 +419,107 @@ Route::middleware(['auth', 'school.active', 'role:school_admin', 'tenant'])->pre
 // ==========================================
 // EXTRAS (Services & prestations scolaires : transport, garderie, activités, sorties, ...)
 // ==========================================
-Route::middleware(['auth', 'school.active', 'role:school_admin', 'tenant'])->prefix('extras')->name('extras.')->group(function () {
-    // Catégories
-    Route::get('/categories', [ExtraController::class, 'categoriesIndex'])->name('categories.index');
-    Route::post('/categories', [ExtraController::class, 'categoriesStore'])->name('categories.store');
-    Route::put('/categories/{id}', [ExtraController::class, 'categoriesUpdate'])->name('categories.update');
-    Route::delete('/categories/{id}', [ExtraController::class, 'categoriesDestroy'])->name('categories.destroy');
+Route::middleware(['auth', 'school.active', 'role:school_admin,accountant,canteen_manager,transport_manager', 'tenant'])->prefix('extras')->name('extras.')->group(function () {
 
-    // Catalogue
-    Route::get('/catalogue', [ExtraController::class, 'catalogueIndex'])->name('catalogue.index');
-    Route::get('/catalogue/create', [ExtraController::class, 'catalogueCreate'])->name('catalogue.create');
-    Route::post('/catalogue', [ExtraController::class, 'catalogueStore'])->name('catalogue.store');
-    Route::get('/catalogue/{id}/edit', [ExtraController::class, 'catalogueEdit'])->name('catalogue.edit');
-    Route::put('/catalogue/{id}', [ExtraController::class, 'catalogueUpdate'])->name('catalogue.update');
-    Route::delete('/catalogue/{id}', [ExtraController::class, 'catalogueDestroy'])->name('catalogue.destroy');
+    // ==========================================================================
+    // Configuration du catalogue (catégories, extras, tarifs, planning, stocks) :
+    // réservé à l'admin école, comme le reste de la configuration de l'établissement.
+    // ==========================================================================
+    Route::middleware('role:school_admin')->group(function () {
+        // Catégories
+        Route::get('/categories', [ExtraController::class, 'categoriesIndex'])->name('categories.index');
+        Route::post('/categories', [ExtraController::class, 'categoriesStore'])->name('categories.store');
+        Route::put('/categories/{id}', [ExtraController::class, 'categoriesUpdate'])->name('categories.update');
+        Route::delete('/categories/{id}', [ExtraController::class, 'categoriesDestroy'])->name('categories.destroy');
 
-    // Tarifs (sous-formulaire de la fiche extra)
-    Route::post('/catalogue/{extraId}/tarifs', [ExtraController::class, 'tarifsStore'])->name('tarifs.store');
-    Route::put('/tarifs/{id}', [ExtraController::class, 'tarifsUpdate'])->name('tarifs.update');
-    Route::delete('/tarifs/{id}', [ExtraController::class, 'tarifsDestroy'])->name('tarifs.destroy');
+        // Catalogue
+        Route::get('/catalogue', [ExtraController::class, 'catalogueIndex'])->name('catalogue.index');
+        Route::get('/catalogue/create', [ExtraController::class, 'catalogueCreate'])->name('catalogue.create');
+        Route::post('/catalogue', [ExtraController::class, 'catalogueStore'])->name('catalogue.store');
+        Route::get('/catalogue/{id}/edit', [ExtraController::class, 'catalogueEdit'])->name('catalogue.edit');
+        Route::put('/catalogue/{id}', [ExtraController::class, 'catalogueUpdate'])->name('catalogue.update');
+        Route::delete('/catalogue/{id}', [ExtraController::class, 'catalogueDestroy'])->name('catalogue.destroy');
 
-    // Planning (sous-formulaire de la fiche extra)
-    Route::post('/catalogue/{extraId}/schedules', [ExtraController::class, 'schedulesStore'])->name('schedules.store');
-    Route::delete('/schedules/{id}', [ExtraController::class, 'schedulesDestroy'])->name('schedules.destroy');
+        // Tarifs (sous-formulaire de la fiche extra)
+        Route::post('/catalogue/{extraId}/tarifs', [ExtraController::class, 'tarifsStore'])->name('tarifs.store');
+        Route::put('/tarifs/{id}', [ExtraController::class, 'tarifsUpdate'])->name('tarifs.update');
+        Route::delete('/tarifs/{id}', [ExtraController::class, 'tarifsDestroy'])->name('tarifs.destroy');
 
-    // AJAX
-    Route::get('/classes-by-cycle', [ExtraController::class, 'classesByCycle'])->name('classes-by-cycle');
-    Route::get('/students-by-class', [ExtraController::class, 'studentsByClass'])->name('students-by-class');
-    Route::get('/tarif-for-class', [ExtraController::class, 'tarifForClass'])->name('tarif-for-class');
+        // Planning (sous-formulaire de la fiche extra)
+        Route::post('/catalogue/{extraId}/schedules', [ExtraController::class, 'schedulesStore'])->name('schedules.store');
+        Route::delete('/schedules/{id}', [ExtraController::class, 'schedulesDestroy'])->name('schedules.destroy');
 
-    // Inscriptions
-    Route::get('/subscriptions', [ExtraController::class, 'subscriptionsIndex'])->name('subscriptions.index');
-    Route::get('/subscriptions/create', [ExtraController::class, 'subscriptionsCreate'])->name('subscriptions.create');
-    Route::post('/subscriptions', [ExtraController::class, 'subscriptionsStore'])->name('subscriptions.store');
-    Route::delete('/subscriptions/{id}', [ExtraController::class, 'subscriptionsDestroy'])->name('subscriptions.destroy');
-    Route::patch('/subscriptions/{id}/validate', [ExtraController::class, 'subscriptionsValidate'])->name('subscriptions.validate');
-    Route::patch('/subscriptions/{id}/promote', [ExtraController::class, 'subscriptionsPromote'])->name('subscriptions.promote');
-    Route::patch('/subscriptions/{id}/toggle-authorization', [ExtraController::class, 'subscriptionsToggleAuthorization'])->name('subscriptions.toggle-authorization');
-    Route::get('/subscriptions/{id}/authorization-pdf', [ExtraController::class, 'subscriptionsAuthorizationPdf'])->name('subscriptions.authorization-pdf');
-    Route::get('/subscriptions/pdf', [ExtraController::class, 'subscriptionsPdf'])->name('subscriptions.pdf');
+        // Stocks (uniformes, fournitures, kits scolaires)
+        Route::get('/stocks', [ExtraStockController::class, 'index'])->name('stocks.index');
+        Route::post('/stocks', [ExtraStockController::class, 'itemsStore'])->name('stocks.store');
+        Route::put('/stocks/{id}', [ExtraStockController::class, 'itemsUpdate'])->name('stocks.update');
+        Route::delete('/stocks/{id}', [ExtraStockController::class, 'itemsDestroy'])->name('stocks.destroy');
+        Route::post('/stocks/movements', [ExtraStockController::class, 'movementsStore'])->name('stocks.movements.store');
+    });
 
-    // Paiements
-    Route::get('/payments', [ExtraController::class, 'paymentsIndex'])->name('payments.index');
-    Route::post('/payments', [ExtraController::class, 'paymentsStore'])->name('payments.store');
-    Route::get('/payments/{payment}/receipt', [ExtraController::class, 'paymentsReceipt'])->name('payments.receipt');
+    // ==========================================================================
+    // Inscriptions, paiements, remboursements, factures : admin école + comptable
+    // (rôle "accountant", même périmètre financier que côté scolarité classique).
+    // ==========================================================================
+    Route::middleware('role:school_admin,accountant')->group(function () {
+        // AJAX (formulaire d'inscription)
+        Route::get('/classes-by-cycle', [ExtraController::class, 'classesByCycle'])->name('classes-by-cycle');
+        Route::get('/students-by-class', [ExtraController::class, 'studentsByClass'])->name('students-by-class');
+        Route::get('/tarif-for-class', [ExtraController::class, 'tarifForClass'])->name('tarif-for-class');
 
-    // Remboursements
-    Route::get('/refunds', [ExtraRefundController::class, 'index'])->name('refunds.index');
-    Route::post('/refunds', [ExtraRefundController::class, 'store'])->name('refunds.store');
-    Route::get('/refunds/{subscriptionId}/suggested', [ExtraRefundController::class, 'suggested'])->name('refunds.suggested');
+        // Inscriptions
+        Route::get('/subscriptions', [ExtraController::class, 'subscriptionsIndex'])->name('subscriptions.index');
+        Route::get('/subscriptions/create', [ExtraController::class, 'subscriptionsCreate'])->name('subscriptions.create');
+        Route::post('/subscriptions', [ExtraController::class, 'subscriptionsStore'])->name('subscriptions.store');
+        Route::delete('/subscriptions/{id}', [ExtraController::class, 'subscriptionsDestroy'])->name('subscriptions.destroy');
+        Route::patch('/subscriptions/{id}/validate', [ExtraController::class, 'subscriptionsValidate'])->name('subscriptions.validate');
+        Route::patch('/subscriptions/{id}/promote', [ExtraController::class, 'subscriptionsPromote'])->name('subscriptions.promote');
+        Route::patch('/subscriptions/{id}/toggle-authorization', [ExtraController::class, 'subscriptionsToggleAuthorization'])->name('subscriptions.toggle-authorization');
+        Route::get('/subscriptions/{id}/authorization-pdf', [ExtraController::class, 'subscriptionsAuthorizationPdf'])->name('subscriptions.authorization-pdf');
+        Route::get('/subscriptions/{id}/qrcode', [ExtraAttendanceController::class, 'qrcode'])->name('subscriptions.qrcode');
+        Route::get('/subscriptions/pdf', [ExtraController::class, 'subscriptionsPdf'])->name('subscriptions.pdf');
 
-    // Stocks (uniformes, fournitures, kits scolaires)
-    Route::get('/stocks', [ExtraStockController::class, 'index'])->name('stocks.index');
-    Route::post('/stocks', [ExtraStockController::class, 'itemsStore'])->name('stocks.store');
-    Route::put('/stocks/{id}', [ExtraStockController::class, 'itemsUpdate'])->name('stocks.update');
-    Route::delete('/stocks/{id}', [ExtraStockController::class, 'itemsDestroy'])->name('stocks.destroy');
-    Route::post('/stocks/movements', [ExtraStockController::class, 'movementsStore'])->name('stocks.movements.store');
+        // Paiements
+        Route::get('/payments', [ExtraController::class, 'paymentsIndex'])->name('payments.index');
+        Route::post('/payments', [ExtraController::class, 'paymentsStore'])->name('payments.store');
+        Route::get('/payments/{payment}/receipt', [ExtraController::class, 'paymentsReceipt'])->name('payments.receipt');
 
-    // Facture consolidée (scolarité + tous les extras d'un élève sur un mois)
-    Route::get('/invoices/consolidated', [ExtraController::class, 'consolidatedInvoiceIndex'])->name('invoices.consolidated');
-    Route::get('/invoices/consolidated/pdf', [ExtraController::class, 'consolidatedInvoicePdf'])->name('invoices.consolidated.pdf');
+        // Remboursements
+        Route::get('/refunds', [ExtraRefundController::class, 'index'])->name('refunds.index');
+        Route::post('/refunds', [ExtraRefundController::class, 'store'])->name('refunds.store');
+        Route::get('/refunds/{subscriptionId}/suggested', [ExtraRefundController::class, 'suggested'])->name('refunds.suggested');
 
-    // Rapports
-    Route::get('/reports/unpaid', [ExtraController::class, 'reportsUnpaid'])->name('reports.unpaid');
-    Route::get('/reports/unpaid/pdf', [ExtraController::class, 'reportsUnpaidPdf'])->name('reports.unpaid.pdf');
-    Route::get('/dashboard', [ExtraController::class, 'dashboard'])->name('dashboard');
+        // Facture consolidée (scolarité + tous les extras d'un élève sur un mois)
+        Route::get('/invoices/consolidated', [ExtraController::class, 'consolidatedInvoiceIndex'])->name('invoices.consolidated');
+        Route::get('/invoices/consolidated/pdf', [ExtraController::class, 'consolidatedInvoicePdf'])->name('invoices.consolidated.pdf');
 
-    // Présences / consommations + QR de pointage
-    Route::get('/attendances', [ExtraAttendanceController::class, 'index'])->name('attendances.index');
-    Route::post('/attendances', [ExtraAttendanceController::class, 'store'])->name('attendances.store');
-    Route::get('/attendances/scan', [ExtraAttendanceController::class, 'scanForm'])->name('attendances.scan');
-    Route::post('/attendances/scan', [ExtraAttendanceController::class, 'scanStore'])->name('attendances.scan.store');
-    Route::get('/subscriptions/{id}/qrcode', [ExtraAttendanceController::class, 'qrcode'])->name('subscriptions.qrcode');
-    Route::post('/attendances/{attendanceId}/bill-overage', [ExtraAttendanceController::class, 'billOverage'])->name('attendances.bill-overage');
+        // Rapports
+        Route::get('/reports/unpaid', [ExtraController::class, 'reportsUnpaid'])->name('reports.unpaid');
+        Route::get('/reports/unpaid/pdf', [ExtraController::class, 'reportsUnpaidPdf'])->name('reports.unpaid.pdf');
+        Route::get('/dashboard', [ExtraController::class, 'dashboard'])->name('dashboard');
+    });
 
-    // Menus (cantine)
-    Route::get('/menus', [ExtraMenuController::class, 'index'])->name('menus.index');
-    Route::post('/menus', [ExtraMenuController::class, 'store'])->name('menus.store');
-    Route::delete('/menus/{id}', [ExtraMenuController::class, 'destroy'])->name('menus.destroy');
+    // ==========================================================================
+    // Cantine : admin école + responsable cantine (rôle "canteen_manager").
+    // ==========================================================================
+    Route::middleware('role:school_admin,canteen_manager')->group(function () {
+        // Présences / consommations + QR de pointage
+        Route::get('/attendances', [ExtraAttendanceController::class, 'index'])->name('attendances.index');
+        Route::post('/attendances', [ExtraAttendanceController::class, 'store'])->name('attendances.store');
+        Route::get('/attendances/scan', [ExtraAttendanceController::class, 'scanForm'])->name('attendances.scan');
+        Route::post('/attendances/scan', [ExtraAttendanceController::class, 'scanStore'])->name('attendances.scan.store');
+        Route::post('/attendances/{attendanceId}/bill-overage', [ExtraAttendanceController::class, 'billOverage'])->name('attendances.bill-overage');
 
-    // Transport
-    Route::prefix('transport')->name('transport.')->group(function () {
+        // Menus
+        Route::get('/menus', [ExtraMenuController::class, 'index'])->name('menus.index');
+        Route::post('/menus', [ExtraMenuController::class, 'store'])->name('menus.store');
+        Route::delete('/menus/{id}', [ExtraMenuController::class, 'destroy'])->name('menus.destroy');
+    });
+
+    // ==========================================================================
+    // Transport : admin école + responsable transport (rôle "transport_manager").
+    // ==========================================================================
+    Route::middleware('role:school_admin,transport_manager')->prefix('transport')->name('transport.')->group(function () {
         Route::get('/vehicles', [ExtraTransportController::class, 'vehiclesIndex'])->name('vehicles.index');
         Route::post('/vehicles', [ExtraTransportController::class, 'vehiclesStore'])->name('vehicles.store');
         Route::put('/vehicles/{id}', [ExtraTransportController::class, 'vehiclesUpdate'])->name('vehicles.update');
