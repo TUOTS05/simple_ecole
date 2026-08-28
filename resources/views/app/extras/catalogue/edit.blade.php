@@ -158,7 +158,11 @@
                         <td class="py-2 px-3 text-right font-semibold text-primary">{{ number_format($tarif->amount, 0, ',', ' ') }} FCFA</td>
                         @if($extra->isRecurring())
                         <td class="py-2 px-3 text-center text-gray-500">
+                            @if($tarif->is_open_ended)
+                            <span class="text-primary font-semibold">🔁 Mensuel continu</span>
+                            @else
                             {{ $tarif->start_period }} → {{ $tarif->end_period }} ({{ $tarif->periods_count }} périodes)
+                            @endif
                         </td>
                         @endif
                         <td class="py-2 px-3 text-center">
@@ -176,7 +180,7 @@
         </div>
 
         <h4 class="font-semibold text-gray-700 mb-3">+ Ajouter un tarif</h4>
-        <form action="{{ route('extras.tarifs.store', $extra->id) }}" method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <form action="{{ route('extras.tarifs.store', $extra->id) }}" method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-4" x-data="{ openEnded: false }">
             @csrf
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Année scolaire *</label>
@@ -201,13 +205,17 @@
             </div>
 
             @if($extra->isRecurring())
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Début de période (AAAA-MM)</label>
-                <input type="month" name="start_period" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+            <div class="md:col-span-3 flex items-center gap-2">
+                <input type="checkbox" name="is_open_ended" value="1" x-model="openEnded" id="is_open_ended" class="w-4 h-4 text-primary border-gray-300 rounded">
+                <label for="is_open_ended" class="text-sm text-gray-700">🔁 Facturation mensuelle continue (sans date de fin — une échéance est générée chaque mois tant que l'abonnement reste actif)</label>
             </div>
-            <div>
+            <div x-show="!openEnded">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Début de période (AAAA-MM)</label>
+                <input type="month" name="start_period" :disabled="openEnded" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+            </div>
+            <div x-show="!openEnded">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Fin de période (AAAA-MM)</label>
-                <input type="month" name="end_period" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                <input type="month" name="end_period" :disabled="openEnded" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Jour d'échéance</label>

@@ -11,12 +11,13 @@ class ExtraTarif extends Model
 {
     protected $fillable = [
         'extra_id', 'school_year_id', 'school_class_id',
-        'amount', 'periods_count', 'start_period', 'end_period', 'due_day', 'description',
+        'amount', 'periods_count', 'is_open_ended', 'start_period', 'end_period', 'due_day', 'description',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'periods_count' => 'integer',
+        'is_open_ended' => 'boolean',
         'due_day' => 'integer',
     ];
 
@@ -53,6 +54,10 @@ class ExtraTarif extends Model
      */
     public function defaultPeriods(): array
     {
+        if ($this->is_open_ended) {
+            return [now()->format('Y-m')];
+        }
+
         if ($this->start_period && $this->end_period) {
             $periods = [];
             $cursor = Carbon::parse($this->start_period.'-01');

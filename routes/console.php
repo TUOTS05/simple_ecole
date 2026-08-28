@@ -22,3 +22,7 @@ Schedule::command('notifications:late-payments')
 // Extras : rappel avant échéance (J-3) et alerte de retard, une fois par jour.
 Schedule::command('notify:extras-upcoming')->dailyAt('08:30');
 Schedule::command('notify:extras-late')->dailyAt('09:30');
+
+// Extras : génère l'échéance du mois pour les tarifs à facturation continue
+// (cantine, garderie, transport...) le 1er de chaque mois.
+Schedule::command('extras:generate-monthly-installments')->monthlyOn(1, '06:00');

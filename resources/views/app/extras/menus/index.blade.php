@@ -35,6 +35,17 @@
         </form>
 
         @if($extraId)
+        @if($studentsWithRestrictions->isNotEmpty())
+        <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+            <h4 class="font-semibold text-orange-800 mb-2">⚠️ Élèves avec restrictions alimentaires / allergies ({{ $studentsWithRestrictions->count() }})</h4>
+            <ul class="text-sm text-orange-800 space-y-1">
+                @foreach($studentsWithRestrictions as $student)
+                <li><strong>{{ $student->last_name }} {{ $student->first_name }}</strong> — {{ $student->dietary_restrictions }}</li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
+
         <h4 class="font-semibold text-gray-700 mb-3">+ Ajouter / modifier un menu</h4>
         <form action="{{ route('extras.menus.store') }}" method="POST" class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-8">
             @csrf

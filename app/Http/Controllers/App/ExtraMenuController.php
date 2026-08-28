@@ -5,6 +5,7 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Controller;
 use App\Models\Extra;
 use App\Models\ExtraMenu;
+use App\Models\ExtraSubscription;
 use Illuminate\Http\Request;
 
 class ExtraMenuController extends Controller
@@ -18,15 +19,25 @@ class ExtraMenuController extends Controller
         $extras = Extra::where('school_id', $schoolId)->orderBy('name')->get();
 
         $menus = collect();
+        $studentsWithRestrictions = collect();
         if ($extraId) {
             $menus = ExtraMenu::where('school_id', $schoolId)
                 ->where('extra_id', $extraId)
                 ->whereBetween('date', [$month.'-01', date('Y-m-t', strtotime($month.'-01'))])
                 ->orderBy('date')
                 ->get();
+
+            $studentsWithRestrictions = ExtraSubscription::where('school_id', $schoolId)
+                ->where('extra_id', $extraId)
+                ->where('status', 'active')
+                ->whereHas('student', fn ($q) => $q->whereNotNull('dietary_restrictions')->where('dietary_restrictions', '!=', ''))
+                ->with('student')
+                ->get()
+                ->pluck('student')
+                ->sortBy(fn ($s) => $s->last_name.$s->first_name);
         }
 
-        return view('app.extras.menus.index', compact('extras', 'extraId', 'month', 'menus'));
+        return view('app.extras.menus.index', compact('extras', 'extraId', 'month', 'menus', 'studentsWithRestrictions'));
     }
 
     public function store(Request $request)

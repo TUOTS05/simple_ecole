@@ -18,6 +18,7 @@ use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\SchoolYear;
 use App\Models\Student;
+use App\Models\StudentInstallment;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -242,6 +243,7 @@ class ExtraController extends Controller
             'school_class_id' => 'nullable|exists:school_classes,id',
             'amount' => 'required|numeric|min:0',
             'periods_count' => 'nullable|integer|min:1|max:12',
+            'is_open_ended' => 'nullable|boolean',
             'start_period' => 'nullable|date_format:Y-m',
             'end_period' => 'nullable|date_format:Y-m|after_or_equal:start_period',
             'due_day' => 'nullable|integer|min:1|max:28',
@@ -259,6 +261,7 @@ class ExtraController extends Controller
 
         $validated['extra_id'] = $extra->id;
         $validated['due_day'] = $validated['due_day'] ?? 5;
+        $validated['is_open_ended'] = $request->boolean('is_open_ended');
         ExtraTarif::create($validated);
 
         ActivityLog::logAction('extras.tarif.created', "Ajout d'un tarif pour l'extra « {$extra->name} »");
@@ -274,12 +277,14 @@ class ExtraController extends Controller
         $validated = $request->validate([
             'amount' => 'required|numeric|min:0',
             'periods_count' => 'nullable|integer|min:1|max:12',
+            'is_open_ended' => 'nullable|boolean',
             'start_period' => 'nullable|date_format:Y-m',
             'end_period' => 'nullable|date_format:Y-m|after_or_equal:start_period',
             'due_day' => 'nullable|integer|min:1|max:28',
             'description' => 'nullable|string|max:500',
         ]);
 
+        $validated['is_open_ended'] = $request->boolean('is_open_ended');
         $oldAmount = $tarif->amount;
         $tarif->update($validated);
 
@@ -1053,5 +1058,91 @@ class ExtraController extends Controller
         $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
 
         return view('app.extras.dashboard', compact('kpis', 'byExtra', 'monthlyRevenue', 'schoolYears', 'schoolYearId'));
+    }
+
+    // ==========================================
+    // FACTURE CONSOLIDÉE (scolarité + tous les extras d'un élève sur un mois)
+    // ==========================================
+
+    public function consolidatedInvoiceIndex(Request $request)
+    {
+        $schoolId = session('current_school_id');
+        $studentId = $request->get('student_id', '');
+        $month = $request->get('month', now()->format('Y-m'));
+
+        $students = Student::where('school_id', $schoolId)->orderBy('last_name')->orderBy('first_name')->get(['id', 'matricule', 'first_name', 'last_name']);
+
+        $data = $studentId ? $this->buildConsolidatedInvoiceData($schoolId, $studentId, $month) : null;
+
+        return view('app.extras.invoices.consolidated', array_merge(
+            compact('students', 'studentId', 'month'),
+            $data ?? ['student' => null, 'lines' => collect(), 'totals' => null]
+        ));
+    }
+
+    public function consolidatedInvoicePdf(Request $request)
+    {
+        $schoolId = session('current_school_id');
+        $studentId = $request->get('student_id');
+        $month = $request->get('month', now()->format('Y-m'));
+
+        $data = $this->buildConsolidatedInvoiceData($schoolId, $studentId, $month);
+        $school = School::find($schoolId);
+
+        $pdf = Pdf::loadView('pdf.extra-consolidated-invoice', array_merge($data, compact('school', 'month')));
+
+        return $pdf->download('Facture_'.str_pad($studentId, 6, '0', STR_PAD_LEFT).'_'.$month.'.pdf');
+    }
+
+    /**
+     * Regroupe sur un seul document, pour un élève et un mois donnés, les échéances
+     * de scolarité (StudentInstallment) et de tous les extras souscrits
+     * (ExtraInstallment) dues ce mois-là (spec §14 — la facture reste réglée service
+     * par service en coulisses, ceci n'est qu'une vue consolidée pour impression).
+     */
+    private function buildConsolidatedInvoiceData(int $schoolId, int $studentId, string $month): array
+    {
+        $student = Student::where('school_id', $schoolId)->findOrFail($studentId);
+        $monthStart = $month.'-01';
+        $monthEnd = date('Y-m-t', strtotime($monthStart));
+
+        $lines = collect();
+
+        StudentInstallment::whereHas('enrollment', fn ($q) => $q->where('student_id', $studentId))
+            ->whereBetween('due_date', [$monthStart, $monthEnd])
+            ->get()
+            ->each(function ($installment) use ($lines) {
+                $lines->push((object) [
+                    'service' => 'Scolarité — '.$installment->description,
+                    'amount' => (float) $installment->amount,
+                    'paid' => (float) $installment->paid_amount,
+                    'remaining' => (float) ($installment->amount - $installment->paid_amount),
+                    'due_date' => $installment->due_date,
+                ]);
+            });
+
+        ExtraInstallment::whereHas('subscription', fn ($q) => $q->where('school_id', $schoolId)->where('student_id', $studentId))
+            ->whereBetween('due_date', [$monthStart, $monthEnd])
+            ->with('subscription.extra')
+            ->get()
+            ->each(function ($installment) use ($lines) {
+                $lines->push((object) [
+                    'service' => $installment->subscription->extra->name,
+                    'amount' => (float) $installment->amount,
+                    'paid' => (float) $installment->paid_amount,
+                    'remaining' => (float) ($installment->amount - $installment->paid_amount),
+                    'due_date' => $installment->due_date,
+                ]);
+            });
+
+        $lines = $lines->sortBy('due_date')->values();
+
+        $totals = (object) [
+            'amount' => $lines->sum('amount'),
+            'paid' => $lines->sum('paid'),
+            'remaining' => $lines->sum('remaining'),
+        ];
+
+        return ['student' => $student, 'lines' => $lines, 'totals' => $totals];
     }
 }

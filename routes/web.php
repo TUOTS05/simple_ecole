@@ -464,6 +464,10 @@ Route::middleware(['auth', 'school.active', 'role:school_admin', 'tenant'])->pre
     Route::delete('/stocks/{id}', [ExtraStockController::class, 'itemsDestroy'])->name('stocks.destroy');
     Route::post('/stocks/movements', [ExtraStockController::class, 'movementsStore'])->name('stocks.movements.store');
 
+    // Facture consolidée (scolarité + tous les extras d'un élève sur un mois)
+    Route::get('/invoices/consolidated', [ExtraController::class, 'consolidatedInvoiceIndex'])->name('invoices.consolidated');
+    Route::get('/invoices/consolidated/pdf', [ExtraController::class, 'consolidatedInvoicePdf'])->name('invoices.consolidated.pdf');
+
     // Rapports
     Route::get('/reports/unpaid', [ExtraController::class, 'reportsUnpaid'])->name('reports.unpaid');
     Route::get('/reports/unpaid/pdf', [ExtraController::class, 'reportsUnpaidPdf'])->name('reports.unpaid.pdf');
