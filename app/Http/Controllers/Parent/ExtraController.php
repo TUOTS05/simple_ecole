@@ -6,11 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Enrollment;
 use App\Models\Extra;
-use App\Models\ExtraInstallment;
 use App\Models\ExtraSubscription;
 use App\Models\ExtraTarif;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class ExtraController extends Controller
@@ -104,9 +102,7 @@ class ExtraController extends Controller
             return back()->withErrors(['error' => 'Une demande ou inscription existe déjà pour ce service.']);
         }
 
-        if (! $extra->hasAvailableCapacity()) {
-            return back()->withErrors(['error' => "⚠️ « {$extra->name} » est complet, votre demande ne peut pas être prise en compte pour le moment."]);
-        }
+        $hasCapacity = $extra->hasAvailableCapacity();
 
         $tarif = ExtraTarif::where('extra_id', $extra->id)
             ->where('school_year_id', $enrollment->school_year_id)
@@ -121,14 +117,11 @@ class ExtraController extends Controller
             return back()->withErrors(['error' => 'Aucun tarif n\'est encore défini pour ce service, contactez l\'établissement.']);
         }
 
+        $periods = $extra->isRecurring() ? $tarif->defaultPeriods() : ['unique'];
+        $totalAmount = $extra->isRecurring() ? count($periods) * $tarif->amount : $tarif->amount;
+
         DB::beginTransaction();
         try {
-            $periods = $extra->isRecurring()
-                ? $this->defaultPeriods($tarif)
-                : ['unique'];
-
-            $totalAmount = $extra->isRecurring() ? count($periods) * $tarif->amount : $tarif->amount;
-
             $subscription = ExtraSubscription::create([
                 'school_id' => $student->school_id,
                 'student_id' => $studentId,
@@ -138,31 +131,29 @@ class ExtraController extends Controller
                 'total_amount' => $totalAmount,
                 'paid_amount' => 0,
                 'remaining_amount' => $totalAmount,
-                'status' => 'requested',
+                'status' => $hasCapacity ? 'requested' : 'waitlisted',
                 'requested_by' => $parent->id,
             ]);
 
-            foreach ($periods as $period) {
-                $dueDate = $period === 'unique'
-                    ? now()
-                    : Carbon::parse($period.'-01')->day(min($tarif->due_day, Carbon::parse($period.'-01')->daysInMonth));
-
-                ExtraInstallment::create([
-                    'extra_subscription_id' => $subscription->id,
-                    'period' => $period,
-                    'amount' => $tarif->amount,
-                    'paid_amount' => 0,
-                    'due_date' => $dueDate,
-                    'status' => 'pending',
-                ]);
+            // Les échéances ne sont créées qu'une fois la place effectivement acquise
+            // (demande directe si capacité dispo) : une inscription en liste d'attente
+            // n'a pas encore de dette envers l'établissement.
+            if ($hasCapacity) {
+                $tarif->createDefaultInstallmentsFor($subscription);
             }
 
             DB::commit();
 
-            ActivityLog::logAction('extras.subscription.requested', "Demande d'inscription à « {$extra->name} » pour {$student->first_name} {$student->last_name}");
+            ActivityLog::logAction(
+                'extras.subscription.requested',
+                ($hasCapacity ? "Demande d'inscription à" : "Demande d'inscription (liste d'attente) à")." « {$extra->name} » pour {$student->first_name} {$student->last_name}"
+            );
 
-            return redirect()->route('parent.extras.index', $studentId)
-                ->with('success', "✅ Votre demande d'inscription à « {$extra->name} » a été envoyée à l'établissement.");
+            $message = $hasCapacity
+                ? "✅ Votre demande d'inscription à « {$extra->name} » a été envoyée à l'établissement."
+                : "🕒 « {$extra->name} » est complet : votre enfant a été placé sur liste d'attente, vous serez prévenu(e) dès qu'une place se libère.";
+
+            return redirect()->route('parent.extras.index', $studentId)->with('success', $message);
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -210,35 +201,5 @@ class ExtraController extends Controller
         $filename = 'Recu_Extra_'.str_pad($payment->id, 6, '0', STR_PAD_LEFT).'.pdf';
 
         return $pdf->download($filename);
-    }
-
-    /**
-     * Génère la liste des périodes (Y-m) par défaut d'un tarif récurrent : celles
-     * comprises entre start_period/end_period si définies, sinon periods_count mois
-     * à partir du mois courant.
-     */
-    private function defaultPeriods(ExtraTarif $tarif): array
-    {
-        if ($tarif->start_period && $tarif->end_period) {
-            $periods = [];
-            $cursor = Carbon::parse($tarif->start_period.'-01');
-            $end = Carbon::parse($tarif->end_period.'-01');
-            while ($cursor->lte($end)) {
-                $periods[] = $cursor->format('Y-m');
-                $cursor->addMonth();
-            }
-
-            return $periods;
-        }
-
-        $count = $tarif->periods_count ?? 1;
-        $periods = [];
-        $cursor = now()->startOfMonth();
-        for ($i = 0; $i < $count; $i++) {
-            $periods[] = $cursor->format('Y-m');
-            $cursor->addMonth();
-        }
-
-        return $periods;
     }
 }

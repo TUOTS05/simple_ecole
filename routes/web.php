@@ -12,6 +12,7 @@ use App\Http\Controllers\App\EnrollmentController;
 use App\Http\Controllers\App\ExtraAttendanceController;
 use App\Http\Controllers\App\ExtraController;
 use App\Http\Controllers\App\ExtraMenuController;
+use App\Http\Controllers\App\ExtraRefundController;
 use App\Http\Controllers\App\ExtraTransportController;
 use App\Http\Controllers\App\FeeController;
 use App\Http\Controllers\App\FinancialReportController;
@@ -440,12 +441,18 @@ Route::middleware(['auth', 'school.active', 'role:school_admin', 'tenant'])->pre
     Route::post('/subscriptions', [ExtraController::class, 'subscriptionsStore'])->name('subscriptions.store');
     Route::delete('/subscriptions/{id}', [ExtraController::class, 'subscriptionsDestroy'])->name('subscriptions.destroy');
     Route::patch('/subscriptions/{id}/validate', [ExtraController::class, 'subscriptionsValidate'])->name('subscriptions.validate');
+    Route::patch('/subscriptions/{id}/promote', [ExtraController::class, 'subscriptionsPromote'])->name('subscriptions.promote');
     Route::get('/subscriptions/pdf', [ExtraController::class, 'subscriptionsPdf'])->name('subscriptions.pdf');
 
     // Paiements
     Route::get('/payments', [ExtraController::class, 'paymentsIndex'])->name('payments.index');
     Route::post('/payments', [ExtraController::class, 'paymentsStore'])->name('payments.store');
     Route::get('/payments/{payment}/receipt', [ExtraController::class, 'paymentsReceipt'])->name('payments.receipt');
+
+    // Remboursements
+    Route::get('/refunds', [ExtraRefundController::class, 'index'])->name('refunds.index');
+    Route::post('/refunds', [ExtraRefundController::class, 'store'])->name('refunds.store');
+    Route::get('/refunds/{subscriptionId}/suggested', [ExtraRefundController::class, 'suggested'])->name('refunds.suggested');
 
     // Rapports
     Route::get('/reports/unpaid', [ExtraController::class, 'reportsUnpaid'])->name('reports.unpaid');

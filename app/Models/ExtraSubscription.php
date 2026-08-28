@@ -11,6 +11,7 @@ class ExtraSubscription extends Model
     protected $fillable = [
         'school_id', 'student_id', 'extra_id', 'extra_tarif_id', 'school_year_id',
         'total_amount', 'paid_amount', 'remaining_amount', 'status',
+        'original_amount', 'discount_type', 'discount_amount', 'discount_reason',
         'requested_by', 'validated_by', 'validated_at', 'start_date', 'end_date', 'notes',
     ];
 
@@ -18,6 +19,8 @@ class ExtraSubscription extends Model
         'total_amount' => 'decimal:2',
         'paid_amount' => 'decimal:2',
         'remaining_amount' => 'decimal:2',
+        'original_amount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'validated_at' => 'datetime',
         'start_date' => 'date',
         'end_date' => 'date',
@@ -78,6 +81,16 @@ class ExtraSubscription extends Model
         return $this->hasOne(ExtraTransportAssignment::class);
     }
 
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(ExtraRefund::class);
+    }
+
+    public function hasDiscount(): bool
+    {
+        return $this->discount_amount > 0;
+    }
+
     public function getPaymentRateAttribute()
     {
         return $this->total_amount > 0
@@ -133,5 +146,33 @@ class ExtraSubscription extends Model
 
             $installment->save();
         }
+    }
+
+    /**
+     * Montant remboursable suggéré en cas de départ anticipé (spec §28) : le prorata
+     * non consommé de l'échéance du mois en cours, plus l'intégralité des échéances
+     * déjà payées pour des mois futurs. Une simple suggestion, ajustable par
+     * l'administration avant validation du remboursement.
+     */
+    public function suggestedRefundAmount(): float
+    {
+        $currentPeriod = now()->format('Y-m');
+
+        $currentInstallment = $this->installments()->where('period', $currentPeriod)->first();
+        $partial = 0.0;
+
+        if ($currentInstallment && $currentInstallment->paid_amount > 0) {
+            $daysInMonth = now()->daysInMonth;
+            $remainingDays = max(0, $daysInMonth - now()->day);
+            $partial = round((float) $currentInstallment->paid_amount * $remainingDays / $daysInMonth, 2);
+        }
+
+        $futurePaid = $this->installments
+            ->filter(fn ($installment) => preg_match('/^\d{4}-\d{2}$/', $installment->period) && $installment->period > $currentPeriod)
+            ->sum('paid_amount');
+
+        $suggested = $partial + (float) $futurePaid;
+
+        return min($suggested, (float) $this->paid_amount);
     }
 }

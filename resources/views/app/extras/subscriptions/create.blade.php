@@ -132,6 +132,38 @@
                             <input type="hidden" :name="`enrollments[${student.id}][periods][]`" value="unique">
                         </template>
 
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Remise</label>
+                                <select :name="`enrollments[${student.id}][discount_type]`" x-model="studentConfig[student.id].discount_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white">
+                                    <option value="">-- Aucune remise --</option>
+                                    <option value="individual">Individuelle</option>
+                                    <option value="family">Familiale</option>
+                                    <option value="sibling">Fratrie</option>
+                                    <option value="promotion">Promotion</option>
+                                    <option value="scholarship">Bourse</option>
+                                    <option value="exceptional">Exceptionnelle</option>
+                                    <option value="free">Gratuité (100%)</option>
+                                </select>
+                            </div>
+                            <div x-show="studentConfig[student.id].discount_type && studentConfig[student.id].discount_type !== 'free'">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Taux de remise (%)</label>
+                                <input type="number"
+                                    :name="`enrollments[${student.id}][discount_percent]`"
+                                    x-model="studentConfig[student.id].discount_percent"
+                                    min="0" max="100"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                        </div>
+                        <div x-show="studentConfig[student.id].discount_type" class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Motif de la remise</label>
+                            <input type="text"
+                                :name="`enrollments[${student.id}][discount_reason]`"
+                                x-model="studentConfig[student.id].discount_reason"
+                                placeholder="Ex : 2ᵉ enfant inscrit à la cantine"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Montant à encaisser maintenant (FCFA)</label>
@@ -142,6 +174,9 @@
                                     class="w-full px-4 py-2 border border-primary rounded-lg font-bold text-primary">
                                 <p class="text-xs text-gray-500 mt-1">
                                     💡 Total dû : <span x-text="studentTotal(student.id)"></span> FCFA
+                                    <template x-if="studentConfig[student.id].discount_type">
+                                        <span class="text-purple-600"> (remise appliquée)</span>
+                                    </template>
                                 </p>
                             </div>
                             <div>
@@ -255,6 +290,9 @@
                         periods: this.billingType === 'recurring' && this.availablePeriods.length ? [this.availablePeriods[0].value] : [],
                         amount: this.tarif ? this.tarif.amount : 0,
                         payment_method: '',
+                        discount_type: '',
+                        discount_percent: 0,
+                        discount_reason: '',
                     };
                 } else {
                     delete this.studentConfig[student.id];
@@ -265,8 +303,12 @@
                 if (!this.tarif) return 0;
                 const config = this.studentConfig[studentId];
                 if (!config) return 0;
-                if (this.billingType === 'one_time') return this.tarif.amount;
-                return (config.periods ? config.periods.length : 0) * this.tarif.amount;
+                const gross = this.billingType === 'one_time'
+                    ? this.tarif.amount
+                    : (config.periods ? config.periods.length : 0) * this.tarif.amount;
+                if (!config.discount_type) return gross;
+                const percent = config.discount_type === 'free' ? 100 : (Number(config.discount_percent) || 0);
+                return Math.round(gross * (1 - percent / 100));
             },
         };
     }

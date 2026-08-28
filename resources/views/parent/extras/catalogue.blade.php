@@ -36,8 +36,8 @@
             <div class="flex justify-between items-start mb-2">
                 <h3 class="font-bold text-gray-800">{{ $extra->category->icon ?? '🧩' }} {{ $extra->name }}</h3>
                 @if($extra->seats_left !== null)
-                <span class="text-xs font-semibold px-2 py-1 rounded-full {{ $extra->seats_left > 0 ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700' }}">
-                    {{ $extra->seats_left > 0 ? $extra->seats_left.' places restantes' : 'Complet' }}
+                <span class="text-xs font-semibold px-2 py-1 rounded-full {{ $extra->seats_left > 0 ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700' }}">
+                    {{ $extra->seats_left > 0 ? $extra->seats_left.' places restantes' : "Complet — liste d'attente" }}
                 </span>
                 @endif
             </div>
@@ -49,11 +49,11 @@
                 <span class="text-xs font-normal text-gray-500">{{ $extra->billing_type === 'recurring' ? '/ période' : '(frais unique)' }}</span>
             </p>
 
-            <form action="{{ route('parent.extras.request', ['student' => $student->id, 'extraId' => $extra->id]) }}" method="POST" onsubmit="return confirm('Envoyer une demande d\'inscription à ce service ?')">
+            <form action="{{ route('parent.extras.request', ['student' => $student->id, 'extraId' => $extra->id]) }}" method="POST" onsubmit="return confirm('{{ $extra->seats_left === 0 ? 'Ce service est complet : rejoindre la liste d\'attente ?' : 'Envoyer une demande d\'inscription à ce service ?' }}')">
                 @csrf
-                <button type="submit" {{ $extra->seats_left === 0 ? 'disabled' : '' }}
-                    class="w-full bg-primary hover:bg-primary-dark disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-semibold text-sm transition">
-                    Demander l'inscription
+                <button type="submit"
+                    class="w-full {{ $extra->seats_left === 0 ? 'bg-purple-600 hover:bg-purple-700' : 'bg-primary hover:bg-primary-dark' }} text-white px-4 py-2 rounded-lg font-semibold text-sm transition">
+                    {{ $extra->seats_left === 0 ? "Rejoindre la liste d'attente" : "Demander l'inscription" }}
                 </button>
             </form>
             @else

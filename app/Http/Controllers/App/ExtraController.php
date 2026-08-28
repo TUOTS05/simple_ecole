@@ -451,6 +451,9 @@ class ExtraController extends Controller
             'enrollments.*.periods.*' => 'string',
             'enrollments.*.amount' => 'required|numeric|min:0',
             'enrollments.*.payment_method' => 'nullable|in:cash,mobile_money,transfer,check',
+            'enrollments.*.discount_type' => 'nullable|in:individual,family,sibling,promotion,free,scholarship,exceptional',
+            'enrollments.*.discount_percent' => 'nullable|numeric|min:0|max:100',
+            'enrollments.*.discount_reason' => 'nullable|string|max:255',
         ]);
 
         $extra = Extra::where('school_id', $schoolId)->findOrFail($validated['extra_id']);
@@ -473,12 +476,6 @@ class ExtraController extends Controller
                 if (ExtraSubscription::where('student_id', $studentId)->where('extra_id', $extra->id)
                     ->where('school_year_id', $validated['school_year_id'])->exists()) {
                     $errors[] = 'Un élève est déjà inscrit à cet extra pour cette année.';
-
-                    continue;
-                }
-
-                if (! $extra->hasAvailableCapacity()) {
-                    $errors[] = "⚠️ Capacité maximale atteinte pour « {$extra->name} », inscription refusée pour un ou plusieurs élèves.";
 
                     continue;
                 }
@@ -516,11 +513,24 @@ class ExtraController extends Controller
                     continue;
                 }
 
-                $totalAmount = $extra->isRecurring()
+                $grossAmount = $extra->isRecurring()
                     ? count($periods) * $tarif->amount
                     : $tarif->amount;
 
-                $paidNow = min((float) $data['amount'], $totalAmount);
+                $discountType = $data['discount_type'] ?? null;
+                $discountPercent = $discountType === 'free' ? 100 : max(0, min(100, (float) ($data['discount_percent'] ?? 0)));
+                $discountAmount = $discountType ? round($grossAmount * $discountPercent / 100, 2) : 0;
+                $totalAmount = round($grossAmount - $discountAmount, 2);
+                $installmentUnitAmount = $discountType ? round($tarif->amount * (1 - $discountPercent / 100), 2) : $tarif->amount;
+
+                // Capacité atteinte : l'élève est placé sur liste d'attente plutôt que
+                // rejeté, aucune échéance n'est créée tant qu'il n'est pas promu.
+                $hasCapacity = $extra->hasAvailableCapacity();
+                if (! $hasCapacity) {
+                    $errors[] = "🕒 Capacité maximale atteinte pour « {$extra->name} », un ou plusieurs élèves ont été placés sur liste d'attente.";
+                }
+
+                $paidNow = $hasCapacity ? min((float) $data['amount'], $totalAmount) : 0;
 
                 $subscription = ExtraSubscription::create([
                     'school_id' => $schoolId,
@@ -531,24 +541,30 @@ class ExtraController extends Controller
                     'total_amount' => $totalAmount,
                     'paid_amount' => 0,
                     'remaining_amount' => $totalAmount,
-                    'status' => 'active',
-                    'validated_by' => auth()->id(),
-                    'validated_at' => now(),
+                    'original_amount' => $grossAmount,
+                    'discount_type' => $discountType,
+                    'discount_amount' => $discountAmount,
+                    'discount_reason' => $data['discount_reason'] ?? null,
+                    'status' => $hasCapacity ? 'active' : 'waitlisted',
+                    'validated_by' => $hasCapacity ? auth()->id() : null,
+                    'validated_at' => $hasCapacity ? now() : null,
                 ]);
 
-                foreach ($periods as $period) {
-                    $dueDate = $period === 'unique'
-                        ? now()
-                        : Carbon::parse($period.'-01')->day(min($tarif->due_day, Carbon::parse($period.'-01')->daysInMonth));
+                if ($hasCapacity) {
+                    foreach ($periods as $period) {
+                        $dueDate = $period === 'unique'
+                            ? now()
+                            : Carbon::parse($period.'-01')->day(min($tarif->due_day, Carbon::parse($period.'-01')->daysInMonth));
 
-                    ExtraInstallment::create([
-                        'extra_subscription_id' => $subscription->id,
-                        'period' => $period,
-                        'amount' => $tarif->amount,
-                        'paid_amount' => 0,
-                        'due_date' => $dueDate,
-                        'status' => 'pending',
-                    ]);
+                        ExtraInstallment::create([
+                            'extra_subscription_id' => $subscription->id,
+                            'period' => $period,
+                            'amount' => $installmentUnitAmount,
+                            'paid_amount' => 0,
+                            'due_date' => $dueDate,
+                            'status' => 'pending',
+                        ]);
+                    }
                 }
 
                 if ($paidNow > 0 && ! empty($data['payment_method'])) {
@@ -620,11 +636,15 @@ class ExtraController extends Controller
         ]);
 
         if ($validated['decision'] === 'accept') {
-            if (! $subscription->extra->hasAvailableCapacity()) {
-                return back()->withErrors(['error' => "⚠️ Capacité maximale atteinte pour « {$subscription->extra->name} »."]);
+            if ($subscription->extra->hasAvailableCapacity()) {
+                $subscription->status = 'active';
+            } else {
+                // Plus de place entre-temps : liste d'attente plutôt que refus. Les
+                // échéances déjà créées à la demande (non payées) sont annulées, elles
+                // seront recréées à la promotion depuis la liste d'attente.
+                $subscription->installments()->where('paid_amount', 0)->delete();
+                $subscription->status = 'waitlisted';
             }
-
-            $subscription->status = 'active';
         } else {
             $subscription->status = 'terminated';
         }
@@ -636,12 +656,54 @@ class ExtraController extends Controller
         }
         $subscription->save();
 
+        $decisionLabel = match (true) {
+            $subscription->status === 'active' => 'acceptée',
+            $subscription->status === 'waitlisted' => 'placée sur liste d\'attente (capacité atteinte)',
+            default => 'refusée',
+        };
+
         ActivityLog::logAction(
             'extras.subscription.'.$validated['decision'],
-            "Demande d'inscription de {$subscription->student->first_name} {$subscription->student->last_name} à « {$subscription->extra->name} » : ".($validated['decision'] === 'accept' ? 'acceptée' : 'refusée')
+            "Demande d'inscription de {$subscription->student->first_name} {$subscription->student->last_name} à « {$subscription->extra->name} » : {$decisionLabel}"
         );
 
-        return back()->with('success', $validated['decision'] === 'accept' ? '✅ Demande acceptée !' : '✅ Demande refusée.');
+        $successMessage = match (true) {
+            $subscription->status === 'active' => '✅ Demande acceptée !',
+            $subscription->status === 'waitlisted' => "🕒 « {$subscription->extra->name} » est complet : l'élève a été placé sur liste d'attente.",
+            default => '✅ Demande refusée.',
+        };
+
+        return back()->with('success', $successMessage);
+    }
+
+    /**
+     * Promeut une inscription en liste d'attente vers le statut actif dès qu'une
+     * place se libère (à déclencher manuellement par l'administration).
+     */
+    public function subscriptionsPromote($id)
+    {
+        $subscription = ExtraSubscription::where('school_id', session('current_school_id'))
+            ->where('status', 'waitlisted')
+            ->with('extra', 'extraTarif', 'student')
+            ->findOrFail($id);
+
+        if (! $subscription->extra->hasAvailableCapacity()) {
+            return back()->withErrors(['error' => "⚠️ Aucune place disponible pour « {$subscription->extra->name} » pour le moment."]);
+        }
+
+        $subscription->extraTarif->createDefaultInstallmentsFor($subscription);
+
+        $subscription->status = 'active';
+        $subscription->validated_by = auth()->id();
+        $subscription->validated_at = now();
+        $subscription->save();
+
+        ActivityLog::logAction(
+            'extras.subscription.promoted',
+            "Promotion depuis la liste d'attente de {$subscription->student->first_name} {$subscription->student->last_name} pour « {$subscription->extra->name} »"
+        );
+
+        return back()->with('success', "✅ « {$subscription->extra->name} » activé pour {$subscription->student->first_name} {$subscription->student->last_name} !");
     }
 
     // ==========================================

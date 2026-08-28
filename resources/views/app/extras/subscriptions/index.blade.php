@@ -9,6 +9,7 @@ $statusLabels = [
     'pending' => 'En attente',
     'validated' => 'Validée',
     'active' => 'Active',
+    'waitlisted' => "Liste d'attente",
     'suspended' => 'Suspendue',
     'terminated' => 'Résiliée',
     'completed' => 'Terminée',
@@ -18,6 +19,7 @@ $statusColors = [
     'pending' => 'yellow',
     'validated' => 'blue',
     'active' => 'green',
+    'waitlisted' => 'purple',
     'suspended' => 'orange',
     'terminated' => 'red',
     'completed' => 'gray',
@@ -98,7 +100,12 @@ $statusColors = [
                         {{ $sub->extra->category->icon ?? '' }} {{ $sub->extra->name }}
                         <div class="text-xs text-gray-400">{{ $sub->extraTarif->schoolClass->name ?? 'Toutes classes' }}</div>
                     </td>
-                    <td class="py-3 px-4 text-right text-gray-800">{{ number_format($sub->total_amount, 0, ',', ' ') }} FCFA</td>
+                    <td class="py-3 px-4 text-right text-gray-800">
+                        {{ number_format($sub->total_amount, 0, ',', ' ') }} FCFA
+                        @if($sub->hasDiscount())
+                        <div class="text-xs text-purple-600" title="{{ $sub->discount_reason }}">🏷️ -{{ number_format($sub->discount_amount, 0, ',', ' ') }} FCFA</div>
+                        @endif
+                    </td>
                     <td class="py-3 px-4 text-right text-green-700 font-semibold">{{ number_format($sub->paid_amount, 0, ',', ' ') }} FCFA</td>
                     <td class="py-3 px-4 text-right text-red-700 font-semibold">{{ number_format($sub->remaining_amount, 0, ',', ' ') }} FCFA</td>
                     <td class="py-3 px-4 text-center">
@@ -120,6 +127,15 @@ $statusColors = [
                             @csrf @method('PATCH')
                             <input type="hidden" name="decision" value="refuse">
                             <button type="submit" class="text-red-600 hover:text-red-800 text-sm">❌ Refuser</button>
+                        </form>
+                        @elseif($sub->status === 'waitlisted')
+                        <form action="{{ route('extras.subscriptions.promote', $sub->id) }}" method="POST" class="inline">
+                            @csrf @method('PATCH')
+                            <button type="submit" class="text-purple-600 hover:text-purple-800 text-sm mr-2">⬆️ Promouvoir</button>
+                        </form>
+                        <form action="{{ route('extras.subscriptions.destroy', $sub->id) }}" method="POST" class="inline" onsubmit="return confirm('Retirer cet élève de la liste d\'attente ?')">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="text-red-600 hover:text-red-800 text-sm">🗑️ Retirer</button>
                         </form>
                         @else
                         <form action="{{ route('extras.subscriptions.destroy', $sub->id) }}" method="POST" class="inline" onsubmit="return confirm('Annuler cette inscription ?')">
