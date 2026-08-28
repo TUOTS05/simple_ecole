@@ -351,6 +351,12 @@ Route::middleware(['auth', 'parent', 'school.active', 'tenant'])->prefix('parent
     Route::post('/{student}/extras/{subscriptionId}/suspend', [App\Http\Controllers\Parent\ExtraController::class, 'suspend'])->name('extras.suspend');
     Route::get('/{student}/extras/{subscriptionId}/payments/{paymentId}/receipt', [App\Http\Controllers\Parent\ExtraController::class, 'downloadReceipt'])->name('extras.payments.receipt');
 
+    // Paiement en ligne (CinetPay)
+    Route::post('/{student}/extras/{subscriptionId}/pay-online', [App\Http\Controllers\Parent\ExtraController::class, 'payOnline'])->name('extras.pay-online');
+    Route::get('/{student}/extras/pay-online/{transaction}/return', [App\Http\Controllers\Parent\ExtraController::class, 'payOnlineReturn'])->name('extras.pay-online.return');
+    Route::get('/{student}/extras/pay-online/{transaction}/simulate', [App\Http\Controllers\Parent\ExtraController::class, 'payOnlineSimulate'])->name('extras.pay-online.simulate');
+    Route::post('/{student}/extras/pay-online/{transaction}/simulate', [App\Http\Controllers\Parent\ExtraController::class, 'payOnlineSimulateConfirm'])->name('extras.pay-online.simulate.confirm');
+
 });
 
 // ==========================================

@@ -6,10 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Enrollment;
 use App\Models\Extra;
+use App\Models\ExtraOnlinePayment;
 use App\Models\ExtraSubscription;
 use App\Models\ExtraTarif;
+use App\Services\CinetPayService;
+use App\Services\ExtraOnlinePaymentService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ExtraController extends Controller
 {
@@ -205,5 +210,136 @@ class ExtraController extends Controller
         $filename = 'Recu_Extra_'.str_pad($payment->id, 6, '0', STR_PAD_LEFT).'.pdf';
 
         return $pdf->download($filename);
+    }
+
+    // ==========================================
+    // PAIEMENT EN LIGNE (CinetPay)
+    // ==========================================
+
+    /**
+     * Initie un paiement en ligne pour un abonnement actif et redirige le
+     * parent vers la page de paiement CinetPay (ou vers la simulation locale
+     * tant que CINETPAY_DEV_MODE=true).
+     */
+    public function payOnline(Request $request, CinetPayService $cinetPay, $studentId, $subscriptionId)
+    {
+        $parent = auth()->user();
+        $student = $parent->children()->where('students.id', $studentId)->firstOrFail();
+
+        $subscription = ExtraSubscription::where('student_id', $studentId)
+            ->where('status', 'active')
+            ->with('extra')
+            ->findOrFail($subscriptionId);
+
+        if ($subscription->remaining_amount <= 0) {
+            return back()->withErrors(['error' => 'Ce service est déjà entièrement soldé.']);
+        }
+
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:1|max:'.$subscription->remaining_amount,
+        ]);
+
+        $transactionId = 'EXTRA-'.$subscription->id.'-'.now()->format('YmdHis').'-'.Str::upper(Str::random(6));
+
+        $onlinePayment = ExtraOnlinePayment::create([
+            'school_id' => $student->school_id,
+            'extra_subscription_id' => $subscription->id,
+            'transaction_id' => $transactionId,
+            'amount' => $validated['amount'],
+            'status' => 'pending',
+            'initiated_by' => $parent->id,
+        ]);
+
+        $result = $cinetPay->initiatePayment([
+            'transaction_id' => $transactionId,
+            'amount' => (int) round($validated['amount']),
+            'description' => 'Paiement '.$subscription->extra->name.' - '.$student->first_name.' '.$student->last_name,
+            'customer_name' => $parent->last_name ?? '',
+            'customer_surname' => $parent->first_name ?? '',
+            'customer_email' => $parent->email,
+            'customer_phone_number' => $parent->phone,
+            'notify_url' => route('webhooks.cinetpay.extras'),
+            'return_url' => route('parent.extras.pay-online.return', ['student' => $studentId, 'transaction' => $transactionId]),
+        ]);
+
+        if (! ($result['success'] ?? false)) {
+            $onlinePayment->update(['status' => 'failed', 'gateway_response' => json_encode($result)]);
+
+            return back()->withErrors(['error' => "Impossible d'initier le paiement en ligne : ".($result['error'] ?? 'erreur inconnue')]);
+        }
+
+        $onlinePayment->update(['payment_token' => $result['payment_token'] ?? null]);
+
+        if ($cinetPay->isDevMode()) {
+            return redirect()->route('parent.extras.pay-online.simulate', ['student' => $studentId, 'transaction' => $transactionId]);
+        }
+
+        return redirect()->away($result['payment_url']);
+    }
+
+    /**
+     * Point de retour navigateur après paiement (succès, échec ou abandon côté
+     * CinetPay). Revérifie le statut tout de suite au cas où le webhook ne
+     * serait pas encore arrivé, pour un retour instantané à l'utilisateur.
+     */
+    public function payOnlineReturn(ExtraOnlinePaymentService $service, $studentId, $transaction)
+    {
+        $parent = auth()->user();
+        $parent->children()->where('students.id', $studentId)->firstOrFail();
+
+        ExtraOnlinePayment::where('transaction_id', $transaction)
+            ->whereHas('subscription', fn ($q) => $q->where('student_id', $studentId))
+            ->firstOrFail();
+
+        $onlinePayment = $service->confirmFromGateway($transaction);
+
+        $message = match ($onlinePayment->status) {
+            'completed' => '✅ Paiement confirmé avec succès !',
+            'failed' => '❌ Le paiement a échoué ou a été annulé.',
+            default => '⏳ Paiement en cours de vérification, actualisez cette page dans un instant.',
+        };
+
+        return redirect()->route('parent.extras.index', $studentId)->with('success', $message);
+    }
+
+    /**
+     * Page de paiement factice, affichée uniquement quand CINETPAY_DEV_MODE=true
+     * (aucune clé API configurée) : remplace la page hébergée CinetPay pour
+     * pouvoir tester tout le flux sans compte marchand ni argent réel.
+     */
+    public function payOnlineSimulate($studentId, $transaction)
+    {
+        $parent = auth()->user();
+        $student = $parent->children()->where('students.id', $studentId)->firstOrFail();
+
+        $onlinePayment = ExtraOnlinePayment::where('transaction_id', $transaction)
+            ->whereHas('subscription', fn ($q) => $q->where('student_id', $studentId))
+            ->with('subscription.extra')
+            ->firstOrFail();
+
+        if ($onlinePayment->status !== 'pending') {
+            return redirect()->route('parent.extras.index', $studentId);
+        }
+
+        return view('parent.extras.pay-online-simulate', compact('student', 'onlinePayment'));
+    }
+
+    public function payOnlineSimulateConfirm(Request $request, ExtraOnlinePaymentService $service, $studentId, $transaction)
+    {
+        $parent = auth()->user();
+        $parent->children()->where('students.id', $studentId)->firstOrFail();
+
+        ExtraOnlinePayment::where('transaction_id', $transaction)
+            ->whereHas('subscription', fn ($q) => $q->where('student_id', $studentId))
+            ->firstOrFail();
+
+        $accepted = $request->input('decision') === 'success';
+        $onlinePayment = $service->confirmFromSimulation($transaction, $accepted);
+
+        $message = $onlinePayment->status === 'completed'
+            ? '✅ Paiement simulé confirmé avec succès !'
+            : '❌ Paiement simulé refusé/annulé.';
+
+        return redirect()->route('parent.extras.index', $studentId)->with('success', $message);
     }
 }

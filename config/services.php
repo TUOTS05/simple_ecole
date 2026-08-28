@@ -42,4 +42,12 @@ return [
         'dev_mode' => env('ORANGE_SMS_DEV_MODE', true),
     ],
 
+    'cinetpay' => [
+        'api_key' => env('CINETPAY_API_KEY'),
+        'site_id' => env('CINETPAY_SITE_ID'),
+        // Tant qu'aucune clé API n'est configurée, le service simule le paiement
+        // (page de simulation locale) au lieu d'appeler la vraie API CinetPay.
+        'dev_mode' => env('CINETPAY_DEV_MODE', true),
+    ],
+
 ];

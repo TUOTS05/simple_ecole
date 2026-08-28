@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
-use App\Mail\ExtraPaymentConfirmedMail;
 use App\Models\ActivityLog;
 use App\Models\Enrollment;
 use App\Models\Extra;
@@ -13,17 +12,16 @@ use App\Models\ExtraPayment;
 use App\Models\ExtraSchedule;
 use App\Models\ExtraSubscription;
 use App\Models\ExtraTarif;
-use App\Models\NotificationLog;
 use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\SchoolYear;
 use App\Models\Student;
 use App\Models\StudentInstallment;
+use App\Services\ExtraPaymentNotifier;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 
 class ExtraController extends Controller
 {
@@ -877,33 +875,7 @@ class ExtraController extends Controller
      */
     private function sendPaymentConfirmation(ExtraPayment $payment): void
     {
-        $payment->loadMissing('subscription.student', 'subscription.extra');
-        $student = $payment->subscription->student;
-
-        if (empty($student->guardian_email)) {
-            return;
-        }
-
-        $status = 'sent';
-        $errorMessage = null;
-
-        try {
-            Mail::to($student->guardian_email)->send(new ExtraPaymentConfirmedMail($student, $payment));
-        } catch (\Exception $e) {
-            $status = 'failed';
-            $errorMessage = $e->getMessage();
-        }
-
-        NotificationLog::create([
-            'school_id' => $payment->school_id,
-            'student_id' => $student->id,
-            'type' => 'email',
-            'category' => 'extra_payment_confirmed',
-            'recipient_email' => $student->guardian_email,
-            'message' => 'Confirmation de paiement extra : '.number_format($payment->amount, 0, ',', ' ')." FCFA pour « {$payment->subscription->extra->name} »",
-            'status' => $status,
-            'error_message' => $errorMessage,
-        ]);
+        (new ExtraPaymentNotifier)->sendConfirmation($payment);
     }
 
     // ==========================================

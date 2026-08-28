@@ -107,10 +107,21 @@ $statusColors = [
         @endif
 
         @if($sub->status === 'active')
-        <form action="{{ route('parent.extras.suspend', ['student' => $student->id, 'subscriptionId' => $sub->id]) }}" method="POST" class="mt-3" onsubmit="return confirm('Demander la suspension de ce service ?')">
-            @csrf
-            <button type="submit" class="text-xs text-orange-600 hover:text-orange-800 font-semibold">⏸️ Demander une suspension</button>
-        </form>
+        <div class="flex flex-wrap items-center gap-4 mt-3">
+            @if($sub->remaining_amount > 0)
+            <form action="{{ route('parent.extras.pay-online', ['student' => $student->id, 'subscriptionId' => $sub->id]) }}" method="POST" onsubmit="return confirm('Payer {{ number_format($sub->remaining_amount, 0, ',', ' ') }} FCFA en ligne pour « {{ $sub->extra->name }} » ?')">
+                @csrf
+                <input type="hidden" name="amount" value="{{ $sub->remaining_amount }}">
+                <button type="submit" class="text-xs bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-full font-semibold transition">
+                    💳 Payer {{ number_format($sub->remaining_amount, 0, ',', ' ') }} FCFA en ligne
+                </button>
+            </form>
+            @endif
+            <form action="{{ route('parent.extras.suspend', ['student' => $student->id, 'subscriptionId' => $sub->id]) }}" method="POST" onsubmit="return confirm('Demander la suspension de ce service ?')">
+                @csrf
+                <button type="submit" class="text-xs text-orange-600 hover:text-orange-800 font-semibold">⏸️ Demander une suspension</button>
+            </form>
+        </div>
         @endif
     </div>
     @empty
