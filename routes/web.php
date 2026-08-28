@@ -9,6 +9,10 @@ use App\Http\Controllers\App\ClassFeeController;
 use App\Http\Controllers\App\DashboardController as AppDashboardController;
 use App\Http\Controllers\App\EndOfYearController;
 use App\Http\Controllers\App\EnrollmentController;
+use App\Http\Controllers\App\ExtraAttendanceController;
+use App\Http\Controllers\App\ExtraController;
+use App\Http\Controllers\App\ExtraMenuController;
+use App\Http\Controllers\App\ExtraTransportController;
 use App\Http\Controllers\App\FeeController;
 use App\Http\Controllers\App\FinancialReportController;
 use App\Http\Controllers\App\GouterController;
@@ -326,6 +330,13 @@ Route::middleware(['auth', 'parent', 'school.active', 'tenant'])->prefix('parent
     Route::get('/{student}/payments', [App\Http\Controllers\Parent\PaymentController::class, 'index'])->name('payments.index');
     Route::get('/{student}/payments/{payment}/receipt', [App\Http\Controllers\Parent\PaymentController::class, 'downloadReceipt'])->name('payments.receipt');
 
+    // Extras (« Mes extras »)
+    Route::get('/{student}/extras', [App\Http\Controllers\Parent\ExtraController::class, 'index'])->name('extras.index');
+    Route::get('/{student}/extras/catalogue', [App\Http\Controllers\Parent\ExtraController::class, 'catalogue'])->name('extras.catalogue');
+    Route::post('/{student}/extras/{extraId}/request', [App\Http\Controllers\Parent\ExtraController::class, 'request'])->name('extras.request');
+    Route::post('/{student}/extras/{subscriptionId}/suspend', [App\Http\Controllers\Parent\ExtraController::class, 'suspend'])->name('extras.suspend');
+    Route::get('/{student}/extras/{subscriptionId}/payments/{paymentId}/receipt', [App\Http\Controllers\Parent\ExtraController::class, 'downloadReceipt'])->name('extras.payments.receipt');
+
 });
 
 // ==========================================
@@ -389,6 +400,88 @@ Route::middleware(['auth', 'school.active', 'role:school_admin', 'tenant'])->pre
 
     // Rapports
     Route::get('/reports/unpaid-by-class', [GouterController::class, 'unpaidByClass'])->name('reports.unpaid_by_class');
+});
+
+// ==========================================
+// EXTRAS (Services & prestations scolaires : transport, garderie, activités, sorties, ...)
+// ==========================================
+Route::middleware(['auth', 'school.active', 'role:school_admin', 'tenant'])->prefix('extras')->name('extras.')->group(function () {
+    // Catégories
+    Route::get('/categories', [ExtraController::class, 'categoriesIndex'])->name('categories.index');
+    Route::post('/categories', [ExtraController::class, 'categoriesStore'])->name('categories.store');
+    Route::put('/categories/{id}', [ExtraController::class, 'categoriesUpdate'])->name('categories.update');
+    Route::delete('/categories/{id}', [ExtraController::class, 'categoriesDestroy'])->name('categories.destroy');
+
+    // Catalogue
+    Route::get('/catalogue', [ExtraController::class, 'catalogueIndex'])->name('catalogue.index');
+    Route::get('/catalogue/create', [ExtraController::class, 'catalogueCreate'])->name('catalogue.create');
+    Route::post('/catalogue', [ExtraController::class, 'catalogueStore'])->name('catalogue.store');
+    Route::get('/catalogue/{id}/edit', [ExtraController::class, 'catalogueEdit'])->name('catalogue.edit');
+    Route::put('/catalogue/{id}', [ExtraController::class, 'catalogueUpdate'])->name('catalogue.update');
+    Route::delete('/catalogue/{id}', [ExtraController::class, 'catalogueDestroy'])->name('catalogue.destroy');
+
+    // Tarifs (sous-formulaire de la fiche extra)
+    Route::post('/catalogue/{extraId}/tarifs', [ExtraController::class, 'tarifsStore'])->name('tarifs.store');
+    Route::put('/tarifs/{id}', [ExtraController::class, 'tarifsUpdate'])->name('tarifs.update');
+    Route::delete('/tarifs/{id}', [ExtraController::class, 'tarifsDestroy'])->name('tarifs.destroy');
+
+    // Planning (sous-formulaire de la fiche extra)
+    Route::post('/catalogue/{extraId}/schedules', [ExtraController::class, 'schedulesStore'])->name('schedules.store');
+    Route::delete('/schedules/{id}', [ExtraController::class, 'schedulesDestroy'])->name('schedules.destroy');
+
+    // AJAX
+    Route::get('/classes-by-cycle', [ExtraController::class, 'classesByCycle'])->name('classes-by-cycle');
+    Route::get('/students-by-class', [ExtraController::class, 'studentsByClass'])->name('students-by-class');
+    Route::get('/tarif-for-class', [ExtraController::class, 'tarifForClass'])->name('tarif-for-class');
+
+    // Inscriptions
+    Route::get('/subscriptions', [ExtraController::class, 'subscriptionsIndex'])->name('subscriptions.index');
+    Route::get('/subscriptions/create', [ExtraController::class, 'subscriptionsCreate'])->name('subscriptions.create');
+    Route::post('/subscriptions', [ExtraController::class, 'subscriptionsStore'])->name('subscriptions.store');
+    Route::delete('/subscriptions/{id}', [ExtraController::class, 'subscriptionsDestroy'])->name('subscriptions.destroy');
+    Route::patch('/subscriptions/{id}/validate', [ExtraController::class, 'subscriptionsValidate'])->name('subscriptions.validate');
+    Route::get('/subscriptions/pdf', [ExtraController::class, 'subscriptionsPdf'])->name('subscriptions.pdf');
+
+    // Paiements
+    Route::get('/payments', [ExtraController::class, 'paymentsIndex'])->name('payments.index');
+    Route::post('/payments', [ExtraController::class, 'paymentsStore'])->name('payments.store');
+    Route::get('/payments/{payment}/receipt', [ExtraController::class, 'paymentsReceipt'])->name('payments.receipt');
+
+    // Rapports
+    Route::get('/reports/unpaid', [ExtraController::class, 'reportsUnpaid'])->name('reports.unpaid');
+    Route::get('/reports/unpaid/pdf', [ExtraController::class, 'reportsUnpaidPdf'])->name('reports.unpaid.pdf');
+    Route::get('/dashboard', [ExtraController::class, 'dashboard'])->name('dashboard');
+
+    // Présences / consommations + QR de pointage
+    Route::get('/attendances', [ExtraAttendanceController::class, 'index'])->name('attendances.index');
+    Route::post('/attendances', [ExtraAttendanceController::class, 'store'])->name('attendances.store');
+    Route::get('/attendances/scan', [ExtraAttendanceController::class, 'scanForm'])->name('attendances.scan');
+    Route::post('/attendances/scan', [ExtraAttendanceController::class, 'scanStore'])->name('attendances.scan.store');
+    Route::get('/subscriptions/{id}/qrcode', [ExtraAttendanceController::class, 'qrcode'])->name('subscriptions.qrcode');
+    Route::post('/attendances/{attendanceId}/bill-overage', [ExtraAttendanceController::class, 'billOverage'])->name('attendances.bill-overage');
+
+    // Menus (cantine)
+    Route::get('/menus', [ExtraMenuController::class, 'index'])->name('menus.index');
+    Route::post('/menus', [ExtraMenuController::class, 'store'])->name('menus.store');
+    Route::delete('/menus/{id}', [ExtraMenuController::class, 'destroy'])->name('menus.destroy');
+
+    // Transport
+    Route::prefix('transport')->name('transport.')->group(function () {
+        Route::get('/vehicles', [ExtraTransportController::class, 'vehiclesIndex'])->name('vehicles.index');
+        Route::post('/vehicles', [ExtraTransportController::class, 'vehiclesStore'])->name('vehicles.store');
+        Route::put('/vehicles/{id}', [ExtraTransportController::class, 'vehiclesUpdate'])->name('vehicles.update');
+        Route::delete('/vehicles/{id}', [ExtraTransportController::class, 'vehiclesDestroy'])->name('vehicles.destroy');
+
+        Route::get('/routes', [ExtraTransportController::class, 'routesIndex'])->name('routes.index');
+        Route::post('/routes', [ExtraTransportController::class, 'routesStore'])->name('routes.store');
+        Route::delete('/routes/{id}', [ExtraTransportController::class, 'routesDestroy'])->name('routes.destroy');
+        Route::post('/routes/{routeId}/stops', [ExtraTransportController::class, 'stopsStore'])->name('stops.store');
+        Route::delete('/stops/{id}', [ExtraTransportController::class, 'stopsDestroy'])->name('stops.destroy');
+
+        Route::get('/assignments', [ExtraTransportController::class, 'assignmentsIndex'])->name('assignments.index');
+        Route::post('/assignments', [ExtraTransportController::class, 'assignmentsStore'])->name('assignments.store');
+        Route::delete('/assignments/{id}', [ExtraTransportController::class, 'assignmentsDestroy'])->name('assignments.destroy');
+    });
 });
 
 /*

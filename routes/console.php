@@ -18,3 +18,7 @@ Schedule::command('notify:parents-late')->dailyAt('09:00');
 Schedule::command('notifications:late-payments')
     ->dailyAt('09:00')
     ->withoutOverlapping();
+
+// Extras : rappel avant échéance (J-3) et alerte de retard, une fois par jour.
+Schedule::command('notify:extras-upcoming')->dailyAt('08:30');
+Schedule::command('notify:extras-late')->dailyAt('09:30');

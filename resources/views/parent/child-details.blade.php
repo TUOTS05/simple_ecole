@@ -115,7 +115,7 @@
     @endif
 
     <!-- Menu d'actions -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
         <a href="{{ route('parent.grades.index', $student->id) }}" class="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm hover:shadow-md transition">
             <div class="text-3xl mb-2">📊</div>
             <h3 class="font-semibold text-gray-700 text-sm">Notes</h3>
@@ -129,6 +129,11 @@
         <a href="{{ route('parent.payments.index', $student->id) }}" class="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm hover:shadow-md transition">
             <div class="text-3xl mb-2">💰</div>
             <h3 class="font-semibold text-gray-700 text-sm">Paiements</h3>
+        </a>
+
+        <a href="{{ route('parent.extras.index', $student->id) }}" class="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm hover:shadow-md transition">
+            <div class="text-3xl mb-2">🧩</div>
+            <h3 class="font-semibold text-gray-700 text-sm">Mes extras</h3>
         </a>
 
         <a href="{{ route('parent.messages.index') }}" class="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm hover:shadow-md transition">

@@ -50,6 +50,7 @@ class Student extends Model
         'permanent_address',
         'previous_school',
         'remarks',
+        'dietary_restrictions',
         'id_card_path', // ✅ Ajouté précédemment
         'documents',
         // ... vos autres colonnes
@@ -160,5 +161,10 @@ class Student extends Model
         return $this->hasOne(GouterSubscription::class)
             ->where('school_year_id', SchoolYear::where('is_active', true)->value('id'))
             ->where('status', 'active');
+    }
+
+    public function extraSubscriptions(): HasMany
+    {
+        return $this->hasMany(ExtraSubscription::class);
     }
 }

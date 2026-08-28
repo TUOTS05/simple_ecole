@@ -13,6 +13,7 @@ class NotificationLog extends Model
         'school_id',
         'student_id',
         'installment_id',
+        'extra_installment_id',
         'parent_id',
         'type',
         'category',
@@ -41,6 +42,11 @@ class NotificationLog extends Model
         return $this->belongsTo(StudentInstallment::class, 'installment_id');
     }
 
+    public function extraInstallment(): BelongsTo
+    {
+        return $this->belongsTo(ExtraInstallment::class, 'extra_installment_id');
+    }
+
     /**
      * Vérifie si une notification a déjà été envoyée pour cette échéance
      */
@@ -49,6 +55,19 @@ class NotificationLog extends Model
         return self::where('installment_id', $installmentId)
             ->where('type', $type)
             ->where('category', 'late_payment')
+            ->where('status', 'sent')
+            ->exists();
+    }
+
+    /**
+     * Vérifie si une notification d'une catégorie donnée a déjà été envoyée
+     * pour cette échéance d'extra (évite les doublons de rappel automatique).
+     */
+    public static function alreadySentForExtraInstallment(int $extraInstallmentId, string $category, string $type = 'email'): bool
+    {
+        return self::where('extra_installment_id', $extraInstallmentId)
+            ->where('type', $type)
+            ->where('category', $category)
             ->where('status', 'sent')
             ->exists();
     }

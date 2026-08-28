@@ -284,6 +284,34 @@
             </div>
         </div>
 
+        <!-- ========================================== -->
+        <!-- GROUPE : EXTRAS (Services & prestations)   -->
+        <!-- ========================================== -->
+        <div x-data="{ open: {{ request()->routeIs('extras.*') ? 'true' : 'false' }} }" class="space-y-1">
+            <button @click="if(!sidebarOpen) sidebarOpen = true; open = !open" title="Extras"
+                class="w-full flex items-center justify-between px-3 py-3 rounded-lg transition text-gray-700 hover:bg-gray-100 focus:outline-none">
+                <div class="flex items-center">
+                    <span class="text-xl min-w-[24px] text-center">🧩</span>
+                    <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Extras</span>
+                </div>
+                <svg x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+
+            <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
+                <a href="{{ route('extras.dashboard') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('extras.dashboard') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Tableau de bord</a>
+                <a href="{{ route('extras.categories.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('extras.categories.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Catégories</a>
+                <a href="{{ route('extras.catalogue.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('extras.catalogue.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Catalogue</a>
+                <a href="{{ route('extras.subscriptions.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('extras.subscriptions.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Inscriptions</a>
+                <a href="{{ route('extras.attendances.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('extras.attendances.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Présences</a>
+                <a href="{{ route('extras.menus.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('extras.menus.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Menus Cantine</a>
+                <a href="{{ route('extras.transport.vehicles.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('extras.transport.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Transport</a>
+                <a href="{{ route('extras.payments.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('extras.payments.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Paiements</a>
+                <a href="{{ route('extras.reports.unpaid') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('extras.reports.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Impayés</a>
+            </div>
+        </div>
+
         <!-- Groupe : Paramètres de l'école -->
         <div x-data="{ open: {{ request()->routeIs('app.classes.*') || request()->routeIs('app.subjects.*') || request()->routeIs('app.school-years.*') ? 'true' : 'false' }} }" class="space-y-1">
             <button @click="if(!sidebarOpen) sidebarOpen = true; open = !open" title="Paramètres"
