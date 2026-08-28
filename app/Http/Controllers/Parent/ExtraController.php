@@ -97,6 +97,10 @@ class ExtraController extends Controller
             return back()->withErrors(['error' => "Votre enfant n'a pas d'inscription active cette année."]);
         }
 
+        if (! $extra->isRegistrationOpen()) {
+            return back()->withErrors(['error' => "La date limite d'inscription à « {$extra->name} » est dépassée."]);
+        }
+
         if (ExtraSubscription::where('student_id', $studentId)->where('extra_id', $extra->id)
             ->where('school_year_id', $enrollment->school_year_id)->exists()) {
             return back()->withErrors(['error' => 'Une demande ou inscription existe déjà pour ce service.']);

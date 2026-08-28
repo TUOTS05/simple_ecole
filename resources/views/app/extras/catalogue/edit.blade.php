@@ -104,6 +104,25 @@
                 </div>
             </div>
 
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-100 pt-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Destination (sortie scolaire)</label>
+                    <input type="text" name="destination" maxlength="150" value="{{ $extra->destination }}" placeholder="Parc national du Banco..." class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date limite d'inscription</label>
+                    <input type="date" name="registration_deadline" value="{{ $extra->registration_deadline?->format('Y-m-d') }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" name="includes_transport" value="1" id="includes_transport" {{ $extra->includes_transport ? 'checked' : '' }} class="w-4 h-4 text-primary border-gray-300 rounded">
+                    <label for="includes_transport" class="text-sm text-gray-700">Le transport est inclus</label>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" name="requires_parental_authorization" value="1" id="requires_parental_authorization" {{ $extra->requires_parental_authorization ? 'checked' : '' }} class="w-4 h-4 text-primary border-gray-300 rounded">
+                    <label for="requires_parental_authorization" class="text-sm text-gray-700">Autorisation parentale requise</label>
+                </div>
+            </div>
+
             <div class="flex justify-between items-center pt-4">
                 <form action="{{ route('extras.catalogue.destroy', $extra->id) }}" method="POST" onsubmit="return confirm('Supprimer définitivement cet extra ?')">
                     @csrf @method('DELETE')

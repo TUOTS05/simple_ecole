@@ -99,6 +99,11 @@ $statusColors = [
                     <td class="py-3 px-4 text-sm text-gray-600">
                         {{ $sub->extra->category->icon ?? '' }} {{ $sub->extra->name }}
                         <div class="text-xs text-gray-400">{{ $sub->extraTarif->schoolClass->name ?? 'Toutes classes' }}</div>
+                        @if($sub->extra->requires_parental_authorization)
+                        <div class="text-xs {{ $sub->parental_authorization_signed ? 'text-green-600' : 'text-orange-600' }}">
+                            {{ $sub->parental_authorization_signed ? '✅ Autorisation reçue' : '✍️ Autorisation en attente' }}
+                        </div>
+                        @endif
                     </td>
                     <td class="py-3 px-4 text-right text-gray-800">
                         {{ number_format($sub->total_amount, 0, ',', ' ') }} FCFA
@@ -116,6 +121,15 @@ $statusColors = [
                     <td class="py-3 px-4 text-center whitespace-nowrap">
                         @if($sub->status === 'active')
                         <a href="{{ route('extras.subscriptions.qrcode', $sub->id) }}" target="_blank" class="text-gray-500 hover:text-primary text-sm mr-2" title="Badge QR">🔳</a>
+                        @endif
+                        @if($sub->extra->requires_parental_authorization)
+                        <a href="{{ route('extras.subscriptions.authorization-pdf', $sub->id) }}" target="_blank" class="text-gray-500 hover:text-primary text-sm mr-2" title="Imprimer l'autorisation">🖨️</a>
+                        <form action="{{ route('extras.subscriptions.toggle-authorization', $sub->id) }}" method="POST" class="inline mr-2">
+                            @csrf @method('PATCH')
+                            <button type="submit" class="text-sm {{ $sub->parental_authorization_signed ? 'text-orange-600 hover:text-orange-800' : 'text-green-600 hover:text-green-800' }}" title="{{ $sub->parental_authorization_signed ? 'Annuler' : 'Marquer reçue' }}">
+                                {{ $sub->parental_authorization_signed ? '↩️' : '✅' }}
+                            </button>
+                        </form>
                         @endif
                         @if(in_array($sub->status, ['requested', 'pending']))
                         <form action="{{ route('extras.subscriptions.validate', $sub->id) }}" method="POST" class="inline">

@@ -43,12 +43,28 @@
             </div>
             <p class="text-sm text-gray-500 mb-3">{{ $extra->description ?: 'Aucune description.' }}</p>
 
+            @if($extra->destination || $extra->registration_deadline)
+            <div class="text-xs text-gray-500 mb-3 space-y-0.5">
+                @if($extra->destination)<p>📍 Destination : {{ $extra->destination }}</p>@endif
+                @if($extra->includes_transport)<p>🚌 Transport inclus</p>@endif
+                @if($extra->requires_parental_authorization)<p>✍️ Autorisation parentale requise</p>@endif
+                @if($extra->registration_deadline)
+                <p class="{{ ! $extra->isRegistrationOpen() ? 'text-red-600 font-semibold' : '' }}">
+                    ⏳ Inscriptions jusqu'au {{ $extra->registration_deadline->format('d/m/Y') }}
+                </p>
+                @endif
+            </div>
+            @endif
+
             @if($extra->applicable_tarif)
             <p class="text-lg font-bold text-primary mb-3">
                 {{ number_format($extra->applicable_tarif->amount, 0, ',', ' ') }} FCFA
                 <span class="text-xs font-normal text-gray-500">{{ $extra->billing_type === 'recurring' ? '/ période' : '(frais unique)' }}</span>
             </p>
 
+            @if(! $extra->isRegistrationOpen())
+            <p class="text-center text-sm text-red-600 font-semibold py-2">Date limite d'inscription dépassée</p>
+            @else
             <form action="{{ route('parent.extras.request', ['student' => $student->id, 'extraId' => $extra->id]) }}" method="POST" onsubmit="return confirm('{{ $extra->seats_left === 0 ? 'Ce service est complet : rejoindre la liste d\'attente ?' : 'Envoyer une demande d\'inscription à ce service ?' }}')">
                 @csrf
                 <button type="submit"
@@ -56,6 +72,7 @@
                     {{ $extra->seats_left === 0 ? "Rejoindre la liste d'attente" : "Demander l'inscription" }}
                 </button>
             </form>
+            @endif
             @else
             <p class="text-sm text-orange-600 italic">Tarif non encore disponible pour la classe de votre enfant.</p>
             @endif

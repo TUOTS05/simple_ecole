@@ -13,6 +13,7 @@ class ExtraSubscription extends Model
         'total_amount', 'paid_amount', 'remaining_amount', 'status',
         'original_amount', 'discount_type', 'discount_amount', 'discount_reason',
         'requested_by', 'validated_by', 'validated_at', 'start_date', 'end_date', 'notes',
+        'parental_authorization_signed', 'parental_authorization_signed_at',
     ];
 
     protected $casts = [
@@ -24,6 +25,8 @@ class ExtraSubscription extends Model
         'validated_at' => 'datetime',
         'start_date' => 'date',
         'end_date' => 'date',
+        'parental_authorization_signed' => 'boolean',
+        'parental_authorization_signed_at' => 'datetime',
     ];
 
     public function school(): BelongsTo

@@ -13,6 +13,7 @@ class Extra extends Model
         'status', 'target_audience', 'billing_type', 'capacity', 'responsible_id',
         'conditions', 'start_date', 'end_date',
         'location', 'daycare_closing_time', 'overage_rate_per_minute',
+        'destination', 'registration_deadline', 'includes_transport', 'requires_parental_authorization',
     ];
 
     protected $casts = [
@@ -20,6 +21,9 @@ class Extra extends Model
         'start_date' => 'date',
         'end_date' => 'date',
         'overage_rate_per_minute' => 'decimal:2',
+        'registration_deadline' => 'date',
+        'includes_transport' => 'boolean',
+        'requires_parental_authorization' => 'boolean',
     ];
 
     public function school(): BelongsTo
@@ -89,5 +93,14 @@ class Extra extends Model
         }
 
         return $this->occupiedSeatsCount() < $this->capacity;
+    }
+
+    /**
+     * Vrai si aucune date limite d'inscription n'est définie, ou si elle n'est pas
+     * encore passée (utilisé notamment pour les sorties scolaires, spec §23).
+     */
+    public function isRegistrationOpen(): bool
+    {
+        return ! $this->registration_deadline || now()->toDateString() <= $this->registration_deadline->toDateString();
     }
 }

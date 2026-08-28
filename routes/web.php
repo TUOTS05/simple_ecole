@@ -13,6 +13,7 @@ use App\Http\Controllers\App\ExtraAttendanceController;
 use App\Http\Controllers\App\ExtraController;
 use App\Http\Controllers\App\ExtraMenuController;
 use App\Http\Controllers\App\ExtraRefundController;
+use App\Http\Controllers\App\ExtraStockController;
 use App\Http\Controllers\App\ExtraTransportController;
 use App\Http\Controllers\App\FeeController;
 use App\Http\Controllers\App\FinancialReportController;
@@ -442,6 +443,8 @@ Route::middleware(['auth', 'school.active', 'role:school_admin', 'tenant'])->pre
     Route::delete('/subscriptions/{id}', [ExtraController::class, 'subscriptionsDestroy'])->name('subscriptions.destroy');
     Route::patch('/subscriptions/{id}/validate', [ExtraController::class, 'subscriptionsValidate'])->name('subscriptions.validate');
     Route::patch('/subscriptions/{id}/promote', [ExtraController::class, 'subscriptionsPromote'])->name('subscriptions.promote');
+    Route::patch('/subscriptions/{id}/toggle-authorization', [ExtraController::class, 'subscriptionsToggleAuthorization'])->name('subscriptions.toggle-authorization');
+    Route::get('/subscriptions/{id}/authorization-pdf', [ExtraController::class, 'subscriptionsAuthorizationPdf'])->name('subscriptions.authorization-pdf');
     Route::get('/subscriptions/pdf', [ExtraController::class, 'subscriptionsPdf'])->name('subscriptions.pdf');
 
     // Paiements
@@ -453,6 +456,13 @@ Route::middleware(['auth', 'school.active', 'role:school_admin', 'tenant'])->pre
     Route::get('/refunds', [ExtraRefundController::class, 'index'])->name('refunds.index');
     Route::post('/refunds', [ExtraRefundController::class, 'store'])->name('refunds.store');
     Route::get('/refunds/{subscriptionId}/suggested', [ExtraRefundController::class, 'suggested'])->name('refunds.suggested');
+
+    // Stocks (uniformes, fournitures, kits scolaires)
+    Route::get('/stocks', [ExtraStockController::class, 'index'])->name('stocks.index');
+    Route::post('/stocks', [ExtraStockController::class, 'itemsStore'])->name('stocks.store');
+    Route::put('/stocks/{id}', [ExtraStockController::class, 'itemsUpdate'])->name('stocks.update');
+    Route::delete('/stocks/{id}', [ExtraStockController::class, 'itemsDestroy'])->name('stocks.destroy');
+    Route::post('/stocks/movements', [ExtraStockController::class, 'movementsStore'])->name('stocks.movements.store');
 
     // Rapports
     Route::get('/reports/unpaid', [ExtraController::class, 'reportsUnpaid'])->name('reports.unpaid');

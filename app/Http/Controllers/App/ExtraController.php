@@ -192,6 +192,10 @@ class ExtraController extends Controller
             'location' => 'nullable|string|max:150',
             'daycare_closing_time' => 'nullable|date_format:H:i',
             'overage_rate_per_minute' => 'nullable|numeric|min:0',
+            'destination' => 'nullable|string|max:150',
+            'registration_deadline' => 'nullable|date',
+            'includes_transport' => 'nullable|boolean',
+            'requires_parental_authorization' => 'nullable|boolean',
         ]);
 
         $duplicate = Extra::where('school_id', $extra->school_id)
@@ -201,6 +205,9 @@ class ExtraController extends Controller
         if ($duplicate) {
             return back()->withErrors(['code' => 'Ce code est déjà utilisé par un autre extra.'])->withInput();
         }
+
+        $validated['includes_transport'] = $request->boolean('includes_transport');
+        $validated['requires_parental_authorization'] = $request->boolean('requires_parental_authorization');
 
         $extra->update($validated);
 
@@ -704,6 +711,47 @@ class ExtraController extends Controller
         );
 
         return back()->with('success', "✅ « {$subscription->extra->name} » activé pour {$subscription->student->first_name} {$subscription->student->last_name} !");
+    }
+
+    /**
+     * Marque (ou démarque) l'autorisation parentale d'une sortie scolaire comme reçue,
+     * une fois le coupon papier signé rapporté par l'élève (spec §23).
+     */
+    public function subscriptionsToggleAuthorization($id)
+    {
+        $subscription = ExtraSubscription::where('school_id', session('current_school_id'))
+            ->with('extra', 'student')
+            ->findOrFail($id);
+
+        $subscription->parental_authorization_signed = ! $subscription->parental_authorization_signed;
+        $subscription->parental_authorization_signed_at = $subscription->parental_authorization_signed ? now() : null;
+        $subscription->save();
+
+        ActivityLog::logAction(
+            'extras.subscription.authorization_toggled',
+            "Autorisation parentale pour {$subscription->student->first_name} {$subscription->student->last_name} ({$subscription->extra->name}) : ".($subscription->parental_authorization_signed ? 'marquée reçue' : 'annulée')
+        );
+
+        return back()->with('success', $subscription->parental_authorization_signed ? '✅ Autorisation marquée comme reçue.' : 'Autorisation annulée.');
+    }
+
+    /**
+     * Coupon d'autorisation de sortie à imprimer et faire signer par le parent (spec §24).
+     */
+    public function subscriptionsAuthorizationPdf($id)
+    {
+        $subscription = ExtraSubscription::where('school_id', session('current_school_id'))
+            ->with('extra', 'student.school')
+            ->findOrFail($id);
+
+        $pdf = Pdf::loadView('pdf.extra-outing-authorization', [
+            'subscription' => $subscription,
+            'student' => $subscription->student,
+            'extra' => $subscription->extra,
+            'school' => $subscription->student->school,
+        ]);
+
+        return $pdf->download('Autorisation_Sortie_'.str_pad($subscription->id, 6, '0', STR_PAD_LEFT).'.pdf');
     }
 
     // ==========================================
