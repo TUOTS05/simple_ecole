@@ -15,10 +15,16 @@ use Illuminate\Support\Facades\Mail;
  */
 class ExtraPaymentNotifier
 {
+    public function __construct(private ExtraWhatsAppNotifier $whatsapp) {}
+
     public function sendConfirmation(ExtraPayment $payment): void
     {
         $payment->loadMissing('subscription.student', 'subscription.extra');
         $student = $payment->subscription->student;
+
+        // Canal indépendant de l'email : un parent sans adresse peut avoir
+        // un numéro WhatsApp, d'où l'envoi avant le retour anticipé ci-dessous.
+        $this->whatsapp->sendPaymentConfirmed($payment);
 
         if (empty($student->guardian_email)) {
             return;

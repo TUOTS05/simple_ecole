@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Mail\ExtraInstallmentLateMail;
 use App\Models\ExtraInstallment;
 use App\Models\NotificationLog;
+use App\Services\ExtraWhatsAppNotifier;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
@@ -15,7 +16,7 @@ class NotifyExtrasLate extends Command
 
     protected $description = "Envoie une alerte aux parents dont une échéance d'extra est en retard de paiement.";
 
-    public function handle()
+    public function handle(ExtraWhatsAppNotifier $whatsapp)
     {
         $this->info("🔍 Vérification des échéances d'extras en retard...");
 
@@ -34,6 +35,15 @@ class NotifyExtrasLate extends Command
 
         foreach ($installments as $installment) {
             $student = $installment->subscription->student;
+
+            // WhatsApp d'abord, avant tout "continue" propre à l'email : les deux
+            // canaux sont indépendants (un parent sans email peut avoir un numéro).
+            $sent = $whatsapp->sendLate($installment);
+            if ($sent !== null) {
+                $this->line($sent
+                    ? "💬 WhatsApp envoyé pour : {$student->first_name} {$student->last_name}"
+                    : "❌ Échec WhatsApp pour : {$student->first_name} {$student->last_name}");
+            }
 
             if (NotificationLog::alreadySentForExtraInstallment($installment->id, 'extra_late', 'email')) {
                 $this->line("⏭️  Échéance extra #{$installment->id} déjà notifiée, on passe.");

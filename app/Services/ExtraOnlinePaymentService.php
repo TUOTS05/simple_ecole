@@ -80,7 +80,7 @@ class ExtraOnlinePaymentService
                 $onlinePayment->save();
             });
 
-            (new ExtraPaymentNotifier)->sendConfirmation($onlinePayment->payment);
+            app(ExtraPaymentNotifier::class)->sendConfirmation($onlinePayment->payment);
 
             ActivityLog::logAction(
                 'extras.online_payment.completed',

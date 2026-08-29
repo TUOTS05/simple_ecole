@@ -42,6 +42,24 @@ return [
         'dev_mode' => env('ORANGE_SMS_DEV_MODE', true),
     ],
 
+    'whatsapp' => [
+        'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+        'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
+        'api_version' => env('WHATSAPP_API_VERSION', 'v21.0'),
+        // Indicatif pays ajouté aux numéros saisis au format local.
+        'country_code' => env('WHATSAPP_COUNTRY_CODE', '225'),
+        // Tant qu'aucun identifiant n'est configuré, le service journalise
+        // le message au lieu d'appeler l'API Meta.
+        'dev_mode' => env('WHATSAPP_DEV_MODE', true),
+        // Modèles pré-approuvés par Meta (obligatoires pour un message
+        // envoyé à l'initiative de l'école, hors fenêtre de 24 h).
+        'templates' => [
+            'extra_upcoming' => env('WHATSAPP_TEMPLATE_EXTRA_UPCOMING', 'extra_echeance_a_venir'),
+            'extra_late' => env('WHATSAPP_TEMPLATE_EXTRA_LATE', 'extra_echeance_en_retard'),
+            'extra_payment_confirmed' => env('WHATSAPP_TEMPLATE_EXTRA_PAYMENT', 'extra_paiement_confirme'),
+        ],
+    ],
+
     'cinetpay' => [
         'api_key' => env('CINETPAY_API_KEY'),
         'site_id' => env('CINETPAY_SITE_ID'),

@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Mail\ExtraInstallmentUpcomingMail;
 use App\Models\ExtraInstallment;
 use App\Models\NotificationLog;
+use App\Services\ExtraWhatsAppNotifier;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
@@ -15,7 +16,7 @@ class NotifyExtrasUpcoming extends Command
 
     protected $description = "Envoie un rappel aux parents dont une échéance d'extra arrive bientôt à échéance.";
 
-    public function handle()
+    public function handle(ExtraWhatsAppNotifier $whatsapp)
     {
         $days = (int) $this->option('days');
         $targetDate = Carbon::today()->addDays($days);
@@ -37,6 +38,15 @@ class NotifyExtrasUpcoming extends Command
 
         foreach ($installments as $installment) {
             $student = $installment->subscription->student;
+
+            // WhatsApp d'abord, avant tout "continue" propre à l'email : les deux
+            // canaux sont indépendants (un parent sans email peut avoir un numéro).
+            $sent = $whatsapp->sendUpcoming($installment);
+            if ($sent !== null) {
+                $this->line($sent
+                    ? "💬 WhatsApp envoyé pour : {$student->first_name} {$student->last_name}"
+                    : "❌ Échec WhatsApp pour : {$student->first_name} {$student->last_name}");
+            }
 
             if (NotificationLog::alreadySentForExtraInstallment($installment->id, 'extra_upcoming', 'email')) {
                 $this->line("⏭️  Échéance extra #{$installment->id} déjà notifiée, on passe.");

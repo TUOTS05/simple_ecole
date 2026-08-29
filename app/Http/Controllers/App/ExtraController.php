@@ -875,7 +875,7 @@ class ExtraController extends Controller
      */
     private function sendPaymentConfirmation(ExtraPayment $payment): void
     {
-        (new ExtraPaymentNotifier)->sendConfirmation($payment);
+        app(ExtraPaymentNotifier::class)->sendConfirmation($payment);
     }
 
     // ==========================================
