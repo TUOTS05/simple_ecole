@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ParentExtraController;
 use App\Http\Controllers\CinetPayWebhookController;
 use App\Http\Controllers\VehicleTrackingController;
 use Illuminate\Http\Request;
@@ -17,6 +19,36 @@ use Illuminate\Support\Facades\Route;
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+
+/*
+|--------------------------------------------------------------------
+| API parent (application mobile) — jetons Sanctum
+|--------------------------------------------------------------------
+|
+| Lecture seule : consulter ses enfants, leurs extras, échéances,
+| paiements et la position du bus. Souscrire et payer restent sur le
+| site web. Voir Api\ParentExtraController.
+|
+*/
+
+// Limite serrée : c'est la seule route publique qui teste un mot de passe.
+Route::post('/login', [AuthController::class, 'login'])
+    ->middleware('throttle:5,1')
+    ->name('api.login');
+
+Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('api.logout');
+    Route::get('/me', [AuthController::class, 'me'])->name('api.me');
+
+    Route::get('/children', [ParentExtraController::class, 'children'])->name('api.children');
+
+    Route::prefix('children/{student}')->group(function () {
+        Route::get('/extras', [ParentExtraController::class, 'subscriptions'])->name('api.extras');
+        Route::get('/extras/{subscription}/installments', [ParentExtraController::class, 'installments'])->name('api.extras.installments');
+        Route::get('/extras/{subscription}/payments', [ParentExtraController::class, 'payments'])->name('api.extras.payments');
+        Route::get('/extras/{subscription}/bus', [ParentExtraController::class, 'busPosition'])->name('api.extras.bus');
+    });
+});
 
 // Webhook public CinetPay (notify_url) : pas d'auth, appelé directement par
 // les serveurs CinetPay. Le groupe "api" n'a pas de vérification CSRF.
