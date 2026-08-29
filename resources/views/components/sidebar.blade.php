@@ -190,6 +190,10 @@
             <span class="text-xl min-w-[24px] text-center">🎒</span>
             <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Affectations élèves</span>
         </a>
+        <a href="{{ route('extras.transport.tracking.index') }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('extras.transport.tracking.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+            <span class="text-xl min-w-[24px] text-center">📍</span>
+            <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Suivi GPS</span>
+        </a>
 
         @else
         <!-- ========================================== -->
@@ -354,7 +358,8 @@
                 <a href="{{ route('extras.subscriptions.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('extras.subscriptions.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Inscriptions</a>
                 <a href="{{ route('extras.attendances.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('extras.attendances.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Présences</a>
                 <a href="{{ route('extras.menus.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('extras.menus.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Menus Cantine</a>
-                <a href="{{ route('extras.transport.vehicles.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('extras.transport.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Transport</a>
+                <a href="{{ route('extras.transport.vehicles.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('extras.transport.*') && ! request()->routeIs('extras.transport.tracking.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Transport</a>
+                <a href="{{ route('extras.transport.tracking.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('extras.transport.tracking.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Suivi GPS</a>
                 <a href="{{ route('extras.stocks.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('extras.stocks.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Stock</a>
                 <a href="{{ route('extras.payments.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('extras.payments.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Paiements</a>
                 <a href="{{ route('extras.invoices.consolidated') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('extras.invoices.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Facture consolidée</a>

@@ -26,3 +26,6 @@ Schedule::command('notify:extras-late')->dailyAt('09:30');
 // Extras : génère l'échéance du mois pour les tarifs à facturation continue
 // (cantine, garderie, transport...) le 1er de chaque mois.
 Schedule::command('extras:generate-monthly-installments')->monthlyOn(1, '06:00');
+
+// Extras : purge l'historique de position GPS des véhicules (> 7 jours).
+Schedule::command('extras:prune-vehicle-locations')->dailyAt('03:00');

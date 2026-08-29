@@ -10,6 +10,8 @@ use App\Models\ExtraSubscription;
 use App\Models\ExtraTransportAssignment;
 use App\Models\ExtraVehicle;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ExtraTransportController extends Controller
 {
@@ -223,5 +225,70 @@ class ExtraTransportController extends Controller
         $assignment->delete();
 
         return back()->with('success', '✅ Affectation supprimée avec succès !');
+    }
+
+    // ==========================================
+    // GÉOLOCALISATION DES VÉHICULES
+    // ==========================================
+
+    public function trackingIndex()
+    {
+        $schoolId = session('current_school_id');
+
+        $vehicles = ExtraVehicle::where('school_id', $schoolId)
+            ->where('status', 'active')
+            ->orderBy('plate_number')
+            ->get();
+
+        return view('app.extras.transport.tracking', compact('vehicles'));
+    }
+
+    /**
+     * Positions actuelles au format JSON, interrogé en boucle par la carte
+     * (voir tracking.blade.php) pour se rafraîchir sans recharger la page.
+     */
+    public function trackingData()
+    {
+        $schoolId = session('current_school_id');
+
+        $vehicles = ExtraVehicle::where('school_id', $schoolId)
+            ->where('status', 'active')
+            ->whereNotNull('last_latitude')
+            ->get()
+            ->map(fn ($vehicle) => [
+                'id' => $vehicle->id,
+                'plate_number' => $vehicle->plate_number,
+                'driver_name' => $vehicle->driver_name,
+                'latitude' => (float) $vehicle->last_latitude,
+                'longitude' => (float) $vehicle->last_longitude,
+                'last_location_at' => $vehicle->last_location_at?->format('H:i:s'),
+                'stale' => $vehicle->hasStaleLocation(),
+            ]);
+
+        return response()->json($vehicles);
+    }
+
+    /**
+     * Lien + QR code de la page de partage de position, à imprimer ou envoyer
+     * au chauffeur (génère le jeton de suivi s'il n'existe pas encore).
+     */
+    public function vehicleTrackingLink($id)
+    {
+        $vehicle = ExtraVehicle::where('school_id', session('current_school_id'))->findOrFail($id);
+        $vehicle->ensureTrackingToken();
+
+        $trackingUrl = route('vehicle-tracking.show', $vehicle->tracking_token);
+        $qrSvg = QrCode::size(220)->generate($trackingUrl);
+
+        return view('app.extras.transport.tracking-link', compact('vehicle', 'trackingUrl', 'qrSvg'));
+    }
+
+    public function vehicleRegenerateTrackingToken($id)
+    {
+        $vehicle = ExtraVehicle::where('school_id', session('current_school_id'))->findOrFail($id);
+        $vehicle->update(['tracking_token' => Str::random(40)]);
+
+        return redirect()->route('extras.transport.vehicles.tracking-link', $vehicle->id)
+            ->with('success', '✅ Lien de suivi régénéré : l\'ancien lien ne fonctionne plus.');
     }
 }

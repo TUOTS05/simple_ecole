@@ -33,6 +33,14 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
 
+        // Ping de position GPS des véhicules : route publique (aucune session), donc
+        // à protéger explicitement. Indexé sur le jeton et non sur l'IP, car plusieurs
+        // chauffeurs peuvent sortir derrière la même IP d'opérateur mobile (NAT).
+        // La page chauffeur envoie au plus 4 pings/minute : 20 laisse de la marge.
+        RateLimiter::for('vehicle-ping', function (Request $request) {
+            return Limit::perMinute(20)->by((string) $request->route('token'));
+        });
+
         // Personnalisation de la redirection après login
         $this->configureRedirects();
     }

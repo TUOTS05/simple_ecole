@@ -357,6 +357,10 @@ Route::middleware(['auth', 'parent', 'school.active', 'tenant'])->prefix('parent
     Route::get('/{student}/extras/pay-online/{transaction}/simulate', [App\Http\Controllers\Parent\ExtraController::class, 'payOnlineSimulate'])->name('extras.pay-online.simulate');
     Route::post('/{student}/extras/pay-online/{transaction}/simulate', [App\Http\Controllers\Parent\ExtraController::class, 'payOnlineSimulateConfirm'])->name('extras.pay-online.simulate.confirm');
 
+    // Suivi GPS du bus
+    Route::get('/{student}/extras/{subscriptionId}/track-bus', [App\Http\Controllers\Parent\ExtraController::class, 'trackBus'])->name('extras.track-bus');
+    Route::get('/{student}/extras/{subscriptionId}/track-bus/data', [App\Http\Controllers\Parent\ExtraController::class, 'trackBusData'])->name('extras.track-bus.data');
+
 });
 
 // ==========================================
@@ -540,6 +544,12 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,accountant,cantee
         Route::get('/assignments', [ExtraTransportController::class, 'assignmentsIndex'])->name('assignments.index');
         Route::post('/assignments', [ExtraTransportController::class, 'assignmentsStore'])->name('assignments.store');
         Route::delete('/assignments/{id}', [ExtraTransportController::class, 'assignmentsDestroy'])->name('assignments.destroy');
+
+        // Géolocalisation
+        Route::get('/tracking', [ExtraTransportController::class, 'trackingIndex'])->name('tracking.index');
+        Route::get('/tracking/data', [ExtraTransportController::class, 'trackingData'])->name('tracking.data');
+        Route::get('/vehicles/{id}/tracking-link', [ExtraTransportController::class, 'vehicleTrackingLink'])->name('vehicles.tracking-link');
+        Route::patch('/vehicles/{id}/regenerate-tracking-token', [ExtraTransportController::class, 'vehicleRegenerateTrackingToken'])->name('vehicles.regenerate-tracking-token');
     });
 });
 
@@ -572,6 +582,10 @@ Route::post('/demande-compte', [SchoolOnboardingController::class, 'storeRequest
 
 // Route pour la connexion en un clic à la démo
 Route::get('/demo-login', [DemoController::class, 'login'])->name('demo.login');
+
+// Page publique de partage de position GPS pour le chauffeur (pas de compte utilisateur,
+// sécurisée par le jeton opaque dans l'URL — voir ExtraVehicle::tracking_token).
+Route::get('/track/{token}', [App\Http\Controllers\VehicleTrackingController::class, 'show'])->name('vehicle-tracking.show');
 
 Route::get('/', function () {
     $plans = SubscriptionPlan::active()->orderBy('sort_order')->orderBy('monthly_price')->get();

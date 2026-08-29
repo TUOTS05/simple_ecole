@@ -30,7 +30,7 @@ class ExtraController extends Controller
 
         $subscriptions = ExtraSubscription::where('student_id', $studentId)
             ->whereHas('schoolYear', fn ($q) => $q->where('school_id', $student->school_id)->where('is_active', true))
-            ->with(['extra.category', 'extraTarif', 'payments' => fn ($q) => $q->orderByDesc('payment_date')])
+            ->with(['extra.category', 'extraTarif', 'payments' => fn ($q) => $q->orderByDesc('payment_date'), 'transportAssignment.vehicle'])
             ->get();
 
         $monthlyTotal = $subscriptions->where('status', 'active')->sum(fn ($s) => $s->extraTarif->amount ?? 0);
@@ -341,5 +341,53 @@ class ExtraController extends Controller
             : '❌ Paiement simulé refusé/annulé.';
 
         return redirect()->route('parent.extras.index', $studentId)->with('success', $message);
+    }
+
+    // ==========================================
+    // SUIVI GPS DU BUS
+    // ==========================================
+
+    public function trackBus($studentId, $subscriptionId)
+    {
+        $parent = auth()->user();
+        $student = $parent->children()->where('students.id', $studentId)->firstOrFail();
+
+        // Seul un abonnement actif donne accès à la position du bus : un abonnement
+        // suspendu ou résilié ne doit plus permettre de suivre le véhicule.
+        $subscription = ExtraSubscription::where('student_id', $studentId)
+            ->where('status', 'active')
+            ->with('extra', 'transportAssignment.vehicle', 'transportAssignment.route', 'transportAssignment.stop')
+            ->findOrFail($subscriptionId);
+
+        if (! $subscription->transportAssignment || ! $subscription->transportAssignment->vehicle) {
+            abort(404);
+        }
+
+        return view('parent.extras.track-bus', compact('student', 'subscription'));
+    }
+
+    public function trackBusData($studentId, $subscriptionId)
+    {
+        $parent = auth()->user();
+        $parent->children()->where('students.id', $studentId)->firstOrFail();
+
+        $subscription = ExtraSubscription::where('student_id', $studentId)
+            ->where('status', 'active')
+            ->with('transportAssignment.vehicle')
+            ->findOrFail($subscriptionId);
+
+        $vehicle = $subscription->transportAssignment->vehicle ?? null;
+
+        if (! $vehicle || ! $vehicle->last_latitude) {
+            return response()->json(['available' => false]);
+        }
+
+        return response()->json([
+            'available' => true,
+            'latitude' => (float) $vehicle->last_latitude,
+            'longitude' => (float) $vehicle->last_longitude,
+            'last_location_at' => $vehicle->last_location_at?->format('H:i:s'),
+            'stale' => $vehicle->hasStaleLocation(),
+        ]);
     }
 }

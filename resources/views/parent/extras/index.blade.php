@@ -117,6 +117,11 @@ $statusColors = [
                 </button>
             </form>
             @endif
+            @if($sub->status === 'active' && $sub->transportAssignment && $sub->transportAssignment->vehicle)
+            <a href="{{ route('parent.extras.track-bus', ['student' => $student->id, 'subscriptionId' => $sub->id]) }}" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-full font-semibold transition">
+                📍 Suivre le bus
+            </a>
+            @endif
             <form action="{{ route('parent.extras.suspend', ['student' => $student->id, 'subscriptionId' => $sub->id]) }}" method="POST" onsubmit="return confirm('Demander la suspension de ce service ?')">
                 @csrf
                 <button type="submit" class="text-xs text-orange-600 hover:text-orange-800 font-semibold">⏸️ Demander une suspension</button>
