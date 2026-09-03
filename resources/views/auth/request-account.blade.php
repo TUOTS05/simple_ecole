@@ -23,7 +23,7 @@
                 <div class="w-9 h-9 bg-gradient-to-br from-blue-600 to-green-500 rounded-lg flex items-center justify-center shadow-md">
                     <i class="fas fa-graduation-cap text-white"></i>
                 </div>
-                <span class="text-xl font-bold tracking-tight">Simple-<span class="text-blue-600">School</span></span>
+                <span class="text-xl font-bold tracking-tight">Simple <span class="text-blue-600">Ecole</span></span>
             </a>
             <a href="{{ url('/') }}" class="text-sm font-medium text-gray-500 hover:text-blue-600 flex items-center transition">
                 <i class="fas fa-arrow-left mr-2"></i> Retour à l'accueil
@@ -166,7 +166,7 @@
                                     <p class="text-xs text-gray-500 -mt-1 mb-2">soit {{ number_format($plan->monthly_price ?? 0, 0, ',', ' ') }} FCFA/mois</p>
                                     <ul class="text-xs text-gray-600 space-y-1 mt-2">
                                         <li><i class="fas fa-check text-green-500 mr-1"></i> Max {{ $plan->max_students ?? 'Illimité' }} élèves</li>
-                                        <li><i class="fas fa-check text-green-500 mr-1"></i> Max {{ $plan->max_teachers ?? 'Illimité' }} enseignants</li>
+                                        <li><i class="fas fa-check text-green-500 mr-1"></i> Max {{ $plan->max_users ?? 'Illimité' }} utilisateurs</li>
                                     </ul>
                                 </label>
                                 @empty

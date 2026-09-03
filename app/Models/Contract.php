@@ -19,7 +19,7 @@ class Contract extends Model
         'start_date',
         'end_date',
         'max_students',
-        'max_teachers',
+        'max_users',
         'status',
         'pdf_path',
         'signed_at',

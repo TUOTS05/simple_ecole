@@ -62,7 +62,7 @@
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-600">
                                 <div>👨‍🎓 {{ $plan->max_students }} élèves</div>
-                                <div>👨‍🏫 {{ $plan->max_teachers }} enseignants</div>
+                                <div>👥 {{ $plan->max_users }} utilisateurs</div>
                                 <div>🏫 {{ $plan->max_classes }} classes</div>
                             </td>
                             <td class="px-6 py-4">

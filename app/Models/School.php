@@ -13,7 +13,7 @@ class School extends Model
 
     protected $fillable = [
         'name', 'slug', 'logo', 'settings', 'status', 'school_type',
-        'subscription_plan', 'subscription_start_date', 'subscription_end_date', 'max_students',
+        'subscription_plan', 'subscription_start_date', 'subscription_end_date', 'max_students', 'max_users',
         'email', 'phone', 'address', 'sms_enabled',
         'orange_sms_api_url', 'orange_sms_client_id', 'orange_sms_client_secret',
         'orange_sms_sender_name', 'sms_absence_template',
@@ -126,6 +126,20 @@ class School extends Model
         // Ni abonnement ni essai actif : expiré, sauf si aucune échéance n'a jamais été fixée
         // (écoles créées avant la mise en place du système d'essai/abonnement).
         return $this->subscription_end_date !== null || $this->trial_ends_at !== null;
+    }
+
+    /**
+     * Nombre de comptes utilisateurs (personnel) de l'école : tous les rôles sauf 'parent',
+     * qui n'est pas un siège du plan mais un compte lié aux élèves.
+     */
+    public function activeUserCount(): int
+    {
+        return $this->users()->where('role', '!=', 'parent')->count();
+    }
+
+    public function hasReachedUserLimit(): bool
+    {
+        return $this->max_users !== null && $this->activeUserCount() >= $this->max_users;
     }
 
     public function getStatusBadgeAttribute(): string

@@ -71,12 +71,12 @@
                                 @error('max_students') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
                             </div>
 
-                            <!-- Max enseignants -->
+                            <!-- Max utilisateurs -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Max. enseignants *</label>
-                                <input type="number" name="max_teachers" value="{{ old('max_teachers', 10) }}" required min="1"
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent @error('max_teachers') border-red-500 @enderror">
-                                @error('max_teachers') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Max. utilisateurs *</label>
+                                <input type="number" name="max_users" value="{{ old('max_users', 10) }}" required min="1"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent @error('max_users') border-red-500 @enderror">
+                                @error('max_users') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
                             </div>
 
                             <!-- Max classes -->

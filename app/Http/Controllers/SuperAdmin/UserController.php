@@ -84,6 +84,17 @@ class UserController extends Controller
             $validated['school_id'] = null;
         }
 
+        // Le plafond d'utilisateurs du plan ne s'applique qu'aux comptes de personnel d'une école
+        // (les comptes parent en sont exclus, cf. School::activeUserCount()).
+        if ($validated['role'] !== 'parent' && ! empty($validated['school_id'])) {
+            $school = School::find($validated['school_id']);
+            if ($school && $school->hasReachedUserLimit()) {
+                return back()->withErrors([
+                    'school_id' => "Le plafond de {$school->max_users} utilisateurs de l'abonnement de cette école est atteint.",
+                ])->withInput();
+            }
+        }
+
         // Hasher le mot de passe
         $validated['password'] = Hash::make($validated['password']);
 

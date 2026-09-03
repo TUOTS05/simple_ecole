@@ -67,7 +67,7 @@ class SubscriptionController extends Controller
             'end_date' => $validated['end_date'],
             'amount' => $validated['amount'],
             'max_students' => $plan->max_students ?? 0,
-            'max_teachers' => $plan->max_teachers ?? 0,
+            'max_users' => $plan->max_users ?? 0,
             'status' => 'active',
             'signed_at' => now(),
         ]);
@@ -79,6 +79,7 @@ class SubscriptionController extends Controller
             'subscription_start_date' => $validated['start_date'],
             'subscription_end_date' => $validated['end_date'],
             'max_students' => $plan->max_students ?? 999999,
+            'max_users' => $plan->max_users ?? 999999,
         ]);
 
         // 3ter. Garder la table `subscriptions` synchronisée avec les contrats (voir approveRequest()
@@ -193,20 +194,21 @@ class SubscriptionController extends Controller
             'end_date' => $validated['end_date'],
             'amount' => $validated['amount'],
             'max_students' => $oldContract->max_students,
-            'max_teachers' => $oldContract->max_teachers,
+            'max_users' => $oldContract->max_users,
             'status' => 'active',
             'signed_at' => now(),
         ]);
 
         // 5. Mettre à jour l'école : la nouvelle période de facturation démarre bien à cette date de
         // renouvellement (subscription_start_date restait figée à la toute première souscription
-        // avant ce correctif), et le plafond d'élèves suit le contrat renouvelé.
+        // avant ce correctif), et les plafonds d'élèves/utilisateurs suivent le contrat renouvelé.
         $school->update([
             'status' => 'active',
             'subscription_plan' => $planName,
             'subscription_start_date' => $validated['start_date'],
             'subscription_end_date' => $validated['end_date'],
             'max_students' => $oldContract->max_students ?: $school->max_students,
+            'max_users' => $oldContract->max_users ?: $school->max_users,
         ]);
 
         // 5bis. Garder la table `subscriptions` synchronisée : jusqu'ici seule l'approbation initiale
@@ -385,6 +387,7 @@ class SubscriptionController extends Controller
             'subscription_start_date' => $subscriptionStart,
             'subscription_end_date' => $subscriptionEnd,
             'max_students' => $plan->max_students ?? 999999,
+            'max_users' => $plan->max_users ?? 999999,
         ]);
 
         // 1bis. Créer l'année scolaire active de l'école : sans elle, tous les modules métier
@@ -427,7 +430,7 @@ class SubscriptionController extends Controller
             'end_date' => $subscriptionEnd,
             'amount' => $subscriptionAmount,
             'max_students' => $plan->max_students ?? 0,
-            'max_teachers' => $plan->max_teachers ?? 0,
+            'max_users' => $plan->max_users ?? 0,
             'status' => 'active',
             'signed_at' => now(),
         ]);

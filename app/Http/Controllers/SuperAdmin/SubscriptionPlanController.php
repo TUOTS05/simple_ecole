@@ -39,7 +39,7 @@ class SubscriptionPlanController extends Controller
             'slug' => 'nullable|string|max:255|unique:subscription_plans,slug',
             'description' => 'nullable|string',
             'max_students' => 'required|integer|min:1',
-            'max_teachers' => 'required|integer|min:1',
+            'max_users' => 'required|integer|min:1',
             'max_classes' => 'required|integer|min:1',
             'monthly_price' => 'required|numeric|min:0',
         ]);
@@ -79,7 +79,7 @@ class SubscriptionPlanController extends Controller
             'slug' => 'required|string|max:255|unique:subscription_plans,slug,'.$plan->id,
             'description' => 'nullable|string',
             'max_students' => 'required|integer|min:1',
-            'max_teachers' => 'required|integer|min:1',
+            'max_users' => 'required|integer|min:1',
             'max_classes' => 'required|integer|min:1',
             'monthly_price' => 'required|numeric|min:0',
             'is_active' => 'boolean',

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
+use App\Models\School;
 use App\Models\Teacher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -36,6 +37,13 @@ class TeacherController extends Controller
             'phone' => 'nullable|string|max:20',
             'gender' => 'required|in:M,F',
         ]);
+
+        $school = School::find(session('current_school_id'));
+        if ($school && $school->hasReachedUserLimit()) {
+            return back()->withErrors([
+                'email' => "Le plafond de {$school->max_users} utilisateurs de votre abonnement est atteint. Contactez le support pour augmenter votre plan.",
+            ])->withInput();
+        }
 
         // role et school_id ne sont pas mass-assignables (protection contre l'élévation
         // de privilèges) : on les affecte explicitement après création.

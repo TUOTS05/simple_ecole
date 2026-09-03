@@ -11,7 +11,7 @@ class SubscriptionPlan extends Model
         'slug',
         'description',
         'max_students',
-        'max_teachers',
+        'max_users',
         'max_classes',
         'monthly_price',
         'is_active',
