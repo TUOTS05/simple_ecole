@@ -643,21 +643,39 @@
     <!-- ============ PRICING SECTION ============ -->
     <section id="pricing" class="py-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16 reveal">
+            <div class="text-center mb-10 reveal">
                 <span class="inline-block bg-purple-100 text-purple-700 px-4 py-1 rounded-full text-sm font-semibold mb-4">
                     💰 TARIFS
                 </span>
                 <h2 class="text-3xl md:text-5xl font-black text-gray-900 mb-4">
-                    Des tarifs <span class="gradient-text">adaptés</span> à votre école
+                    Des tarifs simples, <span class="gradient-text">accessibles</span> à toutes les écoles
                 </h2>
-                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-                    Choisissez la formule qui correspond à la taille de votre établissement.
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto mb-6">
+                    Gérez votre école maternelle ou primaire simplement, efficacement et à moindre coût.
                 </p>
+                <span class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 border border-blue-200 px-4 py-2 rounded-full text-sm font-bold">
+                    🎓 OFFRE SPÉCIALE RENTRÉE 2026-2027 — Les 50 premières écoles bénéficient de conditions exceptionnelles.
+                </span>
             </div>
 
-            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+            <!-- Toggle Mensuel / Annuel -->
+            <div class="flex justify-center mb-12 reveal">
+                <div class="inline-flex items-center bg-white border border-gray-200 rounded-full p-1 shadow-sm">
+                    <button type="button" class="billing-toggle-btn px-6 py-2 rounded-full text-sm font-bold transition" data-billing="monthly">
+                        Mensuel
+                    </button>
+                    <button type="button" class="billing-toggle-btn px-6 py-2 rounded-full text-sm font-bold transition" data-billing="annual">
+                        Annuel
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto items-start">
                 @forelse ($plans ?? [] as $index => $plan)
                     @php
+                        // La description stocke le pitch de vente sur la 1re ligne/paragraphe, puis une
+                        // 1re ligne "prix" (ex: "10 000 FCFA/mois" ou "Sur devis", utilisée seulement pour
+                        // détecter les plans sur devis), suivie de la liste de fonctionnalités.
                         $descParts = preg_split('/\r?\n\r?\n/', trim($plan->description ?? ''), 2);
                         $tagline = trim($descParts[0] ?? '');
                         $bullets = isset($descParts[1])
@@ -669,33 +687,53 @@
                             ? array_slice($bullets, 1)
                             : [
                                 "Jusqu'à " . number_format($plan->max_students, 0, ',', ' ') . ' élèves',
-                                $plan->max_teachers . ' utilisateurs',
+                                number_format($plan->max_users, 0, ',', ' ') . ' utilisateurs',
                                 'Toutes les fonctionnalités',
                             ];
                         $isPopular = $index === 1;
+                        $savings = !$isQuote ? ((float) $plan->monthly_price * 12) - (float) $plan->yearly_price : 0;
                     @endphp
-                    <div class="{{ $isPopular ? 'bg-gradient-to-br from-blue-600 to-blue-800 text-white transform md:scale-105 shadow-2xl' : 'bg-white border-2 border-gray-100 hover:border-blue-200' }} rounded-2xl p-8 relative transition reveal">
+                    <div class="{{ $isPopular ? 'bg-gradient-to-br from-blue-600 to-blue-800 text-white transform lg:scale-105 shadow-2xl order-first lg:order-none' : 'bg-white border-2 border-gray-100 hover:border-blue-200' }} rounded-2xl p-8 relative transition reveal">
                         @if ($isPopular)
-                            <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-green-500 text-white px-4 py-1 rounded-full text-sm font-bold whitespace-nowrap">
+                            <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-green-500 text-white px-4 py-1 rounded-full text-sm font-bold whitespace-nowrap shadow-lg">
                                 ⭐ POPULAIRE
                             </div>
                         @endif
 
-                        <h3 class="text-xl font-bold {{ $isPopular ? '' : 'text-gray-900' }} mb-2">{{ $plan->name }}</h3>
-                        <p class="{{ $isPopular ? 'text-blue-100' : 'text-gray-500' }} mb-6">{{ $tagline }}</p>
+                        <h3 class="text-xl font-black {{ $isPopular ? '' : 'text-gray-900' }} mb-1">{{ $plan->name }}</h3>
+                        @if ($tagline)
+                            <p class="{{ $isPopular ? 'text-blue-100' : 'text-gray-500' }} text-sm mb-4">{{ $tagline }}</p>
+                        @else
+                            <div class="mb-4"></div>
+                        @endif
+                        @if ($isPopular)
+                            <p class="text-green-300 text-xs font-bold -mt-3 mb-4">⭐ CHOIX N°1 DES ÉCOLES</p>
+                        @endif
 
-                        <div class="mb-6">
+                        <div class="mb-6 min-h-[4.5rem]">
                             @if ($isQuote)
                                 <span class="text-4xl font-black {{ $isPopular ? '' : 'text-gray-900' }}">Sur devis</span>
                             @else
-                                <span class="text-4xl font-black {{ $isPopular ? '' : 'text-gray-900' }}">{{ number_format($plan->monthly_price, 0, ',', ' ') }}</span>
-                                <span class="{{ $isPopular ? 'text-blue-100' : 'text-gray-500' }}"> FCFA/mois</span>
+                                <div>
+                                    <span class="plan-price-monthly text-4xl font-black {{ $isPopular ? '' : 'text-gray-900' }}">{{ number_format($plan->monthly_price, 0, ',', ' ') }}</span>
+                                    <span class="plan-price-annual hidden text-4xl font-black {{ $isPopular ? '' : 'text-gray-900' }}">{{ number_format($plan->yearly_price, 0, ',', ' ') }}</span>
+                                    <span class="{{ $isPopular ? 'text-blue-100' : 'text-gray-500' }}">FCFA</span>
+                                </div>
+                                <div class="{{ $isPopular ? 'text-blue-100' : 'text-gray-500' }} text-sm">
+                                    <span class="plan-price-monthly">/ mois</span>
+                                    <span class="plan-price-annual hidden">/ an</span>
+                                </div>
+                                @if ($savings > 0)
+                                    <div class="plan-savings-annual hidden mt-1 text-xs font-bold {{ $isPopular ? 'text-green-300' : 'text-green-600' }}">
+                                        🎁 Économisez {{ number_format($savings, 0, ',', ' ') }} FCFA/an
+                                    </div>
+                                @endif
                             @endif
                         </div>
 
                         <ul class="space-y-3 mb-8">
                             @foreach ($features as $feature)
-                                <li class="flex items-start {{ $isPopular ? '' : 'text-gray-700' }}">
+                                <li class="flex items-start {{ $isPopular ? '' : 'text-gray-700' }} text-sm">
                                     <i class="fas fa-check {{ $isPopular ? 'text-green-300' : 'text-green-500' }} mt-1 mr-2"></i>
                                     <span>{{ $feature }}</span>
                                 </li>
@@ -715,6 +753,54 @@
                 @empty
                     <p class="col-span-full text-center text-gray-500">Les plans d'abonnement seront bientôt disponibles.</p>
                 @endforelse
+            </div>
+
+            <!-- Bandeau École Fondatrice -->
+            <div class="mt-14 max-w-5xl mx-auto reveal">
+                <div class="bg-gradient-to-br from-green-500 to-green-700 rounded-2xl p-8 md:p-10 text-white text-center shadow-2xl">
+                    <p class="text-sm font-bold uppercase tracking-wide text-green-100 mb-2">🎁 Offre École Fondatrice</p>
+                    <h3 class="text-2xl md:text-3xl font-black mb-6">Pour les 50 premières écoles inscrites</h3>
+                    <div class="grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto mb-8 text-left">
+                        <div class="flex items-center bg-white/10 rounded-lg px-4 py-3">
+                            <i class="fas fa-check-circle mr-3"></i>
+                            <span class="font-semibold">Frais d'installation OFFERTS</span>
+                        </div>
+                        <div class="flex items-center bg-white/10 rounded-lg px-4 py-3">
+                            <i class="fas fa-check-circle mr-3"></i>
+                            <span class="font-semibold">Formation initiale OFFERTE</span>
+                        </div>
+                        <div class="flex items-center bg-white/10 rounded-lg px-4 py-3">
+                            <i class="fas fa-check-circle mr-3"></i>
+                            <span class="font-semibold">Paramétrage de votre école OFFERT</span>
+                        </div>
+                        <div class="flex items-center bg-white/10 rounded-lg px-4 py-3">
+                            <i class="fas fa-check-circle mr-3"></i>
+                            <span class="font-semibold">1er mois OFFERT</span>
+                        </div>
+                    </div>
+                    @php
+                        $cheapestMonthlyPrice = collect($plans ?? [])->where('monthly_price', '>', 0)->min('monthly_price');
+                    @endphp
+                    @if ($cheapestMonthlyPrice)
+                        <p class="text-xl font-black mb-6">🔥 À partir de {{ number_format($cheapestMonthlyPrice, 0, ',', ' ') }} FCFA/mois</p>
+                    @endif
+                    <a href="{{ route('request-account') }}" class="inline-block bg-white hover:bg-gray-100 text-green-700 font-bold px-8 py-4 rounded-lg transition shadow-lg">
+                        PROFITER DE L'OFFRE
+                    </a>
+                </div>
+            </div>
+
+            <!-- Message commercial -->
+            <div class="text-center mt-16 max-w-2xl mx-auto reveal">
+                <p class="text-lg font-bold text-gray-900 mb-2">
+                    Pas besoin d'être une grande école pour avoir de grands outils.
+                </p>
+                <p class="text-gray-600 mb-6">
+                    Simple École vous accompagne dans la digitalisation de votre établissement, quelle que soit sa taille.
+                </p>
+                <a href="#contact" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-4 rounded-lg transition shadow-lg">
+                    DEMANDER UNE DÉMONSTRATION
+                </a>
             </div>
         </div>
     </section>
@@ -974,6 +1060,22 @@
             }
         });
 
+        // Pricing: toggle Mensuel / Annuel
+        const billingBtns = document.querySelectorAll('.billing-toggle-btn');
+        function setBilling(mode) {
+            billingBtns.forEach(btn => {
+                const active = btn.dataset.billing === mode;
+                btn.classList.toggle('bg-blue-600', active);
+                btn.classList.toggle('text-white', active);
+                btn.classList.toggle('shadow', active);
+                btn.classList.toggle('text-gray-600', !active);
+            });
+            document.querySelectorAll('.plan-price-monthly').forEach(el => el.classList.toggle('hidden', mode === 'annual'));
+            document.querySelectorAll('.plan-price-annual').forEach(el => el.classList.toggle('hidden', mode === 'monthly'));
+            document.querySelectorAll('.plan-savings-annual').forEach(el => el.classList.toggle('hidden', mode === 'monthly'));
+        }
+        billingBtns.forEach(btn => btn.addEventListener('click', () => setBilling(btn.dataset.billing)));
+        setBilling('monthly');
 
     </script>
 </body>

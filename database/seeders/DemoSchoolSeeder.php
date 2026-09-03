@@ -20,8 +20,8 @@ class DemoSchoolSeeder extends Seeder
         $school = School::updateOrCreate(
             ['email' => 'demo-ecole@schoolmanager.com'],
             [
-                'name' => 'École Les Mirabelles (Démo)',
-                'slug' => 'ecole-les-mirabelles-demo-'.time(),
+                'name' => 'ECOLE SIMPLE ACCADEMIE',
+                'slug' => 'ecole-simple-accademie-demo-'.time(),
                 'phone' => '+225 07 00 00 00 00',
                 'address' => 'Cocody, Abidjan, Côte d\'Ivoire',
                 'school_type' => 'both',
