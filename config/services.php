@@ -39,6 +39,8 @@ return [
         'client_id' => env('ORANGE_SMS_CLIENT_ID'),
         'client_secret' => env('ORANGE_SMS_CLIENT_SECRET'),
         'sender_name' => env('ORANGE_SMS_SENDER_NAME', 'MIRABELLES'),
+        // Indicatif pays ajouté aux numéros saisis au format local.
+        'country_code' => env('ORANGE_SMS_COUNTRY_CODE', '225'),
         'dev_mode' => env('ORANGE_SMS_DEV_MODE', true),
     ],
 

@@ -13,6 +13,8 @@ class OrangeSmsService
 
     private $senderName;
 
+    private $countryCode;
+
     private $devMode;
 
     public function __construct()
@@ -20,6 +22,7 @@ class OrangeSmsService
         $this->clientId = config('services.orange_sms.client_id');
         $this->clientSecret = config('services.orange_sms.client_secret');
         $this->senderName = config('services.orange_sms.sender_name');
+        $this->countryCode = (string) config('services.orange_sms.country_code', '225');
         $this->devMode = config('services.orange_sms.dev_mode', true);
     }
 
@@ -119,25 +122,25 @@ class OrangeSmsService
     }
 
     /**
-     * Formater le numéro de téléphone au format international
+     * Formater le numéro de téléphone au format international.
      */
     private function formatPhoneNumber(string $phone): string
     {
-        // Supprimer tous les caractères non numériques
-        $phone = preg_replace('/[^0-9]/', '', $phone);
+        $digits = preg_replace('/[^0-9]/', '', $phone);
 
-        // Si le numéro commence par 0, le remplacer par l'indicatif pays
-        if (substr($phone, 0, 1) === '0') {
-            // ⚠️ ADAPTEZ SELON VOTRE PAYS :
-            // 221 = Sénégal
-            // 225 = Côte d'Ivoire
-            // 237 = Cameroun
-            // 223 = Mali
-            // 226 = Burkina Faso
-            $countryCode = '221'; // ← Changez ici selon votre pays
-            $phone = $countryCode.substr($phone, 1);
+        if ($digits === '') {
+            return '';
         }
 
-        return $phone;
+        // Déjà au format international (commence par l'indicatif) : ne rien faire.
+        if (str_starts_with($digits, $this->countryCode)) {
+            return $digits;
+        }
+
+        // Depuis le passage à la numérotation à 10 chiffres (2021), le 0 initial
+        // fait partie du numéro ivoirien (ex: 07 07 07 07 07) : il ne doit plus
+        // être retiré, sous peine de produire un numéro à 12 chiffres invalide
+        // (même correctif que WhatsAppService::formatPhoneNumber()).
+        return $this->countryCode.$digits;
     }
 }
