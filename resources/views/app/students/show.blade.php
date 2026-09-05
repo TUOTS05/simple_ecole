@@ -5,7 +5,18 @@
 
 @section('content')
 <div class="max-w-5xl mx-auto">
-    
+
+    @if(session('success'))
+    <div class="bg-accent text-white px-6 py-4 rounded-lg mb-6">{{ session('success') }}</div>
+    @endif
+    @if($errors->any())
+    <div class="bg-danger text-white px-6 py-4 rounded-lg mb-6">
+        <ul class="list-disc pl-5">
+            @foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach
+        </ul>
+    </div>
+    @endif
+
     <!-- En-tête -->
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center">
@@ -165,10 +176,18 @@
                                 </div>
                             </div>
                             @if($student->id_card_path)
-                                <a href="{{ asset('storage/' . $student->id_card_path) }}" target="_blank" 
-                                class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-sm">
-                                    Télécharger
-                                </a>
+                                <div class="flex items-center gap-2">
+                                    <a href="{{ asset('storage/' . $student->id_card_path) }}?v={{ $student->updated_at->timestamp }}" target="_blank"
+                                    class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-sm">
+                                        Télécharger
+                                    </a>
+                                    <form action="{{ route('app.students.card.reprint', $student) }}" method="POST" onsubmit="return confirm('Régénérer la carte scolaire ? L\'ancien QR code ne fonctionnera plus.');">
+                                        @csrf
+                                        <button type="submit" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition shadow-sm border border-gray-300">
+                                            Réimprimer
+                                        </button>
+                                    </form>
+                                </div>
                             @else
                                 <span class="text-xs text-gray-400 italic">Non générée (Payer les frais d'inscription)</span>
                             @endif

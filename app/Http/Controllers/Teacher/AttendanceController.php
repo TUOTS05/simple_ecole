@@ -10,6 +10,7 @@ use App\Models\SchoolClass;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -138,6 +139,52 @@ class AttendanceController extends Controller
         }
 
         return view('teacher.attendance.create', compact('teacherClasses', 'class', 'students', 'selectedClassId', 'selectedDate', 'selectedPeriod', 'existingAttendances'));
+    }
+
+    /**
+     * Résout le code scanné (QR de la carte scolaire) en élève, pour le pointage à la volée
+     * pendant l'appel. Le pointage réel n'est effectué qu'à la soumission du formulaire (store) ;
+     * cette route sert uniquement à identifier l'élève depuis la caméra.
+     */
+    public function scanLookup(Request $request)
+    {
+        $validated = $request->validate([
+            'code' => 'required|string',
+            'class_id' => 'required|exists:school_classes,id',
+        ]);
+
+        $teacher = auth()->user();
+
+        if (! $teacher->teacherAssignments()->where('school_class_id', $validated['class_id'])->exists()) {
+            return response()->json(['success' => false, 'message' => 'Classe non autorisée.'], 403);
+        }
+
+        try {
+            $decoded = Crypt::decryptString($validated['code']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'QR code invalide ou illisible.']);
+        }
+
+        if (! str_starts_with($decoded, 'student_card:')) {
+            return response()->json(['success' => false, 'message' => 'QR code invalide.']);
+        }
+
+        $studentId = (int) str_replace('student_card:', '', $decoded);
+
+        $student = SchoolClass::findOrFail($validated['class_id'])
+            ->students()
+            ->where('students.id', $studentId)
+            ->first();
+
+        if (! $student) {
+            return response()->json(['success' => false, 'message' => "Cet élève n'appartient pas à la classe sélectionnée."]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'student_id' => $student->id,
+            'name' => trim($student->last_name.' '.$student->first_name),
+        ]);
     }
 
     public function history($classId = null)

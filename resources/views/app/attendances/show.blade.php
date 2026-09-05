@@ -11,9 +11,6 @@
             <a href="{{ route('app.attendances.index') }}" class="text-primary hover:text-primary-dark font-semibold">
                 ← Retour à l'historique
             </a>
-            <a href="{{ route('app.attendances.create', ['date' => $date]) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-semibold transition">
-                ✏️ Modifier cet appel
-            </a>
         </div>
 
         <div class="bg-white rounded-lg shadow overflow-hidden">

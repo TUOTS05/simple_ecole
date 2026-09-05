@@ -43,6 +43,26 @@
     </div>
 
     @if(isset($students) && $students->count() > 0)
+
+        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-secondary">
+            <h2 class="text-xl font-bold text-gray-800 mb-2 flex items-center">
+                <span class="mr-2">📷</span> 2. Scanner les cartes scolaires (optionnel)
+            </h2>
+            <p class="text-sm text-gray-500 mb-4">Scannez le QR code de la carte de chaque élève avec la caméra : il sera automatiquement pointé « Présent » dans la liste ci-dessous.</p>
+
+            <div class="flex items-center gap-3 mb-4">
+                <button type="button" id="startScanBtn" class="bg-secondary hover:bg-yellow-500 text-gray-900 px-5 py-2 rounded-lg font-semibold text-sm transition">
+                    Démarrer le scanner
+                </button>
+                <button type="button" id="stopScanBtn" class="hidden bg-gray-200 hover:bg-gray-300 text-gray-800 px-5 py-2 rounded-lg font-semibold text-sm transition">
+                    Arrêter le scanner
+                </button>
+            </div>
+
+            <div id="qr-reader" class="hidden mx-auto" style="width: 300px; max-width: 100%;"></div>
+            <div id="scanFeedback" class="mt-3 text-center font-semibold text-sm"></div>
+        </div>
+
         <form action="{{ route('teacher.attendance.store') }}" method="POST">
             @csrf
             <input type="hidden" name="class_id" value="{{ $selectedClassId }}">
@@ -50,10 +70,10 @@
             <!-- ID AJOUTÉ ET VALEUR FORCÉE DEPUIS LE CONTRÔLEUR -->
             <input type="hidden" id="periodHidden" name="period" value="{{ $selectedPeriod ?? 'matin' }}">
 
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-accent">
+            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-accent mt-6">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
                     <h2 class="text-xl font-bold text-gray-800 flex items-center">
-                        <span class="mr-2">✅</span> 2. Pointer les élèves ({{ $students->count() }})
+                        <span class="mr-2">✅</span> 3. Pointer les élèves ({{ $students->count() }})
                     </h2>
                     <div class="flex space-x-2">
                         <button type="button" onclick="setAllStatus('present')" class="bg-green-100 hover:bg-green-200 text-green-700 px-4 py-2 rounded-lg text-sm font-semibold transition">✓ Tous Présents</button>
@@ -73,13 +93,14 @@
                                 <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Note</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="studentsTableBody">
                             @foreach($students as $student)
                                 @php
                                     $existing = $existingAttendances->get($student->id);
                                     $currentStatus = $existing ? $existing->status : 'present';
                                 @endphp
-                                <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                                <tr class="border-b border-gray-100 hover:bg-gray-50 transition"
+                                    data-student-id="{{ $student->id }}">
                                     <td class="py-3 px-4">
                                         <div class="font-semibold text-gray-800">{{ $student->last_name }} {{ $student->first_name }}</div>
                                         <div class="text-xs text-gray-500 font-mono">{{ $student->matricule ?? 'N/A' }}</div>
@@ -108,6 +129,12 @@
     @endif
 </div>
 
+@if(isset($students) && $students->count() > 0)
+    @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    @endpush
+@endif
+
 <script>
     // 1. Synchronisation infaillible au chargement de la page
     document.addEventListener('DOMContentLoaded', function() {
@@ -129,5 +156,101 @@
             radio.checked = true;
         });
     }
+
+    // 4. Scanner QR des cartes scolaires : la carte encode un code chiffré (pas de donnée
+    // lisible), donc son identification se fait côté serveur (route scan-lookup) qui vérifie
+    // aussi que l'élève appartient bien à la classe chargée.
+    (function() {
+        const startBtn = document.getElementById('startScanBtn');
+        const stopBtn = document.getElementById('stopScanBtn');
+        const readerEl = document.getElementById('qr-reader');
+        const feedback = document.getElementById('scanFeedback');
+        if (!startBtn) return;
+
+        const currentClassId = {{ $selectedClassId ?? 'null' }};
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+        let html5QrCode = null;
+        const lastScanAt = {};
+
+        function showFeedback(message, isError) {
+            feedback.textContent = message;
+            feedback.className = 'mt-3 text-center font-semibold text-sm ' + (isError ? 'text-red-600' : 'text-green-600');
+        }
+
+        function handleDecodedCode(rawCode) {
+            const code = (rawCode || '').trim();
+            if (!code) return;
+
+            const now = Date.now();
+            if (lastScanAt[code] && (now - lastScanAt[code]) < 2000) {
+                return; // évite les doublons pendant que la carte reste face à la caméra
+            }
+            lastScanAt[code] = now;
+
+            fetch('{{ route('teacher.attendance.scan-lookup') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify({ code: code, class_id: currentClassId }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success) {
+                        showFeedback('❌ ' + (data.message || 'Code non reconnu.'), true);
+                        return;
+                    }
+
+                    const row = document.querySelector('#studentsTableBody tr[data-student-id="' + data.student_id + '"]');
+                    if (!row) {
+                        showFeedback('❌ Élève introuvable dans la liste affichée.', true);
+                        return;
+                    }
+
+                    const presentRadio = row.querySelector('input[type="radio"][value="present"]');
+                    if (presentRadio) {
+                        presentRadio.checked = true;
+                    }
+                    row.classList.add('bg-green-50');
+                    showFeedback('✅ ' + data.name + ' pointé(e) présent(e).', false);
+                })
+                .catch(() => showFeedback('❌ Erreur réseau pendant la vérification du code.', true));
+        }
+
+        startBtn.addEventListener('click', function() {
+            if (typeof Html5Qrcode === 'undefined') {
+                showFeedback('Le scanner QR n\'a pas pu se charger. Vérifiez votre connexion internet.', true);
+                return;
+            }
+
+            readerEl.classList.remove('hidden');
+            html5QrCode = new Html5Qrcode('qr-reader');
+            html5QrCode.start(
+                { facingMode: 'environment' },
+                { fps: 10, qrbox: 220 },
+                handleDecodedCode,
+                () => {}
+            ).then(function() {
+                startBtn.classList.add('hidden');
+                stopBtn.classList.remove('hidden');
+            }).catch(function(err) {
+                readerEl.classList.add('hidden');
+                showFeedback('Impossible d\'accéder à la caméra : ' + err, true);
+            });
+        });
+
+        stopBtn.addEventListener('click', function() {
+            if (!html5QrCode) return;
+            html5QrCode.stop().then(function() {
+                html5QrCode.clear();
+                readerEl.classList.add('hidden');
+                startBtn.classList.remove('hidden');
+                stopBtn.classList.add('hidden');
+            });
+        });
+    })();
 </script>
 @endsection

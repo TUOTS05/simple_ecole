@@ -36,7 +36,7 @@
         .validity { margin-top: .7mm; color: #56657a; font-size: 5.5px; }
         .qr-cell { width: 12mm; text-align: right; }
         .qr { width: 10.5mm; height: 10.5mm; padding: .5mm; background: #fff; border: .25mm solid #ccd7e5; }
-        .qr img { display: block; width: 9.5mm; height: 9.5mm; }
+        .qr svg { display: block; width: 9.5mm; height: 9.5mm; }
         .verify { margin-top: .35mm; color: #62718a; font-size: 4.5px; text-align: right; }
     </style>
 </head>
@@ -47,7 +47,6 @@
             : null;
         $schoolYear = now()->format('Y') . '-' . now()->addYear()->format('Y');
         $studentName = trim(($student->last_name ?? '') . ' ' . ($student->first_name ?? ''));
-        $qrPayload = $qrData ?? ($student->matricule ?? 'INCONNU');
     @endphp
 
     <div class="card">
@@ -102,7 +101,7 @@
                     </td>
                     <td class="qr-cell">
                         <div class="qr">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ urlencode($qrPayload) }}" alt="QR code">
+                            {!! $qrSvg ?? '' !!}
                         </div>
                         <div class="verify">Vérification</div>
                     </td>

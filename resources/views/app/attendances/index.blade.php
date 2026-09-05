@@ -14,12 +14,8 @@
 <div class="flex justify-between items-center mb-6">
     <div>
         <h1 class="text-3xl font-bold text-gray-800">Bilan des présences</h1>
-        <p class="text-gray-600 mt-1">Filtrer par classe, période et intervalle de temps.</p>
+        <p class="text-gray-600 mt-1">Filtrer par classe, période et intervalle de temps. L'appel est réalisé par l'enseignant depuis son espace.</p>
     </div>
-    <a href="{{ route('app.attendances.create') }}"
-        class="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg font-semibold transition">
-        + Faire l'appel
-    </a>
 </div>
 
 <div class="bg-white rounded-lg shadow p-6 mb-6">

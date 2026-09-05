@@ -154,6 +154,8 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent,ac
             ->name('students.by-matricule');
         Route::get('/students/{student}/dossier', [StudentController::class, 'dossier'])
             ->name('students.dossier');
+        Route::post('/students/{student}/card/reprint', [StudentController::class, 'reprintCard'])
+            ->name('students.card.reprint');
 
         // ==========================================
         // EXPORTS ADMIN (Élèves)
@@ -205,10 +207,8 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent,ac
         Route::get('/settings/sms', [SmsSettingsController::class, 'index'])->name('settings.sms');
         Route::post('/settings/sms', [SmsSettingsController::class, 'update'])->name('settings.sms.update');
 
-        // Présences
+        // Présences (lecture seule : l'appel se fait côté enseignant, par QR code ou manuellement)
         Route::get('/attendances', [AttendanceController::class, 'index'])->name('attendances.index');
-        Route::get('/attendances/create', [AttendanceController::class, 'create'])->name('attendances.create');
-        Route::post('/attendances', [AttendanceController::class, 'store'])->name('attendances.store');
         Route::get('/attendances/by-date/{date}', [AttendanceController::class, 'showByDate'])->name('attendances.show-by-date');
 
         // Notes et Bulletins
@@ -292,6 +292,7 @@ Route::middleware(['auth', 'teacher', 'school.active', 'tenant'])->prefix('teach
     Route::get('/attendance', [App\Http\Controllers\Teacher\AttendanceController::class, 'index'])->name('attendance.index');
     Route::get('/attendance/{classId?}/create', [App\Http\Controllers\Teacher\AttendanceController::class, 'create'])->name('attendance.create');
     Route::post('/attendance', [App\Http\Controllers\Teacher\AttendanceController::class, 'store'])->name('attendance.store');
+    Route::post('/attendance/scan-lookup', [App\Http\Controllers\Teacher\AttendanceController::class, 'scanLookup'])->name('attendance.scan-lookup');
     Route::get('/attendance/{classId?}/history', [App\Http\Controllers\Teacher\AttendanceController::class, 'history'])->name('attendance.history');
     // ==========================================
     // EXPORTS ENSEIGNANT (Présences)

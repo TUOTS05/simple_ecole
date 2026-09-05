@@ -287,10 +287,10 @@
                 <span class="text-3xl mb-2">👨‍🎓</span>
                 <span class="text-sm font-semibold">Nouvel élève</span>
             </a>
-            <a href="{{ route('app.attendances.create') }}" 
+            <a href="{{ route('app.attendances.index') }}"
                class="flex flex-col items-center p-4 bg-accent hover:bg-green-600 text-white rounded-lg transition">
                 <span class="text-3xl mb-2">✅</span>
-                <span class="text-sm font-semibold">Faire l'appel</span>
+                <span class="text-sm font-semibold">Présences</span>
             </a>
             <a href="{{ route('app.payments.create') }}" 
                class="flex flex-col items-center p-4 bg-secondary hover:bg-yellow-400 text-gray-800 rounded-lg transition">

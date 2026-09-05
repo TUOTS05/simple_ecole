@@ -15,10 +15,13 @@ use App\Models\StudentInstallment;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class StudentController extends Controller
 {
@@ -370,6 +373,44 @@ class StudentController extends Controller
         ]);
 
         return view('app.students.show', compact('student'));
+    }
+
+    /**
+     * Régénère la carte scolaire (PDF + QR chiffré) de l'élève, par ex. pour les cartes émises
+     * avant le passage au QR chiffré, ou en cas de perte/nouvelle classe.
+     */
+    public function reprintCard(Student $student)
+    {
+        if ($student->school_id !== session('current_school_id')) {
+            abort(403, 'Accès non autorisé à cet élève.');
+        }
+
+        if (! $student->admission_number && ! $student->matricule) {
+            return back()->withErrors(['error' => "Cet élève n'a pas encore de matricule (frais d'inscription non réglés)."]);
+        }
+
+        $school = School::find($student->school_id);
+        $student->load('classes');
+        $currentClassName = $student->classes->first()->name ?? 'Non assignée';
+
+        $qrToken = Crypt::encryptString('student_card:'.$student->id);
+        $qrSvg = QrCode::size(150)->generate($qrToken);
+        $qrSvg = substr($qrSvg, strpos($qrSvg, '<svg'));
+
+        $cardPdf = Pdf::loadView('pdf.student-card', [
+            'student' => $student,
+            'school' => $school,
+            'qrSvg' => $qrSvg,
+            'currentClassName' => $currentClassName,
+        ]);
+
+        $cardFileName = 'carte_'.($student->admission_number ?? $student->matricule).'.pdf';
+        $cardPath = 'student_cards/'.$cardFileName;
+        Storage::disk('public')->put($cardPath, $cardPdf->output());
+
+        $student->update(['id_card_path' => $cardPath]);
+
+        return back()->with('success', '✅ Carte scolaire régénérée avec succès.');
     }
 
     /**
