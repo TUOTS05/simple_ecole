@@ -1,0 +1,11 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/s3education/public_html/simple_ecole
+    - export PHP=/opt/alt/php83/usr/bin/php
+    - /bin/cp -R * $DEPLOYPATH
+    - $PHP $DEPLOYPATH/artisan migrate --force
+    - $PHP $DEPLOYPATH/artisan storage:link
+    - $PHP $DEPLOYPATH/artisan config:clear
+    - $PHP $DEPLOYPATH/artisan route:clear
+    - $PHP $DEPLOYPATH/artisan view:clear
