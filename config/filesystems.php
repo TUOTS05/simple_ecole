@@ -33,7 +33,14 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // 'serve' était à true sans 'url' dédié : Laravel enregistrait alors une route
+            // /storage/{path} pour ce disque *privé*, sur la même URL que le disque "public"
+            // (qui, lui, est exposé via le lien symbolique storage:link). Cette route entrait
+            // en conflit avec les liens vers les cartes/reçus/photos déjà générés, et les
+            // servait avec ce disque privé (visibility non publique) → 403 même sur un fichier
+            // existant. Ce disque n'est utilisé par aucune fonctionnalité de l'appli qui aurait
+            // besoin d'être servie par URL, d'où sa désactivation ici.
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],
