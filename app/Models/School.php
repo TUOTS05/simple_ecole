@@ -63,7 +63,13 @@ class School extends Model
 
     public function isTrialActive(): bool
     {
-        return $this->trial_ends_at && $this->trial_ends_at->isFuture();
+        // La bannière "Essai gratuit" doit disparaître dès que l'école choisit un vrai forfait,
+        // même si trial_ends_at n'était pas (encore) nettoyé pour une raison quelconque : on
+        // exige donc explicitement que l'école soit sur le plan "Essai" en plus d'une échéance
+        // encore future, plutôt que de se fier uniquement à cette date.
+        return $this->subscription_plan === 'Essai'
+            && $this->trial_ends_at
+            && $this->trial_ends_at->isFuture();
     }
 
     public function trialDaysRemaining(): int

@@ -70,7 +70,7 @@ class SchoolOnboardingController extends Controller
      */
     public function showRequestForm()
     {
-        $plans = SubscriptionPlan::where('is_active', true)->get();
+        $plans = SubscriptionPlan::where('is_active', true)->orderBy('sort_order')->orderBy('monthly_price')->get();
 
         return view('auth.request-account', compact('plans'));
     }

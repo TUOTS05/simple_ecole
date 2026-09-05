@@ -380,10 +380,13 @@ class SubscriptionController extends Controller
 
         // La demande précise une durée (mensuelle ou annuelle) qui était jusqu'ici toujours ignorée :
         // l'activation forçait systématiquement +1 an au tarif annuel, quelle que soit la durée choisie.
+        // Le plan "Essai" est un cas particulier : gratuit et toujours limité à 14 jours, quelle
+        // que soit la durée demandée (accepter "annuel" y donnerait sinon un an d'essai gratuit).
+        $isTrialPlan = $plan->name === 'Essai';
         $isMonthly = $subRequest->duration === 'monthly';
         $subscriptionStart = now();
-        $subscriptionEnd = $isMonthly ? now()->addMonth() : now()->addYear();
-        $subscriptionAmount = $isMonthly ? ($plan->monthly_price ?? $plan->yearly_price) : $plan->yearly_price;
+        $subscriptionEnd = $isTrialPlan ? now()->addDays(14) : ($isMonthly ? now()->addMonth() : now()->addYear());
+        $subscriptionAmount = $isTrialPlan ? 0 : ($isMonthly ? ($plan->monthly_price ?? $plan->yearly_price) : $plan->yearly_price);
 
         // 1. ACTIVER CETTE ÉCOLE
         $school->update([
@@ -394,10 +397,12 @@ class SubscriptionController extends Controller
             'subscription_end_date' => $subscriptionEnd,
             'max_students' => $plan->max_students ?? 999999,
             'max_users' => $plan->max_users ?? 999999,
-            // L'école passe d'un essai gratuit à un abonnement payant : sans remettre ce champ à
-            // null, la bannière "Essai gratuit" restait affichée (trial_ends_at encore dans le
-            // futur) alors que l'école a désormais un vrai contrat actif.
-            'trial_ends_at' => null,
+            // Si l'école passe (ou reste) sur le plan "Essai", on (re)lance son compte à rebours
+            // d'essai gratuit ; sinon on le nettoie explicitement — sans ça, la bannière "Essai
+            // gratuit" restait affichée après passage à un abonnement payant (trial_ends_at
+            // encore dans le futur) alors que l'école a désormais un vrai contrat actif. Voir
+            // aussi School::isTrialActive(), qui exige en plus que subscription_plan === 'Essai'.
+            'trial_ends_at' => $isTrialPlan ? $subscriptionEnd : null,
         ]);
 
         // 1bis. Créer l'année scolaire active de l'école : sans elle, tous les modules métier
