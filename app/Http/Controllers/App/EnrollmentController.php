@@ -77,6 +77,12 @@ class EnrollmentController extends Controller
         // Récupérer les infos parent de la session si elles existent
         $parentDetails = session('parent_details', []);
 
+        // Un élève doit toujours être rattaché à une année scolaire active (voir store()).
+        if (! $schoolYears->contains('is_active', true)) {
+            return redirect()->route('app.school-years.index')
+                ->with('error', "Aucune année scolaire active n'est configurée pour votre établissement. Créez-en une (ou activez-en une) avant d'inscrire un élève.");
+        }
+
         return view('app.enrollments.create', compact(
             'students',
             'schoolYears',
@@ -133,6 +139,17 @@ class EnrollmentController extends Controller
 
         $schoolId = session('current_school_id');
         $year = date('Y');
+
+        // Un élève doit toujours être rattaché à une année scolaire active : sans ce garde-fou,
+        // l'élève était créé quand même mais sans inscription (Enrollment) ni échéancier de
+        // frais, car le bloc plus bas ne faisait rien silencieusement si aucune année active
+        // n'existait.
+        $activeYear = SchoolYear::where('school_id', $schoolId)->where('is_active', true)->first();
+        if (! $activeYear) {
+            return back()->withErrors([
+                'class_id' => "Aucune année scolaire active n'est configurée pour votre établissement. Créez-en une avant d'inscrire un élève.",
+            ])->withInput();
+        }
 
         // L'email des users est unique globalement (toutes écoles confondues) : si le tuteur
         // saisi correspond à un compte d'une autre école (ou d'un autre rôle), la création
@@ -255,23 +272,20 @@ class EnrollmentController extends Controller
             }
             // ==========================================
 
-            // 5. Créer l'inscription (Enrollment)
-            $activeYear = SchoolYear::where('school_id', $schoolId)->where('is_active', true)->first();
-            if ($activeYear) {
-                $enrollment = Enrollment::create([
-                    'school_id' => $schoolId,
-                    'student_id' => $student->id,
-                    'school_year_id' => $activeYear->id,
-                    'school_class_id' => $validated['class_id'],
-                    'enrollment_date' => $validated['admission_date'],
-                    'status' => 'enrolled',
-                ]);
+            // 5. Créer l'inscription (Enrollment) — l'année active a déjà été vérifiée plus haut
+            $enrollment = Enrollment::create([
+                'school_id' => $schoolId,
+                'student_id' => $student->id,
+                'school_year_id' => $activeYear->id,
+                'school_class_id' => $validated['class_id'],
+                'enrollment_date' => $validated['admission_date'],
+                'status' => 'enrolled',
+            ]);
 
-                $student->classes()->attach($validated['class_id']);
+            $student->classes()->attach($validated['class_id']);
 
-                // 6. GÉNÉRATION AUTOMATIQUE DES ÉCHÉANCES
-                $this->generateFeeSchedule($enrollment, $validated['class_id'], $validated['admission_date']);
-            }
+            // 6. GÉNÉRATION AUTOMATIQUE DES ÉCHÉANCES
+            $this->generateFeeSchedule($enrollment, $validated['class_id'], $validated['admission_date']);
 
             DB::commit();
 
