@@ -36,7 +36,7 @@
         .validity { margin-top: .7mm; color: #56657a; font-size: 5.5px; }
         .qr-cell { width: 12mm; text-align: right; }
         .qr { width: 10.5mm; height: 10.5mm; padding: .5mm; background: #fff; border: .25mm solid #ccd7e5; }
-        .qr svg { display: block; width: 9.5mm; height: 9.5mm; }
+        .qr img { display: block; width: 9.5mm; height: 9.5mm; }
         .verify { margin-top: .35mm; color: #62718a; font-size: 4.5px; text-align: right; }
     </style>
 </head>
@@ -101,7 +101,9 @@
                     </td>
                     <td class="qr-cell">
                         <div class="qr">
-                            {!! $qrSvg ?? '' !!}
+                            @if($qrImageData ?? null)
+                                <img src="{{ $qrImageData }}" alt="QR code">
+                            @endif
                         </div>
                         <div class="verify">Vérification</div>
                     </td>

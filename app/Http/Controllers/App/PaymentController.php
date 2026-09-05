@@ -9,13 +9,12 @@ use App\Models\SchoolClass;
 use App\Models\SchoolYear;
 use App\Models\Student;
 use App\Models\StudentInstallment; // AJOUTÉ
+use App\Services\StudentCardService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon; // AJOUTÉ
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class PaymentController extends Controller
 {
@@ -210,22 +209,7 @@ class PaymentController extends Controller
             // QR chiffré (identifiant élève, pas de donnée lisible) et généré localement :
             // avant, la carte encodait le matricule en clair et l'image était demandée à une
             // API externe (api.qrserver.com), ce qui fuitait le matricule à un tiers.
-            $qrToken = Crypt::encryptString('student_card:'.$student->id);
-            $qrSvg = QrCode::size(150)->generate($qrToken);
-            $qrSvg = substr($qrSvg, strpos($qrSvg, '<svg'));
-
-            $cardPdf = Pdf::loadView('pdf.student-card', [
-                'student' => $student,
-                'school' => $school,
-                'qrSvg' => $qrSvg,
-                'currentClassName' => $currentClassName, // ✅ Sera maintenant correctement affiché
-            ]);
-
-            $cardFileName = 'carte_'.($student->admission_number ?? $student->matricule ?? 'unknown').'.pdf';
-            $cardPath = 'student_cards/'.$cardFileName;
-            Storage::disk('public')->put($cardPath, $cardPdf->output());
-
-            $student->update(['id_card_path' => $cardPath]);
+            $cardPath = app(StudentCardService::class)->generate($student, $school, $currentClassName);
         }
         // 6. Récupérer les échéances restantes pour le reçu
         $pendingInstallments = StudentInstallment::where('enrollment_id', $validatedData['enrollment_id'])

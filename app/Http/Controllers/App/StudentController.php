@@ -13,15 +13,13 @@ use App\Models\SchoolYear;
 use App\Models\Student;
 use App\Models\StudentInstallment;
 use App\Models\User;
+use App\Services\StudentCardService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class StudentController extends Controller
 {
@@ -393,22 +391,7 @@ class StudentController extends Controller
         $student->load('classes');
         $currentClassName = $student->classes->first()->name ?? 'Non assignée';
 
-        $qrToken = Crypt::encryptString('student_card:'.$student->id);
-        $qrSvg = QrCode::size(150)->generate($qrToken);
-        $qrSvg = substr($qrSvg, strpos($qrSvg, '<svg'));
-
-        $cardPdf = Pdf::loadView('pdf.student-card', [
-            'student' => $student,
-            'school' => $school,
-            'qrSvg' => $qrSvg,
-            'currentClassName' => $currentClassName,
-        ]);
-
-        $cardFileName = 'carte_'.($student->admission_number ?? $student->matricule).'.pdf';
-        $cardPath = 'student_cards/'.$cardFileName;
-        Storage::disk('public')->put($cardPath, $cardPdf->output());
-
-        $student->update(['id_card_path' => $cardPath]);
+        app(StudentCardService::class)->generate($student, $school, $currentClassName);
 
         return back()->with('success', '✅ Carte scolaire régénérée avec succès.');
     }
