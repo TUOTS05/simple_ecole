@@ -56,6 +56,10 @@
         </div>
     @endif
 
+    @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    @endpush
+
     <!-- Grille des enfants -->
     @if(count($childrenBySchool) > 0)
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -117,6 +121,42 @@
                                 </p>
                             </div>
                         </div>
+
+                        <!-- Progression de la moyenne (compositions récentes, toutes années) -->
+                        @if(count($data['progression']['labels']) >= 2)
+                            <div class="px-5 pb-3">
+                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1.5">Progression de la moyenne</p>
+                                <canvas id="progressionChart{{ $student->id }}" height="70"></canvas>
+                            </div>
+                            @push('scripts')
+                            <script>
+                                new Chart(document.getElementById('progressionChart{{ $student->id }}'), {
+                                    type: 'line',
+                                    data: {
+                                        labels: @json($data['progression']['labels']),
+                                        datasets: [{
+                                            label: 'Moyenne /20',
+                                            data: @json($data['progression']['averages']),
+                                            borderColor: 'rgba(135, 206, 235, 1)',
+                                            backgroundColor: 'rgba(135, 206, 235, 0.2)',
+                                            tension: 0.3,
+                                            fill: true,
+                                            pointRadius: 3
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: true,
+                                        plugins: { legend: { display: false } },
+                                        scales: {
+                                            y: { min: 0, max: 20, ticks: { stepSize: 5 } },
+                                            x: { ticks: { font: { size: 9 } } }
+                                        }
+                                    }
+                                });
+                            </script>
+                            @endpush
+                        @endif
 
                         <!-- Boutons d'action rapide -->
                         <div class="p-5 pt-0 grid grid-cols-2 gap-3 mt-auto">

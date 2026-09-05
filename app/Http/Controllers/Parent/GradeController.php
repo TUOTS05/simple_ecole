@@ -8,6 +8,7 @@ use App\Models\ReportCard;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\User;
+use App\Services\StudentProgressionService;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class GradeController extends Controller
@@ -57,7 +58,10 @@ class GradeController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('parent.grades.index', compact('student', 'siblings', 'reportCards'));
+        // 4. Historique complet de la moyenne, toutes années confondues, pour le graphique de progression
+        $progression = app(StudentProgressionService::class)->forStudent($student);
+
+        return view('parent.grades.index', compact('student', 'siblings', 'reportCards', 'progression'));
     }
 
     /**

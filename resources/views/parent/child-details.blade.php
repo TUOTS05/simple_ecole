@@ -114,6 +114,40 @@
         </div>
     @endif
 
+    <!-- Progression de la moyenne, toutes compositions et années confondues -->
+    @if(count($progression['labels']) >= 2)
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+            <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Progression de la moyenne — toutes années</h2>
+            <canvas id="progressionChart" height="90"></canvas>
+        </div>
+        @push('scripts')
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            new Chart(document.getElementById('progressionChart'), {
+                type: 'line',
+                data: {
+                    labels: @json($progression['labels']),
+                    datasets: [{
+                        label: 'Moyenne /20',
+                        data: @json($progression['averages']),
+                        borderColor: 'rgba(135, 206, 235, 1)',
+                        backgroundColor: 'rgba(135, 206, 235, 0.2)',
+                        tension: 0.3,
+                        fill: true,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { min: 0, max: 20, ticks: { stepSize: 5 } } }
+                }
+            });
+        </script>
+        @endpush
+    @endif
+
     <!-- Menu d'actions -->
     <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
         <a href="{{ route('parent.grades.index', $student->id) }}" class="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm hover:shadow-md transition">

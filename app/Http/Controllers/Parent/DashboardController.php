@@ -8,6 +8,7 @@ use App\Models\Enrollment;
 use App\Models\ReportCard;
 use App\Models\SchoolYear;
 use App\Models\Student;
+use App\Services\StudentProgressionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -32,7 +33,9 @@ class DashboardController extends Controller
         $childrenData = $children->map(function ($child) use ($selectedYearId) {
             $currentYear = $this->resolveYearForChild($child, $selectedYearId);
 
-            return $this->resolveChildStats($child, $currentYear);
+            // Progression limitée aux 8 dernières compositions sur le dashboard (carte compacte) ;
+            // l'historique complet est visible sur la fiche détail de l'enfant.
+            return $this->resolveChildStats($child, $currentYear, progressionLimit: 8);
         });
 
         // Grouper par école
@@ -107,8 +110,11 @@ class DashboardController extends Controller
     /**
      * Calcule les statistiques (inscription, classe, moyenne, taux de paiement, présence)
      * d'un enfant pour une année scolaire donnée. Partagé entre le dashboard et la fiche détail.
+     *
+     * @param  int|null  $progressionLimit  Nombre max de compositions à garder dans l'historique
+     *                                       de progression (null = historique complet, toutes années).
      */
-    private function resolveChildStats(Student $child, ?SchoolYear $currentYear): array
+    private function resolveChildStats(Student $child, ?SchoolYear $currentYear, ?int $progressionLimit = null): array
     {
         $data = [
             'student' => $child,
@@ -119,6 +125,9 @@ class DashboardController extends Controller
             'attendanceRate' => 0,
             'totalDays' => 0,
             'presentDays' => 0,
+            // La progression couvre toutes les années scolaires de l'élève, indépendamment de
+            // l'année sélectionnée pour les autres statistiques.
+            'progression' => app(StudentProgressionService::class)->forStudent($child, $progressionLimit),
         ];
 
         if (! $currentYear) {
