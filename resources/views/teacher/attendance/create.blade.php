@@ -50,7 +50,11 @@
             </h2>
             <p class="text-sm text-gray-500 mb-4">Scannez le QR code de la carte de chaque élève avec la caméra : il sera automatiquement pointé « Présent » dans la liste ci-dessous.</p>
 
-            <div class="flex items-center gap-3 mb-4">
+            <div id="insecureContextWarning" class="hidden bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 text-sm px-4 py-3 rounded-lg mb-4">
+                ⚠️ Le scanner caméra nécessite une connexion sécurisée (HTTPS). Cette page est ouverte en <code>http://</code> non sécurisé : demandez à votre administrateur d'activer le HTTPS sur le site de l'école. En attendant, pointez les présences manuellement ci-dessous.
+            </div>
+
+            <div id="scanControls" class="flex items-center gap-3 mb-4">
                 <button type="button" id="startScanBtn" class="bg-secondary hover:bg-yellow-500 text-gray-900 px-5 py-2 rounded-lg font-semibold text-sm transition">
                     Démarrer le scanner
                 </button>
@@ -165,7 +169,18 @@
         const stopBtn = document.getElementById('stopScanBtn');
         const readerEl = document.getElementById('qr-reader');
         const feedback = document.getElementById('scanFeedback');
+        const scanControls = document.getElementById('scanControls');
+        const insecureWarning = document.getElementById('insecureContextWarning');
         if (!startBtn) return;
+
+        // Les navigateurs bloquent l'accès caméra hors contexte sécurisé (HTTPS, ou localhost
+        // exactement) : sur un domaine .test/.local en http://, mieux vaut prévenir clairement
+        // plutôt que de laisser l'enseignant cliquer sur un bouton qui ne peut pas fonctionner.
+        if (!window.isSecureContext) {
+            scanControls.classList.add('hidden');
+            insecureWarning.classList.remove('hidden');
+            return;
+        }
 
         const currentClassId = {{ $selectedClassId ?? 'null' }};
         const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
@@ -176,6 +191,23 @@
         function showFeedback(message, isError) {
             feedback.textContent = message;
             feedback.className = 'mt-3 text-center font-semibold text-sm ' + (isError ? 'text-red-600' : 'text-green-600');
+        }
+
+        function describeCameraError(err) {
+            const name = (err && (err.name || err.message)) || String(err);
+            if (/NotAllowedError|Permission/i.test(name)) {
+                return 'Accès à la caméra refusé. Autorisez la caméra pour ce site dans les paramètres du navigateur.';
+            }
+            if (/NotFoundError|DevicesNotFound/i.test(name)) {
+                return 'Aucune caméra détectée sur cet appareil.';
+            }
+            if (/NotReadableError|TrackStartError/i.test(name)) {
+                return 'La caméra est déjà utilisée par une autre application.';
+            }
+            if (/Camera streaming not supported/i.test(name)) {
+                return 'connexion non sécurisée (HTTPS requis) ou navigateur non compatible.';
+            }
+            return name;
         }
 
         function handleDecodedCode(rawCode) {
@@ -238,7 +270,7 @@
                 stopBtn.classList.remove('hidden');
             }).catch(function(err) {
                 readerEl.classList.add('hidden');
-                showFeedback('Impossible d\'accéder à la caméra : ' + err, true);
+                showFeedback('Impossible d\'accéder à la caméra : ' + describeCameraError(err), true);
             });
         });
 
