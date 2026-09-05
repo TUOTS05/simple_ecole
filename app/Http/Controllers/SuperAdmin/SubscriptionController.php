@@ -80,6 +80,9 @@ class SubscriptionController extends Controller
             'subscription_end_date' => $validated['end_date'],
             'max_students' => $plan->max_students ?? 999999,
             'max_users' => $plan->max_users ?? 999999,
+            // Voir approveRequest() : sans ça, la bannière "Essai gratuit" restait affichée après
+            // l'activation d'un contrat payant si l'école avait encore un trial_ends_at futur.
+            'trial_ends_at' => null,
         ]);
 
         // 3ter. Garder la table `subscriptions` synchronisée avec les contrats (voir approveRequest()
@@ -209,6 +212,9 @@ class SubscriptionController extends Controller
             'subscription_end_date' => $validated['end_date'],
             'max_students' => $oldContract->max_students ?: $school->max_students,
             'max_users' => $oldContract->max_users ?: $school->max_users,
+            // Voir approveRequest() : garde-fou au cas où l'école aurait encore un trial_ends_at
+            // futur (ex: renouvellement d'un contrat activé avant ce correctif).
+            'trial_ends_at' => null,
         ]);
 
         // 5bis. Garder la table `subscriptions` synchronisée : jusqu'ici seule l'approbation initiale
@@ -388,6 +394,10 @@ class SubscriptionController extends Controller
             'subscription_end_date' => $subscriptionEnd,
             'max_students' => $plan->max_students ?? 999999,
             'max_users' => $plan->max_users ?? 999999,
+            // L'école passe d'un essai gratuit à un abonnement payant : sans remettre ce champ à
+            // null, la bannière "Essai gratuit" restait affichée (trial_ends_at encore dans le
+            // futur) alors que l'école a désormais un vrai contrat actif.
+            'trial_ends_at' => null,
         ]);
 
         // 1bis. Créer l'année scolaire active de l'école : sans elle, tous les modules métier
