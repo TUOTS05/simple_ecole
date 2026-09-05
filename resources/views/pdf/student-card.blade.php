@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <title>Carte scolaire — {{ $student->matricule }}</title>
     <style>
-        @page { size: 85.6mm 54mm; margin: 0; }
+        /* Page volontairement 1mm plus grande que la carte (85.6x54mm, format ID-1) dans
+           chaque dimension : dompdf ajoute une page 2 blanche superflue quand un bloc bordé
+           occupe exactement la taille de la page, même sans dépassement visible réel. */
+        @page { size: 86.6mm 55mm; margin: 0; }
         * { box-sizing: border-box; }
         body { margin: 0; font-family: DejaVu Sans, sans-serif; color: #172033; }
         .card { width: 85.6mm; height: 54mm; position: relative; overflow: hidden; background: #fff; border: .45mm solid #143b74; }
