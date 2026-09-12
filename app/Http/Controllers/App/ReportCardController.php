@@ -23,9 +23,14 @@ class ReportCardController extends Controller
             ->where('is_active', true)
             ->first();
 
+        $schoolYears = SchoolYear::where('school_id', $schoolId)->orderBy('start_date', 'desc')->get();
+
+        // Par défaut l'année active, mais consultable pour une année passée (retrouver ses bulletins).
+        $selectedYearId = $request->get('school_year_id', $currentYear?->id);
+
         // 1. Démarrer la requête avec les relations nécessaires
         $query = ReportCard::where('school_id', $schoolId)
-            ->where('school_year_id', $currentYear?->id)
+            ->where('school_year_id', $selectedYearId)
             ->with(['student', 'schoolClass', 'schoolYear']);
 
         // 2. Appliquer les filtres dynamiquement
@@ -43,8 +48,9 @@ class ReportCardController extends Controller
 
         // 3. Trier et paginer les résultats
         $reportCards = $query->orderBy('created_at', 'desc')->paginate(15);
+        $reportCards->appends($request->query());
 
-        return view('app.report-cards.index', compact('reportCards'));
+        return view('app.report-cards.index', compact('reportCards', 'schoolYears', 'selectedYearId'));
     }
 
     public function create(Request $request)

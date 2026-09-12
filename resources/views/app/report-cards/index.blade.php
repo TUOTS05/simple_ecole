@@ -18,7 +18,7 @@
     </div>
     <div class="flex gap-2">
         {{-- ✅ NOUVEAU : Bouton de téléchargement en masse --}}
-        @php $hasFilter = request('period') || request('month') || request('quarter'); @endphp
+        @php $hasFilter = request('period') || request('month') || request('quarter') || request('school_year_id'); @endphp
         @if($hasFilter)
             <a href="{{ route('app.report-cards.bulk-download', request()->query()) }}"
                 class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition shadow flex items-center gap-2">
@@ -35,6 +35,15 @@
 <!-- Filtres avec basculement dynamique -->
 <div class="bg-white rounded-lg shadow p-6 mb-6">
     <form method="GET" action="{{ route('app.report-cards.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Année scolaire</label>
+            <select name="school_year_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary bg-white">
+                @foreach($schoolYears as $year)
+                <option value="{{ $year->id }}" {{ (int) $selectedYearId === $year->id ? 'selected' : '' }}>{{ $year->name }}{{ $year->is_active ? ' (active)' : '' }}</option>
+                @endforeach
+            </select>
+        </div>
 
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Période</label>
@@ -89,7 +98,7 @@
 </div>
 
 @php
-    $hasFilter = request('period') || request('month') || request('quarter');
+    $hasFilter = request('period') || request('month') || request('quarter') || request('school_year_id');
 @endphp
 
 @if($hasFilter)

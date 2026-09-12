@@ -28,6 +28,16 @@
         </div>
         @endif
 
+        {{-- AFFICHAGE DE L'ANNÉE SCOLAIRE ACTIVE --}}
+        @if(session('current_school_year'))
+        <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-600">Année :</span>
+            <span class="font-semibold text-primary">
+                {{ session('current_school_year')->name }}
+            </span>
+        </div>
+        @endif
+
         <!-- Avatar + Nom -->
         <div class="flex items-center space-x-3">
             <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold">

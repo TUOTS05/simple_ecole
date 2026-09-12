@@ -28,6 +28,12 @@ class PaymentController extends Controller
         $query = Payment::where('school_id', $schoolId)
             ->with(['enrollment.student', 'receivedBy', 'studentInstallment', 'enrollment.schoolClass']);
 
+        if ($request->filled('school_year_id')) {
+            $query->whereHas('enrollment', function ($q) use ($request) {
+                $q->where('school_year_id', $request->school_year_id);
+            });
+        }
+
         if ($request->filled('payment_type')) {
             $query->where('payment_type', $request->payment_type);
         }
@@ -56,8 +62,9 @@ class PaymentController extends Controller
 
         // ✅ AJOUT : Récupérer les classes pour le menu déroulant
         $classes = SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
+        $schoolYears = SchoolYear::where('school_id', $schoolId)->orderBy('start_date', 'desc')->get();
 
-        return view('app.payments.index', compact('payments', 'classes'));
+        return view('app.payments.index', compact('payments', 'classes', 'schoolYears'));
     }
 
     /**

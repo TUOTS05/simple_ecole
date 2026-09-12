@@ -46,14 +46,40 @@
             </div>
         </div>
         
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Contenu de cette année</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <a href="{{ route('app.students.index', ['school_year_id' => $schoolYear->id]) }}"
+                   class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-primary hover:bg-gray-50 transition">
+                    <span class="font-semibold text-gray-800">👨‍🎓 Élèves</span>
+                    <span class="text-gray-400">→</span>
+                </a>
+                <a href="{{ route('app.enrollments.index', ['school_year_id' => $schoolYear->id]) }}"
+                   class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-primary hover:bg-gray-50 transition">
+                    <span class="font-semibold text-gray-800">📋 Inscriptions</span>
+                    <span class="text-gray-400">→</span>
+                </a>
+                <a href="{{ route('app.payments.index', ['school_year_id' => $schoolYear->id]) }}"
+                   class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-primary hover:bg-gray-50 transition">
+                    <span class="font-semibold text-gray-800">💳 Paiements</span>
+                    <span class="text-gray-400">→</span>
+                </a>
+                <a href="{{ route('app.report-cards.index', ['school_year_id' => $schoolYear->id]) }}"
+                   class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-primary hover:bg-gray-50 transition">
+                    <span class="font-semibold text-gray-800">📄 Bulletins</span>
+                    <span class="text-gray-400">→</span>
+                </a>
+            </div>
+        </div>
+
         <div class="bg-white rounded-lg shadow p-6">
             <h2 class="text-xl font-bold text-gray-800 mb-4">Actions</h2>
             <div class="flex space-x-4">
-                <a href="{{ route('app.school-years.edit', $schoolYear) }}" 
+                <a href="{{ route('app.school-years.edit', $schoolYear) }}"
                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold transition">
                     ✏️ Modifier
                 </a>
-                <form action="{{ route('app.school-years.destroy', $schoolYear) }}" method="POST" 
+                <form action="{{ route('app.school-years.destroy', $schoolYear) }}" method="POST"
                       onsubmit="return confirm('Êtes-vous sûr ?')">
                     @csrf
                     @method('DELETE')
@@ -63,7 +89,7 @@
                 </form>
             </div>
         </div>
-        
+
     </div>
-    
+
 @endsection

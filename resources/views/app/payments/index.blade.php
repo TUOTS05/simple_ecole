@@ -96,8 +96,20 @@
 
         <!-- Filtres -->
     <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <form method="GET" action="{{ route('app.payments.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
-            
+        <form method="GET" action="{{ route('app.payments.index') }}" class="grid grid-cols-1 md:grid-cols-6 gap-4">
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Année scolaire</label>
+                <select name="school_year_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                    <option value="">Toutes les années</option>
+                    @foreach($schoolYears as $year)
+                        <option value="{{ $year->id }}" {{ request('school_year_id') == $year->id ? 'selected' : '' }}>
+                            {{ $year->name }}{{ $year->is_active ? ' (active)' : '' }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
             <!-- ✅ NOUVEAU : Filtre par Classe -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Classe</label>
@@ -143,8 +155,8 @@
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
             </div>
             
-            <!-- Notez le md:col-span-5 pour s'aligner avec les 5 colonnes -->
-            <div class="flex items-end space-x-2 md:col-span-5">
+            <!-- Notez le md:col-span-6 pour s'aligner avec les 6 colonnes -->
+            <div class="flex items-end space-x-2 md:col-span-6">
                 <button type="submit" class="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg font-semibold transition">
                     Filtrer
                 </button>

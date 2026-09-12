@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\School;
+use App\Models\SchoolYear;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -45,9 +46,15 @@ class CheckTenant
         session(['current_school_id' => $user->school_id]);
         session(['current_school' => $school]);
 
+        // 5bis. Année scolaire active : tout (inscriptions, classes, frais, présences...) y est
+        // rattaché, donc on la rend disponible globalement comme le reste du contexte tenant.
+        $activeSchoolYear = SchoolYear::where('school_id', $school->id)->where('is_active', true)->first();
+        session(['current_school_year' => $activeSchoolYear]);
+
         // 6. Rendre le school_id disponible via un singleton
         app()->instance('current_school_id', $user->school_id);
         app()->instance('current_school', $school);
+        app()->instance('current_school_year', $activeSchoolYear);
 
         // 7. Passer la requête au prochain middleware/controller
         return $next($request);
