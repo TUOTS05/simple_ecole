@@ -162,8 +162,13 @@
                                 <label class="relative block p-4 border-2 rounded-xl cursor-pointer hover:border-blue-500 transition {{ ($plan->is_recommended ?? false) ? 'border-blue-500 bg-blue-50/50' : 'border-gray-200' }}">
                                     <input type="radio" name="plan_id" value="{{ $plan->id }}" class="absolute top-4 right-4 w-5 h-5 text-blue-600" required {{ old('plan_id') == $plan->id ? 'checked' : '' }}>
                                     <h4 class="text-base font-bold text-gray-900">{{ $plan->name }}</h4>
-                                    <p class="text-lg font-bold text-blue-600 my-1">{{ number_format($plan->yearly_price ?? 0, 0, ',', ' ') }} <span class="text-xs text-gray-500">FCFA/an</span></p>
-                                    <p class="text-xs text-gray-500 -mt-1 mb-2">soit {{ number_format($plan->monthly_price ?? 0, 0, ',', ' ') }} FCFA/mois</p>
+                                    @if (($plan->monthly_price ?? 0) <= 0 && ($plan->yearly_price ?? 0) <= 0)
+                                        <p class="text-lg font-bold text-blue-600 my-1">À discuter</p>
+                                        <p class="text-xs text-gray-500 -mt-1 mb-2">Tarif personnalisé selon vos besoins</p>
+                                    @else
+                                        <p class="text-lg font-bold text-blue-600 my-1">{{ number_format($plan->monthly_price ?? 0, 0, ',', ' ') }} <span class="text-xs text-gray-500">FCFA/mois</span></p>
+                                        <p class="text-xs text-gray-500 -mt-1 mb-2">soit {{ number_format($plan->yearly_price ?? 0, 0, ',', ' ') }} FCFA/an</p>
+                                    @endif
                                     <ul class="text-xs text-gray-600 space-y-1 mt-2">
                                         <li><i class="fas fa-check text-green-500 mr-1"></i> Max {{ $plan->max_students ?? 'Illimité' }} élèves</li>
                                         <li><i class="fas fa-check text-green-500 mr-1"></i> Max {{ $plan->max_users ?? 'Illimité' }} utilisateurs</li>
