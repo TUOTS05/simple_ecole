@@ -3,6 +3,7 @@
 use App\Http\Controllers\App\AccountantController;
 use App\Http\Controllers\App\AccountantProfileController;
 use App\Http\Controllers\App\AttendanceController;
+use App\Http\Controllers\App\CrecheAttendanceController;
 use App\Http\Controllers\App\BroadcastMessageController;
 use App\Http\Controllers\App\CanteenController;
 use App\Http\Controllers\App\ClassFeeController;
@@ -210,6 +211,10 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent,ac
         // Présences (lecture seule : l'appel se fait côté enseignant, par QR code ou manuellement)
         Route::get('/attendances', [AttendanceController::class, 'index'])->name('attendances.index');
         Route::get('/attendances/by-date/{date}', [AttendanceController::class, 'showByDate'])->name('attendances.show-by-date');
+
+        // Pointage crèche (arrivée/départ)
+        Route::get('/creche-attendances', [CrecheAttendanceController::class, 'index'])->name('creche-attendances.index');
+        Route::post('/creche-attendances', [CrecheAttendanceController::class, 'store'])->name('creche-attendances.store');
 
         // Notes et Bulletins
         Route::get('/report-cards/bulk-download', [ReportCardController::class, 'downloadClassBulk'])

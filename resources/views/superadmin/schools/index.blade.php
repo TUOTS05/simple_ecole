@@ -58,6 +58,7 @@
                     <option value="maternelle" {{ request('school_type') === 'maternelle' ? 'selected' : '' }}>Maternelle</option>
                     <option value="primaire" {{ request('school_type') === 'primaire' ? 'selected' : '' }}>Primaire</option>
                     <option value="both" {{ request('school_type') === 'both' ? 'selected' : '' }}>Les deux</option>
+                    <option value="creche" {{ request('school_type') === 'creche' ? 'selected' : '' }}>Crèche</option>
                 </select>
             </div>
             

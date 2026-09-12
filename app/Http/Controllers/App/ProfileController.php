@@ -44,7 +44,7 @@ class ProfileController extends Controller
         // Validation des données de l'ÉCOLE
         $validatedSchool = $request->validate([
             'school_name' => 'required|string|max:255',
-            'school_type' => 'required|in:maternelle,primaire,both',
+            'school_type' => 'required|in:maternelle,primaire,both,creche',
             'school_address' => 'nullable|string|max:500',
             'school_email' => 'nullable|email|max:255',
             'school_phone' => 'nullable|string|max:20',

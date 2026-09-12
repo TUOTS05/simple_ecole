@@ -82,6 +82,11 @@ class Student extends Model
         return $this->hasMany(Attendance::class);
     }
 
+    public function crecheAttendances(): HasMany
+    {
+        return $this->hasMany(CrecheAttendance::class);
+    }
+
     public function enrollments(): HasMany
     {
         return $this->hasMany(Enrollment::class);

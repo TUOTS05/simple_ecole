@@ -40,6 +40,9 @@
                             @if($school->isPrimaire() || $school->isBoth())
                                 <option value="primaire" {{ old('cycle', $class->cycle) === 'primaire' ? 'selected' : '' }}>📚 Primaire</option>
                             @endif
+                            @if($school->isCreche())
+                                <option value="creche" {{ old('cycle', $class->cycle) === 'creche' ? 'selected' : '' }}>🍼 Crèche</option>
+                            @endif
                         </select>
                         @error('cycle')
                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>

@@ -213,7 +213,7 @@ class SchoolController extends Controller
         $validated = $request->validate([
             // Infos de l'école
             'name' => 'required|string|max:255',
-            'school_type' => 'required|in:maternelle,primaire,both',
+            'school_type' => 'required|in:maternelle,primaire,both,creche',
             'address' => 'nullable|string|max:255',
             'phone' => 'nullable|number|max:10',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
@@ -316,7 +316,7 @@ class SchoolController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:schools,slug,'.$school->id,
-            'school_type' => 'required|in:maternelle,primaire,both',
+            'school_type' => 'required|in:maternelle,primaire,both,creche',
             'status' => 'required|in:active,suspended,expired', // ✅ UNIFORMISÉ (suppression de 'trial')
             'subscription_plan' => 'required|in:basic,premium,enterprise', // ✅ AJOUTÉ POUR SAAS
             'subscription_start_date' => 'required|date', // ✅ AJOUTÉ POUR SAAS

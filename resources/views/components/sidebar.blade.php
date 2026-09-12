@@ -240,10 +240,31 @@
                 <a href="{{ route('app.parents.index') }}" title="Parents" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.parents.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Parents</a>
                 @endif
                 <a href="{{ route('app.attendances.index') }}" title="Présences" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.attendances.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Présences</a>
+                @unless(session('current_school')?->school_type === 'creche')
                 <a href="{{ route('app.report-cards.index') }}" title="Bulletins" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.report-cards.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Bulletins</a>
+                @endunless
                 <a href="{{ route('app.end-of-year.index') }}" title="Fin d'année & Passage" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.end-of-year.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Fin d'année & Passage</a>
             </div>
         </div>
+
+        @if(session('current_school')?->school_type === 'creche')
+        <!-- Groupe : Crèche -->
+        <div x-data="{ open: {{ request()->routeIs('app.creche-attendances.*') ? 'true' : 'false' }} }" class="space-y-1">
+            <button @click="if(!sidebarOpen) sidebarOpen = true; open = !open" title="Crèche"
+                class="w-full flex items-center justify-between px-3 py-3 rounded-lg transition text-gray-700 hover:bg-gray-100 focus:outline-none">
+                <div class="flex items-center">
+                    <span class="text-xl min-w-[24px] text-center">🍼</span>
+                    <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Crèche</span>
+                </div>
+                <svg x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
+                <a href="{{ route('app.creche-attendances.index') }}" title="Pointage" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.creche-attendances.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Pointage</a>
+            </div>
+        </div>
+        @endif
 
         @if(auth()->user()->isSchoolAdmin())
         <!-- Groupe : Ressources Humaines -->
@@ -280,7 +301,9 @@
                 </svg>
             </button>
             <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
+                @unless(session('current_school')?->school_type === 'creche')
                 <a href="{{ route('app.report-cards.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.report-cards.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Bulletins de notes</a>
+                @endunless
                 <a href="{{ route('app.financial.unpaid_by_class') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.financial.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">États de scolarité</a>
                 <a href="{{ route('app.students.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.students.index') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Listes de classe & Exports</a>
                 <a href="{{ route('app.attendances.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.attendances.index') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Rapport Présences/Absences</a>
@@ -384,7 +407,9 @@
                 <a href="{{ route('app.school-years.index') }}" title="Années Scolaires" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.school-years.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Années</a>
                 <a href="{{ route('app.class-fees.index') }}" title="Configuration des Frais" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.class-fees.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Frais</a>
                 <a href="{{ route('app.classes.index') }}" title="Classes" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.classes.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Classes</a>
+                @unless(session('current_school')?->school_type === 'creche')
                 <a href="{{ route('app.subjects.index') }}" title="Matières" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.subjects.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Matières</a>
+                @endunless
                 <a href="{{ route('app.settings.sms') }}" title="Configuration SMS" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.settings.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Configuration SMS</a>
             </div>
         </div>

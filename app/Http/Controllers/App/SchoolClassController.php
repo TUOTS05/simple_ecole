@@ -61,8 +61,8 @@ class SchoolClassController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'level' => 'required|string|max:10',
-            'cycle' => 'required|in:maternelle,primaire',
+            'level' => 'required|string|max:30',
+            'cycle' => 'required|in:maternelle,primaire,creche',
             'capacity' => 'nullable|integer|min:1|max:100',
         ]);
 
@@ -71,6 +71,7 @@ class SchoolClassController extends Controller
         // Vérifier que le niveau correspond au cycle
         $maternelleLevels = ['TPS', 'PS', 'MS', 'GS'];
         $primaireLevels = ['CP', 'CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2'];
+        $crecheLevels = ['Bébés (0-1 an)', 'Moyens (1-2 ans)', 'Grands (2-3 ans)'];
 
         if ($validated['cycle'] === 'maternelle' && ! in_array($validated['level'], $maternelleLevels)) {
             return back()->withErrors(['level' => 'Ce niveau n\'appartient pas au cycle maternelle.'])
@@ -79,6 +80,11 @@ class SchoolClassController extends Controller
 
         if ($validated['cycle'] === 'primaire' && ! in_array($validated['level'], $primaireLevels)) {
             return back()->withErrors(['level' => 'Ce niveau n\'appartient pas au cycle primaire.'])
+                ->withInput();
+        }
+
+        if ($validated['cycle'] === 'creche' && ! in_array($validated['level'], $crecheLevels)) {
+            return back()->withErrors(['level' => 'Ce niveau n\'appartient pas au cycle crèche.'])
                 ->withInput();
         }
 
@@ -156,14 +162,15 @@ class SchoolClassController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'level' => 'required|string|max:10',
-            'cycle' => 'required|in:maternelle,primaire',
+            'level' => 'required|string|max:30',
+            'cycle' => 'required|in:maternelle,primaire,creche',
             'capacity' => 'nullable|integer|min:1|max:100',
         ]);
 
         // Vérifier que le niveau correspond au cycle
         $maternelleLevels = ['TPS', 'PS', 'MS', 'GS'];
         $primaireLevels = ['CP', 'CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2'];
+        $crecheLevels = ['Bébés (0-1 an)', 'Moyens (1-2 ans)', 'Grands (2-3 ans)'];
 
         if ($validated['cycle'] === 'maternelle' && ! in_array($validated['level'], $maternelleLevels)) {
             return back()->withErrors(['level' => 'Ce niveau n\'appartient pas au cycle maternelle.'])
@@ -172,6 +179,11 @@ class SchoolClassController extends Controller
 
         if ($validated['cycle'] === 'primaire' && ! in_array($validated['level'], $primaireLevels)) {
             return back()->withErrors(['level' => 'Ce niveau n\'appartient pas au cycle primaire.'])
+                ->withInput();
+        }
+
+        if ($validated['cycle'] === 'creche' && ! in_array($validated['level'], $crecheLevels)) {
+            return back()->withErrors(['level' => 'Ce niveau n\'appartient pas au cycle crèche.'])
                 ->withInput();
         }
 
@@ -216,6 +228,7 @@ class SchoolClassController extends Controller
     {
         $maternelleLevels = ['TPS', 'PS', 'MS', 'GS'];
         $primaireLevels = ['CP', 'CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2'];
+        $crecheLevels = ['Bébés (0-1 an)', 'Moyens (1-2 ans)', 'Grands (2-3 ans)'];
 
         $levelsByCycle = [];
 
@@ -227,6 +240,11 @@ class SchoolClassController extends Controller
         // Si l'école est primaire ou both, ajouter les niveaux primaire
         if ($school->school_type === 'primaire' || $school->school_type === 'both') {
             $levelsByCycle['primaire'] = $primaireLevels;
+        }
+
+        // Si l'école est une crèche, ajouter les groupes d'âge
+        if ($school->school_type === 'creche') {
+            $levelsByCycle['creche'] = $crecheLevels;
         }
 
         return $levelsByCycle;

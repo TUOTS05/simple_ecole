@@ -114,6 +114,7 @@
                         <option value="maternelle" {{ old('school_type', $school->school_type ?? '') == 'maternelle' ? 'selected' : '' }}>Maternelle</option>
                         <option value="primaire" {{ old('school_type', $school->school_type ?? '') == 'primaire' ? 'selected' : '' }}>Primaire</option>
                         <option value="both" {{ old('school_type', $school->school_type ?? '') == 'both' ? 'selected' : '' }}>Maternelle & Primaire</option>
+                        <option value="creche" {{ old('school_type', $school->school_type ?? '') == 'creche' ? 'selected' : '' }}>Crèche (0-3 ans)</option>
                     </select>
                     @error('school_type') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>

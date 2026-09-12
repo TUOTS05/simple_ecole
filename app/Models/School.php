@@ -94,15 +94,22 @@ class School extends Model
         return $this->school_type === 'both';
     }
 
+    public function isCreche(): bool
+    {
+        return $this->school_type === 'creche';
+    }
+
     public function getAllowedLevels(): array
     {
         $maternelleLevels = ['TPS', 'PS', 'MS', 'GS'];
         $primaireLevels = ['CP', 'CE1', 'CE2', 'CM1', 'CM2'];
+        $crecheLevels = ['Bébés (0-1 an)', 'Moyens (1-2 ans)', 'Grands (2-3 ans)'];
 
         return match ($this->school_type) {
             'maternelle' => $maternelleLevels,
             'primaire' => $primaireLevels,
             'both' => array_merge($maternelleLevels, $primaireLevels),
+            'creche' => $crecheLevels,
             default => [],
         };
     }
