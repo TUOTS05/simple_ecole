@@ -88,5 +88,7 @@ class StudentInstallment extends Model
                 'status' => 'pending',
             ]);
         }
+
+        $enrollment->recalculateFees();
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\CanteenRate;
 use App\Models\Enrollment;
 use App\Models\ReportCard;
 use App\Models\School;
@@ -83,5 +84,65 @@ class SchoolWorkflowRegressionTest extends TestCase
         $this->actingAs($this->admin)
             ->get(route('extras.invoices.consolidated.pdf'))
             ->assertSessionHasErrors('student_id');
+    }
+
+    private function studentPayload(array $overrides = []): array
+    {
+        // Le formulaire envoie aussi tous les champs facultatifs, même vides.
+        $optional = array_fill_keys(['religion', 'receipt_number', 'father_name', 'father_phone', 'father_occupation', 'mother_name',
+            'mother_phone', 'mother_occupation', 'guardian_relation', 'guardian_occupation', 'guardian_address', 'current_address',
+            'permanent_address', 'previous_school', 'remarks'], '');
+
+        return array_merge($optional, [
+            'first_name' => 'Awa', 'last_name' => 'Koné', 'gender' => 'F', 'birth_date' => '2020-02-03', 'class_id' => $this->class->id,
+            'section' => 'A', 'status' => 'active', 'large_family' => 0, 'staff_child' => 0, 'admission_date' => '2026-09-15', 'guardian_type' => 'mother',
+            'guardian_first_name' => 'Mariam', 'guardian_last_name' => 'Koné', 'guardian_phone' => '0700000001', 'guardian_email' => 'mariam@example.test',
+        ], $overrides);
+    }
+
+    // Le formulaire d'admission rattachait l'élève à sa classe sans année : il disparaissait des listes par année.
+    public function test_admission_form_assigns_the_class_for_the_active_year(): void
+    {
+        $this->actingAs($this->admin)->post(route('app.students.store'), $this->studentPayload())->assertSessionHasNoErrors();
+
+        $student = Student::where('last_name', 'Koné')->firstOrFail();
+        $this->assertDatabaseHas('student_school_class', ['student_id' => $student->id, 'school_class_id' => $this->class->id, 'school_year_id' => $this->year->id]);
+        $this->assertDatabaseMissing('student_school_class', ['student_id' => $student->id, 'school_year_id' => null]);
+    }
+
+    // La modification d'un élève effaçait ses classes des années précédentes.
+    public function test_student_update_keeps_classes_of_previous_years(): void
+    {
+        $this->actingAs($this->admin)->post(route('app.students.store'), $this->studentPayload())->assertSessionHasNoErrors();
+        $student = Student::where('last_name', 'Koné')->firstOrFail();
+
+        $previousYear = SchoolYear::create(['school_id' => $this->school->id, 'name' => '2025-2026', 'start_date' => '2025-09-01', 'end_date' => '2026-07-01', 'is_active' => false]);
+        $student->classes()->attach($this->class->id, ['school_year_id' => $previousYear->id]);
+        $ce1 = SchoolClass::create(['school_id' => $this->school->id, 'name' => 'CE1 A', 'level' => 'CE1', 'cycle' => 'primaire']);
+
+        $this->actingAs($this->admin)->put(route('app.students.update', $student), $this->studentPayload(['class_id' => $ce1->id]))->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('student_school_class', ['student_id' => $student->id, 'school_class_id' => $this->class->id, 'school_year_id' => $previousYear->id]);
+        $this->assertDatabaseHas('student_school_class', ['student_id' => $student->id, 'school_class_id' => $ce1->id, 'school_year_id' => $this->year->id]);
+        $this->assertDatabaseMissing('student_school_class', ['student_id' => $student->id, 'school_class_id' => $this->class->id, 'school_year_id' => $this->year->id]);
+    }
+
+    // Les mois proposés à l'inscription à la cantine étaient une liste fixe (septembre 2026 à juin 2027).
+    public function test_canteen_form_offers_the_months_of_the_class_rate(): void
+    {
+        CanteenRate::create([
+            'school_id' => $this->school->id, 'school_year_id' => $this->year->id, 'school_class_id' => $this->class->id,
+            'monthly_rate' => 10000, 'months_count' => 3, 'start_month' => '2026-09', 'end_month' => '2026-11',
+        ]);
+
+        $this->actingAs($this->admin)->get(route('canteen.subscriptions.index'))
+            ->assertOk()
+            ->assertViewHas('ratesByClass', function ($rates) {
+                $rate = $rates[$this->class->id];
+
+                return $rate['monthly_rate'] === 10000.0
+                    && collect($rate['months'])->pluck('value')->all() === ['2026-09', '2026-10', '2026-11']
+                    && $rate['months'][0]['label'] === 'Septembre 2026';
+            });
     }
 }

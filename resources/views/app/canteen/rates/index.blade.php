@@ -58,8 +58,8 @@
                     <td class="py-3 px-4 text-center text-gray-600">{{ $rate->months_count }} mois</td>
                     <td class="py-3 px-4 text-right font-bold text-primary">{{ number_format($rate->total_amount, 0, ',', ' ') }} FCFA</td>
                     <td class="py-3 px-4 text-sm text-gray-600">
-                        {{ \Carbon\Carbon::parse($rate->start_month . '-01')->format('M Y') }} - 
-                        {{ \Carbon\Carbon::parse($rate->end_month . '-01')->format('M Y') }}
+                        {{ \Carbon\Carbon::parse($rate->start_month . '-01')->translatedFormat('M Y') }} - 
+                        {{ \Carbon\Carbon::parse($rate->end_month . '-01')->translatedFormat('M Y') }}
                     </td>
                     <td class="py-3 px-4 text-center">
                         <!-- CORRECTIONS ICI : canteen.rates.edit et canteen.rates.destroy -->

@@ -297,7 +297,8 @@ class EnrollmentController extends Controller
                 'status' => 'enrolled',
             ]);
 
-            $student->classes()->attach($validated['class_id']);
+            // L'affectation porte l'année : sans elle, l'élève n'apparaît dans aucune liste filtrée par année.
+            $student->classes()->attach($validated['class_id'], ['school_year_id' => $activeYear->id]);
 
             // 6. Génération automatique des échéances (même générateur que StudentController)
             StudentInstallment::generateScheduleFor($enrollment, SchoolClass::findOrFail($validated['class_id']), $enrollment->enrollment_date);

@@ -13,6 +13,7 @@ use App\Models\SchoolYear;
 use App\Models\Student;
 use App\Support\SchoolRules;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -216,8 +217,17 @@ class CanteenController extends Controller
             ->with('schoolClass')
             ->get();
 
+        // Tarif mensuel et mois facturables de chaque classe, pour le formulaire d'inscription :
+        // les mois proposés sont ceux de la période du tarif, pas une liste fixe.
+        $ratesByClass = $rates->mapWithKeys(fn ($rate) => [$rate->school_class_id => [
+            'monthly_rate' => (float) $rate->monthly_rate,
+            'months' => collect(CarbonPeriod::create($rate->start_month.'-01', '1 month', $rate->end_month.'-01'))
+                ->map(fn ($month) => ['value' => $month->format('Y-m'), 'label' => ucfirst($month->locale('fr')->translatedFormat('F Y'))])
+                ->values(),
+        ]]);
+
         return view('app.canteen.subscriptions.index', compact(
-            'subscriptions', 'classes', 'schoolYears', 'schoolYearId', 'classId', 'rates'
+            'subscriptions', 'classes', 'schoolYears', 'schoolYearId', 'classId', 'rates', 'ratesByClass'
         ));
     }
 

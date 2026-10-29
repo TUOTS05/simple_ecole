@@ -307,7 +307,8 @@ class StudentController extends Controller
                 'status' => 'enrolled',
             ]);
 
-            $student->classes()->attach($validated['class_id']);
+            // L'affectation porte l'année : sans elle, l'élève n'apparaît dans aucune liste filtrée par année.
+            $student->classes()->attach($validated['class_id'], ['school_year_id' => $activeYear->id]);
 
             // 6. GÉNÉRATION AUTOMATIQUE DES ÉCHÉANCES
             $this->generateFeeSchedule($enrollment, $validated['class_id']);
@@ -610,12 +611,15 @@ class StudentController extends Controller
                 'documents' => $documentsData, // Sauvegarde du JSON
             ]);
 
-            // 4. Mise à jour de la classe (via la table pivot)
-            $student->classes()->sync([$validated['class_id']]);
-
-            // Mise à jour de l'inscription active
+            // Mise à jour de la classe et de l'inscription de l'année active
             $activeYear = SchoolYear::where('school_id', $schoolId)->where('is_active', true)->first();
             if ($activeYear) {
+                // 4. Seule l'affectation de l'année active est remplacée : un sync() effaçait aussi
+                // les classes des années précédentes (historique de l'élève).
+                $student->classes()->wherePivot('school_year_id', $activeYear->id)->detach();
+                $student->classes()->wherePivotNull('school_year_id')->detach();
+                $student->classes()->attach($validated['class_id'], ['school_year_id' => $activeYear->id]);
+
                 Enrollment::updateOrCreate(
                     [
                         'school_id' => $schoolId,

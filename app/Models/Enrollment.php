@@ -86,13 +86,16 @@ class Enrollment extends Model
     // Recalculer les montants après un paiement
     public function recalculateFees(): void
     {
-        $totalPaid = $this->payments()
-            ->where('payment_type', 'tuition')
-            ->sum('amount');
+        // Les échéances de scolarité font foi : chaque paiement y est imputé avant d'être enregistré.
+        // (Le total n'était jamais renseigné et restait à 0 sur tous les écrans qui le lisent.)
+        $tuition = $this->studentInstallments()->where('type', '<>', 'registration');
+        $total = (float) (clone $tuition)->sum('amount');
+        $totalPaid = (float) (clone $tuition)->sum('paid_amount');
 
         $this->update([
+            'tuition_fee_total' => $total,
             'tuition_fee_paid' => $totalPaid,
-            'tuition_fee_remaining' => $this->tuition_fee_total - $totalPaid,
+            'tuition_fee_remaining' => $total - $totalPaid,
         ]);
 
         // Si tout est payé, passer le statut à "enrolled"

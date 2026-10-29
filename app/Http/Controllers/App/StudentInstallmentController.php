@@ -30,12 +30,13 @@ class StudentInstallmentController extends Controller
             'due_date' => ['required', 'date'],
         ]);
 
-        StudentInstallment::create([
+        $installment = StudentInstallment::create([
             ...$data,
             'school_id' => $schoolId,
             'paid_amount' => 0,
             'status' => 'pending',
         ]);
+        $installment->enrollment?->recalculateFees();
 
         return back()->with('success', 'Échéance ajoutée avec succès.');
     }
@@ -49,6 +50,7 @@ class StudentInstallmentController extends Controller
         abort_if($installment->paid_amount > 0, 422, 'Une échéance déjà réglée ne peut pas être supprimée.');
 
         $installment->delete();
+        $installment->enrollment?->recalculateFees();
 
         return back()->with('success', 'Échéance supprimée avec succès.');
     }
