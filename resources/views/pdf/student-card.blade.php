@@ -1,3 +1,10 @@
+@php
+    $doc = \App\Support\DocumentSettings::for($school ?? null);
+    $card = $doc['student_card'];
+    $primaryColor = $doc['branding']['primary_color'];
+    $accentColor = $doc['branding']['accent_color'];
+    $logoPath = \App\Support\DocumentSettings::imagePath($school->logo ?? null);
+@endphp
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -10,9 +17,9 @@
         @page { size: 86.6mm 55mm; margin: 0; }
         * { box-sizing: border-box; }
         body { margin: 0; font-family: DejaVu Sans, sans-serif; color: #172033; }
-        .card { width: 85.6mm; height: 54mm; position: relative; overflow: hidden; background: #fff; border: .45mm solid #143b74; }
-        .top-band { height: 13mm; padding: 2.5mm 4mm; color: #fff; background: #123b76; }
-        .top-band:after { content: ''; position: absolute; top: 0; right: -8mm; width: 34mm; height: 13mm; background: #e8a317; transform: skewX(-28deg); }
+        .card { width: 85.6mm; height: 54mm; position: relative; overflow: hidden; background: #fff; border: .45mm solid {{ $primaryColor }}; }
+        .top-band { height: 13mm; padding: 2.5mm 4mm; color: #fff; background: {{ $primaryColor }}; }
+        .top-band:after { content: ''; position: absolute; top: 0; right: -8mm; width: 34mm; height: 13mm; background: {{ $accentColor }}; transform: skewX(-28deg); }
         .top-band-table { position: relative; z-index: 2; width: 62mm; border-collapse: collapse; }
         .top-band-table td { vertical-align: middle; }
         .logo-cell { width: 9mm; padding-right: 1.5mm; }
@@ -26,7 +33,7 @@
         .photo img { width: 17mm; height: 21mm; object-fit: cover; }
         .photo-placeholder { padding-top: 7.5mm; color: #6b7a90; font-size: 6px; font-weight: bold; }
         .details-cell { vertical-align: top; padding-left: 1.5mm; }
-        .student-name { margin-bottom: 1.8mm; color: #123b76; font-size: 11px; line-height: 1.05; font-weight: bold; text-transform: uppercase; }
+        .student-name { margin-bottom: 1.8mm; color: {{ $primaryColor }}; font-size: 11px; line-height: 1.05; font-weight: bold; text-transform: uppercase; }
         .details { width: 100%; border-collapse: collapse; font-size: 6.7px; }
         .details td { padding: .45mm 0; vertical-align: top; }
         .label { width: 18mm; color: #62718a; font-weight: bold; }
@@ -35,7 +42,7 @@
         .bottom-table { width: 100%; border-collapse: collapse; }
         .bottom-table td { vertical-align: middle; }
         .matricule-label { color: #62718a; font-size: 5.5px; font-weight: bold; letter-spacing: .35px; }
-        .matricule { margin-top: .6mm; color: #123b76; font-size: 9px; font-weight: bold; letter-spacing: .35px; }
+        .matricule { margin-top: .6mm; color: {{ $primaryColor }}; font-size: 9px; font-weight: bold; letter-spacing: .35px; }
         .validity { margin-top: .7mm; color: #56657a; font-size: 5.5px; }
         .qr-cell { width: 12mm; text-align: right; }
         .qr { width: 10.5mm; height: 10.5mm; padding: .5mm; background: #fff; border: .25mm solid #ccd7e5; }
@@ -56,14 +63,14 @@
         <div class="top-band">
             <table class="top-band-table">
                 <tr>
-                    @if($school->logo ?? null)
+                    @if($logoPath)
                     <td class="logo-cell">
-                        <img src="{{ public_path('storage/' . $school->logo) }}" alt="Logo" class="card-logo">
+                        <img src="{{ $logoPath }}" alt="Logo" class="card-logo">
                     </td>
                     @endif
                     <td>
                         <div class="school-name">{{ $school->name ?? 'Établissement scolaire' }}</div>
-                        <div class="card-type">CARTE D'IDENTITÉ SCOLAIRE</div>
+                        <div class="card-type">{{ mb_strtoupper($card['title']) }}</div>
                     </td>
                 </tr>
             </table>
@@ -85,8 +92,12 @@
                         <div class="student-name">{{ $studentName ?: 'Élève non renseigné' }}</div>
                         <table class="details">
                             <tr><td class="label">Classe</td><td class="value">{{ $currentClassName ?? 'Non assignée' }}</td></tr>
+                            @if($card['show_birth_date'])
                             <tr><td class="label">Né(e) le</td><td class="value">{{ $student->birth_date ? \Carbon\Carbon::parse($student->birth_date)->format('d/m/Y') : 'Non renseigné' }}</td></tr>
+                            @endif
+                            @if($card['show_gender'])
                             <tr><td class="label">Sexe</td><td class="value">{{ $student->gender === 'M' ? 'Masculin' : ($student->gender === 'F' ? 'Féminin' : 'Non renseigné') }}</td></tr>
+                            @endif
                             <tr><td class="label">Année</td><td class="value">{{ $schoolYear }}</td></tr>
                         </table>
                     </td>
@@ -100,7 +111,7 @@
                     <td>
                         <div class="matricule-label">MATRICULE ÉLÈVE</div>
                         <div class="matricule">{{ $student->matricule ?? 'NON ATTRIBUÉ' }}</div>
-                        <div class="validity">Valable pour l'année scolaire {{ $schoolYear }}</div>
+                        <div class="validity">{{ $card['footer_note'] ?: "Valable pour l'année scolaire {$schoolYear}" }}</div>
                     </td>
                     <td class="qr-cell">
                         <div class="qr">

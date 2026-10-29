@@ -1,3 +1,12 @@
+@php
+    $doc = \App\Support\DocumentSettings::for($school ?? null);
+    $rc = $doc['report_card'];
+    $primaryColor = $doc['branding']['primary_color'];
+    $logoPath = \App\Support\DocumentSettings::imagePath($school->logo ?? null);
+    $stampPath = $rc['show_stamp'] ? \App\Support\DocumentSettings::imagePath($doc['branding']['stamp']) : null;
+    $signaturePath = $rc['show_stamp'] ? \App\Support\DocumentSettings::imagePath($doc['branding']['signature']) : null;
+    $headerLines = array_filter(array_map('trim', explode("\n", $doc['header']['lines'])));
+@endphp
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -23,7 +32,7 @@
 
         /* ✅ CADRE GLOBAL AUTOUR DU BULLETIN */
         .bulletin-container {
-            border: 2px solid #000; /* Changez en #1e40af pour un cadre bleu */
+            border: 2px solid {{ $primaryColor }};
             padding: 20px;
             min-height: 90mm;
         }
@@ -177,15 +186,23 @@
         <!-- En-tête : Logo à gauche, Infos école à droite -->
         <div class="header-table">
             <div class="header-cell logo-cell">
-                @if($school && $school->logo && file_exists(public_path('storage/' . $school->logo)))
-                    <img src="{{ public_path('storage/' . $school->logo) }}" alt="Logo" style="max-width: 80px; max-height: 80px;">
+                @if($logoPath)
+                    <img src="{{ $logoPath }}" alt="Logo" style="max-width: 80px; max-height: 80px;">
                 @else
                     <div style="font-size: 10px; color: #666; border: 1px dashed #999; padding: 10px; display: inline-block;">[ LOGO ]</div>
                 @endif
                 <div style="font-size: 10px; margin-top: 8px;">Année Scolaire: <strong>{{ $schoolYear->name ?? '2025-2026' }}</strong></div>
             </div>
             <div class="header-cell info-cell">
-                <div style="font-size: 16px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px;">{{ $school->name ?? 'NOM DE L\'ÉTABLISSEMENT SCOLAIRE' }}</div>
+                @foreach($headerLines as $line)
+                    <div style="font-size: 9px; font-weight: bold; text-transform: uppercase;">{{ $line }}</div>
+                @endforeach
+                @if($doc['header']['motto'])
+                    <div style="font-size: 8px; font-style: italic; margin-bottom: 6px;">{{ $doc['header']['motto'] }}</div>
+                @elseif($headerLines)
+                    <div style="margin-bottom: 6px;"></div>
+                @endif
+                <div style="font-size: 16px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; color: {{ $primaryColor }};">{{ $school->name ?? 'NOM DE L\'ÉTABLISSEMENT SCOLAIRE' }}</div>
                 <div style="font-size: 9px; color: #333;">
                     Adresse: {{ $school->address ?? 'BP 1234 Abidjan- Côte d\'Ivoire' }}<br>
                     Téléphone: {{ $school->phone ?? '+225 01 53 91 91 75/ 07 89 57 32 72' }}<br>
@@ -201,10 +218,10 @@
             @endphp
 
             @if($periodLower === 'mensuel')
-                <div class="bulletin-title">BULLETIN MENSUEL</div>
+                <div class="bulletin-title">{{ $rc['title_monthly'] }}</div>
                 <div class="period">Mois de: <strong>{{ $reportCard->month ?? '___________________________' }}</strong></div>
             @else
-                <div class="bulletin-title">BULLETIN TRIMESTRIEL</div>
+                <div class="bulletin-title">{{ $rc['title_quarterly'] }}</div>
                 <div class="period"><strong>{{ $reportCard->quarter ?? '1' }}ème Trimestre</strong> - {{ $schoolYear->name ?? '2025-2026' }}</div>
             @endif
         </div>
@@ -250,13 +267,8 @@
                         $totalCoefficients += $coefficient;
                         $hasGrade = true;
 
-                        // Calcul automatique de la mention
-                        if ($scoreOutOf20 >= 18) $appreciation = 'Excellent';
-                        elseif ($scoreOutOf20 >= 16) $appreciation = 'Très Bien';
-                        elseif ($scoreOutOf20 >= 14) $appreciation = 'Bien';
-                        elseif ($scoreOutOf20 >= 12) $appreciation = 'Assez Bien';
-                        elseif ($scoreOutOf20 >= 10) $appreciation = 'Passable';
-                        else $appreciation = 'Insuffisant';
+                        // Mention calculée selon le barème configuré par l'école
+                        $appreciation = \App\Support\DocumentSettings::appreciation($rc['scale'], $scoreOutOf20);
 
                         // Utilise l'observation saisie manuellement, sinon la mention calculée
                         $displayAppreciation = $grade->remarks ?: $appreciation;
@@ -296,23 +308,22 @@
         <!-- Résumé (3 éléments sur la MÊME LIGNE) -->
         <div class="summary">
             <div class="summary-row">
+                @if($rc['show_rank'])
                 <div class="summary-cell">
                     <strong>CLASSEMENT (RANG) :</strong> {{ $reportCard->rank ?? '--' }}
                 </div>
+                @endif
+                @if($rc['show_class_size'])
                 <div class="summary-cell">
                     <strong>EFFECTIF DE LA CLASSE :</strong> {{ $reportCard->total_students ?? '--' }} Élèves
                 </div>
+                @endif
+                @if($rc['show_council_mention'])
                 <div class="summary-cell">
                     <strong>MENTION DU CONSEIL :</strong>
-                    @php
-                    $avg = $totalCoefficients > 0 ? ($totalWeightedScore / $totalCoefficients) : 0;
-                    if ($avg >= 16) echo 'Très Bien';
-                    elseif ($avg >= 14) echo 'Bien';
-                    elseif ($avg >= 12) echo 'Assez Bien';
-                    elseif ($avg >= 10) echo 'Passable';
-                    else echo 'Insuffisant';
-                    @endphp
+                    {{ \App\Support\DocumentSettings::appreciation($rc['scale'], $totalCoefficients > 0 ? ($totalWeightedScore / $totalCoefficients) : 0) }}
                 </div>
+                @endif
             </div>
         </div>
 
@@ -372,23 +383,32 @@
             <!-- Ligne des signatures (Toujours présente) -->
             <div class="signature-row">
                 <div class="signature-cell">
-                    <div class="signature-title">APPRÉCIATION GÉNÉRALE & OBSERVATIONS</div>
+                    <div class="signature-title">{{ $rc['teacher_box_title'] }}</div>
                     <div class="signature-box">
                         {{ $reportCard->teacher_comment ?? '' }}
                     </div>
                 </div>
                 <div class="signature-cell">
-                    <div class="signature-title">LA DIRECTION/ CACHET & SIGNATURE</div>
-                    <div class="signature-box"></div>
+                    <div class="signature-title">{{ $doc['branding']['signatory_title'] ?: 'La Direction' }} / Cachet & signature</div>
+                    <div class="signature-box" style="text-align: center;">
+                        @if($stampPath)<img src="{{ $stampPath }}" alt="Cachet" style="max-height: 55px; max-width: 45%;">@endif
+                        @if($signaturePath)<img src="{{ $signaturePath }}" alt="Signature" style="max-height: 45px; max-width: 45%;">@endif
+                        @if($doc['branding']['signatory_name'])
+                            <div style="font-size: 9px; font-weight: bold; margin-top: 2px;">{{ $doc['branding']['signatory_name'] }}</div>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div><br>
 
         <!-- Pied de page -->
         <div class="footer">
-            Fait à: {{ $school->city ?? 'Abidjan' }}
-            Le: {{ now()->format('d/m/Y') }}
+            @if($doc['header']['city'])Fait à : {{ $doc['header']['city'] }}, @endif
+            le {{ now()->format('d/m/Y') }}
         </div>
+        @if($rc['footer_note'])
+            <div style="margin-top: 8px; font-size: 8px; font-style: italic; text-align: center; color: #555;">{{ $rc['footer_note'] }}</div>
+        @endif
 
     </div>
     <!-- ✅ FIN DU CADRE GLOBAL -->

@@ -8,6 +8,7 @@ use App\Http\Controllers\App\BroadcastMessageController;
 use App\Http\Controllers\App\CanteenController;
 use App\Http\Controllers\App\ClassFeeController;
 use App\Http\Controllers\App\DashboardController as AppDashboardController;
+use App\Http\Controllers\App\DocumentSettingsController;
 use App\Http\Controllers\App\EndOfYearController;
 use App\Http\Controllers\App\EnrollmentController;
 use App\Http\Controllers\App\ExtraAttendanceController;
@@ -207,6 +208,14 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent,ac
         // Routes pour les sms
         Route::get('/settings/sms', [SmsSettingsController::class, 'index'])->name('settings.sms');
         Route::post('/settings/sms', [SmsSettingsController::class, 'update'])->name('settings.sms.update');
+        // Personnalisation des documents PDF (bulletin, carte scolaire, reçu) : admin école uniquement
+        Route::middleware('role:school_admin')->group(function () {
+            Route::get('/settings/documents', [DocumentSettingsController::class, 'edit'])->name('settings.documents');
+            Route::put('/settings/documents', [DocumentSettingsController::class, 'update'])->name('settings.documents.update');
+            Route::get('/settings/documents/preview/{type}', [DocumentSettingsController::class, 'preview'])
+                ->where('type', 'report_card|student_card|receipt')
+                ->name('settings.documents.preview');
+        });
 
         // Présences (lecture seule : l'appel se fait côté enseignant, par QR code ou manuellement)
         Route::get('/attendances', [AttendanceController::class, 'index'])->name('attendances.index');
