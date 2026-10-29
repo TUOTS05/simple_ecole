@@ -29,7 +29,7 @@
                     {{ strtoupper(substr($user->first_name, 0, 1)) }}{{ strtoupper(substr($user->last_name, 0, 1)) }}
                 </div>
                 <h2 class="text-xl font-bold text-gray-800">{{ $user->first_name }} {{ $user->last_name }}</h2>
-                <p class="text-gray-500 text-sm mt-1 capitalize">{{ $user->role }}</p>
+                <p class="text-gray-500 text-sm mt-1 ">{{ $user->roleLabel() }}</p>
                 <div class="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-600 space-y-2">
                     <p>📧 {{ $user->email }}</p>
                     <p>📱 {{ $user->phone ?: 'Non renseigné' }}</p>

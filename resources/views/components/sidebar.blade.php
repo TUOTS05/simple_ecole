@@ -1,9 +1,12 @@
 <!-- Barre latérale -->
+{{-- Sur mobile (< 768px) le menu démarre replié et, une fois ouvert, se superpose au contenu au lieu
+     de l'écraser ; l'état mémorisé (localStorage) ne vaut que pour les grands écrans. --}}
 <aside
-    x-data="{ sidebarOpen: localStorage.getItem('sidebarOpen') !== 'false' }"
-    x-init="$watch('sidebarOpen', val => localStorage.setItem('sidebarOpen', val))"
-    :class="sidebarOpen ? 'w-64' : 'w-20'"
-    class="bg-white shadow-lg flex flex-col h-screen sticky top-0 transition-all duration-300 ease-in-out overflow-hidden">
+    x-data="{ mobile: window.innerWidth < 768, sidebarOpen: window.innerWidth >= 768 && localStorage.getItem('sidebarOpen') !== 'false' }"
+    x-init="$watch('sidebarOpen', val => { if (! mobile) localStorage.setItem('sidebarOpen', val) })"
+    @click.outside="if (mobile) sidebarOpen = false"
+    :class="sidebarOpen ? (mobile ? 'w-64 fixed inset-y-0 left-0 z-50' : 'w-64') : 'w-20'"
+    class="bg-white shadow-lg flex flex-col h-screen sticky top-0 transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0">
 
     <!-- Logo & Bouton de réduction -->
     <div class="h-16 flex items-center justify-between px-4 border-b border-gray-200 flex-shrink-0">

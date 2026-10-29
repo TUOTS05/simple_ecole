@@ -83,6 +83,21 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role === 'staff';
     }
 
+    /**
+     * Libellé du rôle à afficher ; pour le personnel, le nom de sa fonction.
+     */
+    public function roleLabel(): string
+    {
+        return match ($this->role) {
+            'super_admin' => 'Super Admin',
+            'school_admin' => 'Admin École',
+            'staff' => $this->staffFunction->name ?? 'Personnel',
+            'teacher' => 'Enseignant',
+            'parent' => 'Parent',
+            default => ucfirst((string) $this->role),
+        };
+    }
+
     public function staffFunction(): BelongsTo
     {
         return $this->belongsTo(StaffFunction::class);
