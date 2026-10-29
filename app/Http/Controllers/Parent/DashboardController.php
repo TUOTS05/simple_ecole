@@ -12,6 +12,9 @@ use App\Services\StudentProgressionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Espace parent : tableau de bord avec la situation de chaque enfant.
+ */
 class DashboardController extends Controller
 {
     /**
@@ -112,7 +115,7 @@ class DashboardController extends Controller
      * d'un enfant pour une année scolaire donnée. Partagé entre le dashboard et la fiche détail.
      *
      * @param  int|null  $progressionLimit  Nombre max de compositions à garder dans l'historique
-     *                                       de progression (null = historique complet, toutes années).
+     *                                      de progression (null = historique complet, toutes années).
      */
     private function resolveChildStats(Student $child, ?SchoolYear $currentYear, ?int $progressionLimit = null): array
     {

@@ -6,6 +6,9 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Interdit les modifications sur le compte de démonstration (lecture seule).
+ */
 class PreventDemoWrites
 {
     protected const DEMO_EMAIL = 'demo@schoolmanager.com';

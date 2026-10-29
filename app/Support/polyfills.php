@@ -10,6 +10,9 @@
 // requête. Si l'extension mbstring est un jour installée par l'hébergeur, cette définition est
 // automatiquement ignorée (function_exists) et peut être supprimée sans risque.
 if (! function_exists('mb_strimwidth')) {
+    /**
+     * Remplace mb_strimwidth() quand l'extension mbstring est absente (cas du serveur de production).
+     */
     function mb_strimwidth($string, $start, $width, $trim_marker = '', $encoding = null)
     {
         $encoding = $encoding ?: 'UTF-8';

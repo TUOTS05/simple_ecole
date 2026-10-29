@@ -21,10 +21,13 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
 
+/**
+ * Dossiers des élèves : création, modification, documents, carte scolaire, parents et exports.
+ */
 class StudentController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Affiche la liste.
      */
     public function index(Request $request)
     {
@@ -71,7 +74,7 @@ class StudentController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Affiche le formulaire de création.
      */
     public function create()
     {
@@ -92,6 +95,10 @@ class StudentController extends Controller
         return view('app.enrollments.create', compact('classes', 'schoolYears', 'parentDetails'));
     }
 
+    /**
+     * Crée un élève avec son parent (compte créé ou rattaché), sa classe, ses documents et sa carte
+     * scolaire.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -117,8 +124,8 @@ class StudentController extends Controller
             'mother_occupation' => 'nullable|string|max:100',
 
             'guardian_type' => 'required|in:father,mother,other',
-            'guardian_first_name' => 'required|string|max:100', // NOUVEAU
-            'guardian_last_name' => 'required|string|max:100',  // NOUVEAU
+            'guardian_first_name' => 'required|string|max:100', // Prénom et nom séparés pour créer le compte parent
+            'guardian_last_name' => 'required|string|max:100',
             'guardian_phone' => 'required|string|max:20',
             'guardian_email' => 'required|email|max:100',       // RENDU OBLIGATOIRE
             'guardian_relation' => 'nullable|string|max:50',
@@ -184,7 +191,7 @@ class StudentController extends Controller
 
         DB::beginTransaction();
         try {
-            // ✅ AJOUT : Gestion des 4 documents avant la création
+            // Enregistrement des 4 documents administratifs avant la création
             $documentsData = [];
             for ($i = 1; $i <= 4; $i++) {
                 if ($request->hasFile("documents.$i") && $request->file("documents.$i")->isValid()) {
@@ -370,7 +377,7 @@ class StudentController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Affiche le détail d'un élément.
      */
     public function show(Student $student)
     {
@@ -449,7 +456,7 @@ class StudentController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Affiche le formulaire de modification.
      */
     public function edit(Student $student)
     {
@@ -462,7 +469,7 @@ class StudentController extends Controller
         $classes = SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
         $schoolYears = SchoolYear::where('school_id', $schoolId)->orderBy('start_date', 'desc')->get();
 
-        // 2. AJOUT CRUCIAL : On charge explicitement la relation 'classes'
+        // 2. Relation 'classes' chargée explicitement (utilisée par la vue)
         // pour que $student->classes->first()?->id fonctionne parfaitement dans la vue
         $student->load('classes');
 
@@ -471,192 +478,12 @@ class StudentController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Met à jour un élément.
      */
-    // public function update(Request $request, Student $student)
-    // {
-    //     if ($student->school_id !== session('current_school_id')) {
-    //         abort(403);
-    //     }
 
-    //     // Validation simplifiée pour la mise à jour
-    //     $validated = $request->validate([
-    //         'first_name' => 'required|string|max:100',
-    //         'last_name' => 'required|string|max:100',
-    //         'status' => 'required|in:active,inactive,suspended',
-    //         // Ajoutez les autres champs nécessaires ici si vous avez un formulaire d'édition complet
-    //     ]);
-
-    //     $student->update($validated);
-
-    //     return redirect()->route('app.students.index')
-    //         ->with('success', 'Informations de l\'élève mises à jour avec succès !');
-    // }
-
-    // public function update(Request $request, Student $student)
-    // {
-    //     if ($student->school_id !== session('current_school_id')) {
-    //         abort(403);
-    //     }
-
-    //     $validated = $request->validate([
-    //         'first_name' => 'required|string|max:100',
-    //         'last_name' => 'required|string|max:100',
-    //         'gender' => 'required|in:M,F',
-    //         'birth_date' => 'required|date|before_or_equal:today',
-    //         'class_id' => 'required|exists:school_classes,id',
-    //         'section' => 'nullable|string|max:10',
-    //         'status' => 'required|in:active,inactive,suspended',
-    //         'large_family' => 'required|boolean',
-    //         'staff_child' => 'required|boolean',
-    //         'religion' => 'nullable|string|max:50',
-    //         'admission_date' => 'required|date',
-    //         'receipt_number' => 'nullable|string|max:50',
-    //         'student_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-
-    //         'father_name' => 'nullable|string|max:100',
-    //         'father_phone' => 'nullable|string|max:20',
-    //         'father_occupation' => 'nullable|string|max:100',
-    //         'mother_name' => 'nullable|string|max:100',
-    //         'mother_phone' => 'nullable|string|max:20',
-    //         'mother_occupation' => 'nullable|string|max:100',
-
-    //         'guardian_type' => 'required|in:father,mother,other',
-    //         'guardian_first_name' => 'required|string|max:100',
-    //         'guardian_last_name' => 'required|string|max:100',
-    //         'guardian_phone' => 'required|string|max:20',
-    //         'guardian_email' => 'required|email|max:100',
-    //         'guardian_relation' => 'nullable|string|max:50',
-    //         'guardian_occupation' => 'nullable|string|max:100',
-    //         'guardian_address' => 'nullable|string',
-
-    //         'current_address' => 'nullable|string',
-    //         'permanent_address' => 'nullable|string',
-    //         'previous_school' => 'nullable|string',
-    //         'remarks' => 'nullable|string',
-
-    //         'documents.1' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:2048',
-    //         'documents.2' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:2048',
-    //         'documents.3' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:2048',
-    //         'documents.4' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:2048',
-    //     ]);
-
-    //     $schoolId = session('current_school_id');
-
-    //     DB::beginTransaction();
-    //     try {
-    //         // 1. Gestion de la photo (si nouvelle photo fournie)
-    //         $photoPath = $student->photo;
-    //         if ($request->hasFile('student_photo')) {
-    //             if ($photoPath) {
-    //                 \Storage::disk('public')->delete($photoPath);
-    //             }
-    //             $photoPath = $request->file('student_photo')->store('students/photos', 'public');
-
-    //             // ✅ AJOUT : Gestion intelligente des 4 documents
-    //         $documentsData = $student->documents ?? []; // Récupère les anciens ou un tableau vide
-
-    //         for ($i = 1; $i <= 4; $i++) {
-    //             if ($request->hasFile("documents.$i")) {
-    //                 // Supprimer l'ancien fichier s'il existe
-    //                 $oldPath = $documentsData["doc_$i"] ?? null;
-    //                 if ($oldPath) {
-    //                     \Storage::disk('public')->delete($oldPath);
-    //                 }
-    //                 // Sauvegarder le nouveau
-    //                 $documentsData["doc_$i"] = $request->file("documents.$i")->store('students/documents', 'public');
-    //             }
-    //         }
-    //         }
-
-    //         // 2. Mise à jour des données de l'élève
-    //         $student->update([
-    //             'first_name' => $validated['first_name'],
-    //             'last_name' => $validated['last_name'],
-    //             'gender' => $validated['gender'],
-    //             'birth_date' => $validated['birth_date'],
-    //             'status' => $validated['status'],
-    //             'section' => $validated['section'],
-    //             'large_family' => $validated['large_family'],
-    //             'staff_child' => $validated['staff_child'],
-    //             'religion' => $validated['religion'],
-    //             'admission_date' => $validated['admission_date'],
-    //             'receipt_number' => $validated['receipt_number'],
-    //             'photo' => $photoPath,
-
-    //             'father_name' => $validated['father_name'],
-    //             'father_phone' => $validated['father_phone'],
-    //             'father_occupation' => $validated['father_occupation'],
-    //             'mother_name' => $validated['mother_name'],
-    //             'mother_phone' => $validated['mother_phone'],
-    //             'mother_occupation' => $validated['mother_occupation'],
-
-    //             'guardian_type' => $validated['guardian_type'],
-    //             'guardian_name' => trim($validated['guardian_first_name'] . ' ' . $validated['guardian_last_name']),
-    //             'guardian_phone' => $validated['guardian_phone'],
-    //             'guardian_relation' => $validated['guardian_relation'],
-    //             'guardian_email' => $validated['guardian_email'],
-    //             'guardian_occupation' => $validated['guardian_occupation'],
-    //             'guardian_address' => $validated['guardian_address'],
-
-    //             'current_address' => $validated['current_address'],
-    //             'permanent_address' => $validated['permanent_address'],
-    //             'previous_school' => $validated['previous_school'],
-    //             'remarks' => $validated['remarks'],
-    //             'documents' => $documentsData,
-    //         ]);
-
-    //         // 3. Mise à jour de la classe (via la table pivot)
-    //         $student->classes()->sync([$validated['class_id']]);
-
-    //         // Mise à jour de l'inscription active
-    //         $activeYear = \App\Models\SchoolYear::where('school_id', $schoolId)->where('is_active', true)->first();
-    //         if ($activeYear) {
-    //             \App\Models\Enrollment::updateOrCreate(
-    //                 [
-    //                     'school_id' => $schoolId,
-    //                     'student_id' => $student->id,
-    //                     'school_year_id' => $activeYear->id,
-    //                 ],
-    //                 [
-    //                     'school_class_id' => $validated['class_id'],
-    //                     'status' => 'enrolled',
-    //                 ]
-    //             );
-    //         }
-
-    //         // 4. GESTION INTELLIGENTE DU COMPTE PARENT (Mise à jour ou Création)
-    //         if (!empty($validated['guardian_email'])) {
-    //             $parentUser = \App\Models\User::updateOrCreate(
-    //                 [
-    //                     'email' => $validated['guardian_email'],
-    //                     'school_id' => $schoolId
-    //                 ],
-    //                 [
-    //                     'first_name' => $validated['guardian_first_name'],
-    //                     'last_name' => $validated['guardian_last_name'],
-    //                     'role' => 'parent',
-    //                     'phone' => $validated['guardian_phone'],
-    //                     // Le mot de passe n'est pas touché s'il existe déjà
-    //                 ]
-    //             );
-
-    //             // Lier ce parent à l'élève dans la table pivot (de manière élégante avec Eloquent)
-    //             $student->parents()->syncWithoutDetaching([
-    //                 $parentUser->id => ['school_id' => $schoolId]
-    //             ]);
-    //         }
-
-    //         DB::commit();
-
-    //         return redirect()->route('app.students.index')
-    //             ->with('success', "✅ Informations de {$student->first_name} mises à jour avec succès ! Le compte parent a été synchronisé.");
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         return back()->withErrors(['error' => 'Erreur lors de la mise à jour : ' . $e->getMessage()])->withInput();
-    //     }
-    // }
-
+    /**
+     * Met à jour le dossier d'un élève, son parent, sa classe et ses documents.
+     */
     public function update(Request $request, Student $student)
     {
         if ($student->school_id !== session('current_school_id')) {
@@ -730,7 +557,7 @@ class StudentController extends Controller
                 $photoPath = $request->file('student_photo')->store('students/photos', 'public');
             }
 
-            // 2. ✅ Gestion intelligente des 4 documents (HORS du bloc photo, bien indenté)
+            // 2. Gestion intelligente des 4 documents (HORS du bloc photo, bien indenté)
             $documentsData = $student->documents ?? [];
 
             for ($i = 1; $i <= 4; $i++) {
@@ -779,7 +606,7 @@ class StudentController extends Controller
                 'permanent_address' => $validated['permanent_address'],
                 'previous_school' => $validated['previous_school'],
                 'remarks' => $validated['remarks'],
-                'documents' => $documentsData, // ✅ Sauvegarde du JSON
+                'documents' => $documentsData, // Sauvegarde du JSON
             ]);
 
             // 4. Mise à jour de la classe (via la table pivot)
@@ -870,7 +697,7 @@ class StudentController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Supprime un élément.
      */
     public function destroy(Student $student)
     {
@@ -890,6 +717,9 @@ class StudentController extends Controller
             ->with('success', 'Élève supprimé avec succès !');
     }
 
+    /**
+     * Exporte en Excel la liste des élèves, éventuellement d'une seule classe.
+     */
     public function exportExcel(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -900,6 +730,9 @@ class StudentController extends Controller
         return Excel::download(new StudentsExport($schoolId, $classId), $filename.'.xlsx');
     }
 
+    /**
+     * Exporte en PDF la liste des élèves, éventuellement d'une seule classe.
+     */
     public function exportPdf(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -940,7 +773,7 @@ class StudentController extends Controller
             $schoolLogoPath = public_path('storage/'.$user->school->logo);
         }
         if (! $schoolLogoPath || ! file_exists($schoolLogoPath)) {
-            $schoolLogoPath = public_path('images/default-logo.png'); // Fallback
+            $schoolLogoPath = public_path('images/default-logo.png'); // Valeur de repli
         }
 
         // 5. Génération du PDF

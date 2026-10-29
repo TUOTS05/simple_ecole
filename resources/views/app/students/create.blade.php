@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Si c'est un nouvel élève, générer un matricule unique
     const matriculeField = document.querySelector('input[name="matricule"]');
     if (matriculeField && !matriculeField.value) {
-        // Format: MAT-ANNEE-NUMERO (ex: MAT-2024-0001)
+        // Format : MAT-ANNEE-NUMERO (ex. : MAT-2024-0001)
         const year = new Date().getFullYear();
         const randomNum = Math.floor(Math.random() * 9000) + 1000;
         matriculeField.value = `MAT-${year}-${randomNum}`;

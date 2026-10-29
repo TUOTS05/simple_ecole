@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Tentative de paiement en ligne d'un extra via CinetPay, en attente jusqu'à sa vérification.
+ */
 class ExtraOnlinePayment extends Model
 {
     protected $fillable = [

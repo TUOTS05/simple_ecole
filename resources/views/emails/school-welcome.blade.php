@@ -116,13 +116,13 @@
 <body>
     <div class="email-container">
         
-        <!-- HEADER -->
+        <!-- EN-TÊTE -->
         <div class="header">
             <h1>🎉 Bienvenue sur {{ config('app.name') }} !</h1>
             <p>Votre espace de gestion scolaire est prêt</p>
         </div>
 
-        <!-- CONTENT -->
+        <!-- CONTENU -->
         <div class="content">
             
             <p class="welcome-message">
@@ -181,7 +181,7 @@
 
         </div>
 
-        <!-- FOOTER -->
+        <!-- PIED DE PAGE -->
         <div class="footer">
             <p>
                 © {{ date('Y') }} {{ config('app.name') }}. Tous droits réservés.<br>

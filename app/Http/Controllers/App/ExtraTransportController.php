@@ -14,12 +14,18 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
+/**
+ * Transport scolaire : véhicules, circuits et arrêts, affectation des élèves et suivi GPS des bus.
+ */
 class ExtraTransportController extends Controller
 {
     // ==========================================
     // VÉHICULES
     // ==========================================
 
+    /**
+     * Liste des véhicules de l'école.
+     */
     public function vehiclesIndex()
     {
         $schoolId = session('current_school_id');
@@ -28,6 +34,9 @@ class ExtraTransportController extends Controller
         return view('app.extras.transport.vehicles', compact('vehicles'));
     }
 
+    /**
+     * Ajoute un véhicule.
+     */
     public function vehiclesStore(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -47,6 +56,9 @@ class ExtraTransportController extends Controller
         return back()->with('success', '✅ Véhicule ajouté avec succès !');
     }
 
+    /**
+     * Met à jour un véhicule.
+     */
     public function vehiclesUpdate(Request $request, $id)
     {
         $vehicle = ExtraVehicle::where('school_id', session('current_school_id'))->findOrFail($id);
@@ -65,6 +77,9 @@ class ExtraTransportController extends Controller
         return back()->with('success', '✅ Véhicule mis à jour avec succès !');
     }
 
+    /**
+     * Supprime un véhicule, refusé s'il est affecté à un circuit ou à des élèves.
+     */
     public function vehiclesDestroy($id)
     {
         $vehicle = ExtraVehicle::where('school_id', session('current_school_id'))->findOrFail($id);
@@ -82,6 +97,9 @@ class ExtraTransportController extends Controller
     // CIRCUITS ET ARRÊTS
     // ==========================================
 
+    /**
+     * Circuits d'un extra de transport, avec leurs arrêts et leur véhicule.
+     */
     public function routesIndex(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -98,6 +116,9 @@ class ExtraTransportController extends Controller
         return view('app.extras.transport.routes', compact('extras', 'extraId', 'vehicles', 'routes'));
     }
 
+    /**
+     * Crée un circuit pour un extra de transport de l'école.
+     */
     public function routesStore(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -114,6 +135,9 @@ class ExtraTransportController extends Controller
         return back()->with('success', '✅ Circuit créé avec succès !');
     }
 
+    /**
+     * Supprime un circuit, refusé si des élèves y sont affectés.
+     */
     public function routesDestroy($id)
     {
         $route = ExtraRoute::whereHas('extra', fn ($q) => $q->where('school_id', session('current_school_id')))->findOrFail($id);
@@ -128,6 +152,9 @@ class ExtraTransportController extends Controller
         return redirect()->route('extras.transport.routes.index', ['extra_id' => $extraId])->with('success', '✅ Circuit supprimé avec succès !');
     }
 
+    /**
+     * Ajoute un arrêt à un circuit.
+     */
     public function stopsStore(Request $request, $routeId)
     {
         $route = ExtraRoute::whereHas('extra', fn ($q) => $q->where('school_id', session('current_school_id')))->findOrFail($routeId);
@@ -145,6 +172,9 @@ class ExtraTransportController extends Controller
         return redirect()->route('extras.transport.routes.index', ['extra_id' => $route->extra_id])->with('success', '✅ Arrêt ajouté avec succès !');
     }
 
+    /**
+     * Supprime un arrêt d'un circuit.
+     */
     public function stopsDestroy($id)
     {
         $stop = ExtraRouteStop::whereHas('route.extra', fn ($q) => $q->where('school_id', session('current_school_id')))->findOrFail($id);
@@ -158,6 +188,9 @@ class ExtraTransportController extends Controller
     // AFFECTATION DES ÉLÈVES
     // ==========================================
 
+    /**
+     * Affectation des élèves inscrits au transport à un circuit et à un arrêt.
+     */
     public function assignmentsIndex(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -180,6 +213,9 @@ class ExtraTransportController extends Controller
         return view('app.extras.transport.assignments', compact('extras', 'extraId', 'routes', 'subscriptions'));
     }
 
+    /**
+     * Affecte un élève à un circuit, en vérifiant l'arrêt et la capacité du véhicule.
+     */
     public function assignmentsStore(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -220,6 +256,9 @@ class ExtraTransportController extends Controller
         return back()->with('success', '✅ Élève affecté au circuit avec succès !');
     }
 
+    /**
+     * Retire un élève de son circuit.
+     */
     public function assignmentsDestroy($id)
     {
         $assignment = ExtraTransportAssignment::whereHas('subscription', fn ($q) => $q->where('school_id', session('current_school_id')))->findOrFail($id);
@@ -232,6 +271,9 @@ class ExtraTransportController extends Controller
     // GÉOLOCALISATION DES VÉHICULES
     // ==========================================
 
+    /**
+     * Carte de suivi en direct des véhicules actifs.
+     */
     public function trackingIndex()
     {
         $schoolId = session('current_school_id');
@@ -284,6 +326,9 @@ class ExtraTransportController extends Controller
         return view('app.extras.transport.tracking-link', compact('vehicle', 'trackingUrl', 'qrSvg'));
     }
 
+    /**
+     * Génère un nouveau lien de suivi pour le chauffeur ; l'ancien cesse de fonctionner.
+     */
     public function vehicleRegenerateTrackingToken($id)
     {
         $vehicle = ExtraVehicle::where('school_id', session('current_school_id'))->findOrFail($id);

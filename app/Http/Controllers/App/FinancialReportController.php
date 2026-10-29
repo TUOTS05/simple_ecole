@@ -17,6 +17,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
+/**
+ * Rapports financiers de la scolarité : impayés par classe et par élève, avec exports Excel et PDF.
+ */
 class FinancialReportController extends Controller
 {
     /**
@@ -184,7 +187,7 @@ class FinancialReportController extends Controller
             $schoolLogoPath = public_path('storage/'.$user->school->logo);
         }
         if (! $schoolLogoPath || ! file_exists($schoolLogoPath)) {
-            $schoolLogoPath = public_path('images/default-logo.png'); // Fallback
+            $schoolLogoPath = public_path('images/default-logo.png'); // Valeur de repli
         }
 
         // 5. Génération du PDF
@@ -258,7 +261,7 @@ class FinancialReportController extends Controller
                 return $student;
             });
 
-        // ✅ NOUVEAU : Calcul des statistiques globales de la classe
+        // Statistiques globales de la classe
         $totalDu = $students->sum('total_du');
         $totalPaye = $students->sum('total_paye');
         $totalReste = $students->sum('total_reste');
@@ -288,7 +291,7 @@ class FinancialReportController extends Controller
             'schoolYear',
             'userName',
             'schoolLogoPath',
-            'classStats' // ✅ Nouvelle variable passée à la vue
+            'classStats' // Nouvelle variable passée à la vue
         ));
 
         $pdf->setPaper('a4', 'portrait');
@@ -395,7 +398,7 @@ class FinancialReportController extends Controller
         $totalRemaining = $totalDue - $totalPaid;
         $paymentRate = $totalDue > 0 ? round(($totalPaid / $totalDue) * 100, 1) : 0;
 
-        // ✅ Ajout des variables pour l'en-tête uniforme
+        // Ajout des variables pour l'en-tête uniforme
         $userName = trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'Non spécifié');
 
         $schoolLogoPath = null;
@@ -403,7 +406,7 @@ class FinancialReportController extends Controller
             $schoolLogoPath = public_path('storage/'.$user->school->logo);
         }
         if (! $schoolLogoPath || ! file_exists($schoolLogoPath)) {
-            $schoolLogoPath = public_path('images/default-logo.png'); // Fallback
+            $schoolLogoPath = public_path('images/default-logo.png'); // Valeur de repli
         }
 
         $pdf = Pdf::loadView('app.financial.exports.student_detail_pdf', compact(

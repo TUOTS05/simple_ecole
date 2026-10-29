@@ -15,7 +15,7 @@ return new class extends Migration
         });
 
         Schema::table('attendances', function (Blueprint $table) {
-            // ✅ Supprime l'ancien index qui empêchait d'avoir matin ET après-midi
+            // Supprime l'ancien index qui empêchait d'avoir matin ET après-midi
             $table->dropUnique('attendances_student_id_date_unique');
         });
     }

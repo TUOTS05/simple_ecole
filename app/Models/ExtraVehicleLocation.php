@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Position GPS envoyée par le téléphone du chauffeur.
+ */
 class ExtraVehicleLocation extends Model
 {
     protected $fillable = [

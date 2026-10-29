@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Arrêt d'un circuit de transport, avec son ordre et ses horaires.
+ */
 class ExtraRouteStop extends Model
 {
     protected $fillable = [

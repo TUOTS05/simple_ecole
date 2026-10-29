@@ -1,5 +1,5 @@
-<!-- Header -->
-<!-- Header -->
+<!-- En-tête -->
+<!-- En-tête -->
 <header class="h-16 bg-white shadow-md border-b-4 border-primary flex items-center justify-between px-6">
 
     <!-- Titre de la page -->

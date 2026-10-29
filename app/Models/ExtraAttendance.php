@@ -6,6 +6,9 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Présence d'un élève à une séance d'extra.
+ */
 class ExtraAttendance extends Model
 {
     protected $fillable = [

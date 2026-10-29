@@ -14,7 +14,7 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Google Fonts -->
+    <!-- Polices Google -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <style>
@@ -91,7 +91,7 @@
             opacity: 0;
         }
 
-        /* Gradient backgrounds */
+        /* Fonds en dégradé */
         .gradient-hero {
             background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #3b82f6 100%);
         }
@@ -103,14 +103,14 @@
             background-clip: text;
         }
 
-        /* Glass effect */
+        /* Effet de verre dépoli */
         .glass {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        /* Card hover */
+        /* Survol des cartes */
         .feature-card {
             transition: all 0.3s ease;
         }
@@ -120,7 +120,7 @@
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
 
-        /* Scroll reveal */
+        /* Apparition des blocs au défilement */
         .reveal {
             opacity: 0;
             transform: translateY(30px);
@@ -132,7 +132,7 @@
             transform: translateY(0);
         }
 
-        /* Mobile menu */
+        /* Menu mobile */
         .mobile-menu {
             transform: translateX(100%);
             transition: transform 0.3s ease;
@@ -142,7 +142,7 @@
             transform: translateX(0);
         }
 
-        /* Custom scrollbar */
+        /* Barre de défilement personnalisée */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -180,7 +180,7 @@
                     <a href="#contact" class="text-gray-600 hover:text-blue-600 transition font-medium">Contact</a>
                 </div>
 
-                <!-- CTA -->
+                <!-- Appel à l'action -->
                 <div class="hidden md:flex items-center space-x-3">
                     <a href="/login" class="text-gray-700 hover:text-blue-600 font-medium transition">Connexion</a>
                     <a href="{{ route('demo.login') }}" class="relative group bg-white text-blue-600 hover:bg-gray-100 px-6 py-3 rounded-lg font-bold transition shadow-lg flex items-center justify-center">
@@ -196,14 +196,14 @@
                         Demander mon compte
                     </a>
                 </div>
-                <!-- Mobile Menu Button -->
+                <!-- Bouton du menu mobile -->
                 <button id="mobile-menu-btn" class="md:hidden text-gray-700">
                     <i class="fas fa-bars text-2xl"></i>
                 </button>
             </div>
         </div>
 
-        <!-- Mobile Menu -->
+        <!-- Menu mobile -->
         <div id="mobile-menu" class="mobile-menu fixed top-0 right-0 h-full w-64 bg-white shadow-2xl md:hidden z-50">
             <div class="p-6">
                 <button id="close-menu" class="absolute top-4 right-4 text-gray-700">
@@ -226,9 +226,9 @@
         </div>
     </nav>
 
-    <!-- ============ HERO SECTION ============ -->
+    <!-- ============ BANDEAU D'ACCUEIL ============ -->
     <section class="gradient-hero pt-24 pb-20 md:pt-32 md:pb-32 relative overflow-hidden">
-        <!-- Background decoration -->
+        <!-- Décor d'arrière-plan -->
         <div class="absolute inset-0 opacity-10">
             <div class="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl"></div>
             <div class="absolute bottom-10 right-10 w-96 h-96 bg-green-300 rounded-full blur-3xl"></div>
@@ -236,7 +236,7 @@
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
             <div class="grid md:grid-cols-2 gap-12 items-center">
-                <!-- Text -->
+                <!-- Texte -->
                 <div class="text-white">
                     <div class="inline-flex items-center bg-white/20 backdrop-blur-md px-4 py-2 rounded-full mb-6 animate-fade-in-up">
                         <span class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
@@ -265,7 +265,7 @@
                         </a>
                     </div>
 
-                    <!-- Social proof -->
+                    <!-- Preuve sociale (témoignages, chiffres) -->
                     <div class="mt-10 flex items-center space-x-6 animate-fade-in-up delay-400">
                         <div class="flex -space-x-2">
                             <div class="w-10 h-10 rounded-full bg-gradient-to-br from-pink-400 to-red-500 border-2 border-white flex items-center justify-center text-white text-xs font-bold">AK</div>
@@ -282,7 +282,7 @@
                     </div>
                 </div>
 
-                <!-- Visual -->
+                <!-- Visuel -->
                 <div class="relative animate-float">
                     <div class="bg-white rounded-2xl shadow-2xl p-6 transform rotate-2 hover:rotate-0 transition duration-500">
                         <div class="flex items-center justify-between mb-4">
@@ -331,7 +331,7 @@
         </div>
     </section>
 
-    <!-- ============ STATS SECTION ============ -->
+    <!-- ============ CHIFFRES CLÉS ============ -->
     <section class="py-16 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
@@ -355,7 +355,7 @@
         </div>
     </section>
 
-    <!-- ============ FEATURES SECTION ============ -->
+    <!-- ============ FONCTIONNALITÉS ============ -->
     <section id="features" class="py-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16 reveal">
@@ -371,7 +371,7 @@
             </div>
 
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Feature 1 -->
+                <!-- Fonctionnalité 1 -->
                 <div class="feature-card bg-white p-8 rounded-2xl border border-gray-100 reveal">
                     <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-5">
                         <i class="fas fa-user-plus text-blue-600 text-2xl"></i>
@@ -382,7 +382,7 @@
                     </p>
                 </div>
 
-                <!-- Feature 2 -->
+                <!-- Fonctionnalité 2 -->
                 <div class="feature-card bg-white p-8 rounded-2xl border border-gray-100 reveal">
                     <div class="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center mb-5">
                         <i class="fas fa-money-bill-wave text-green-600 text-2xl"></i>
@@ -393,7 +393,7 @@
                     </p>
                 </div>
 
-                <!-- Feature 3 -->
+                <!-- Fonctionnalité 3 -->
                 <div class="feature-card bg-white p-8 rounded-2xl border border-gray-100 reveal">
                     <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center mb-5">
                         <i class="fas fa-file-alt text-purple-600 text-2xl"></i>
@@ -404,7 +404,7 @@
                     </p>
                 </div>
 
-                <!-- Feature 4 -->
+                <!-- Fonctionnalité 4 -->
                 <div class="feature-card bg-white p-8 rounded-2xl border border-gray-100 reveal">
                     <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-5">
                         <i class="fas fa-calendar-check text-orange-600 text-2xl"></i>
@@ -415,7 +415,7 @@
                     </p>
                 </div>
 
-                <!-- Feature 5 -->
+                <!-- Fonctionnalité 5 -->
                 <div class="feature-card bg-white p-8 rounded-2xl border border-gray-100 reveal">
                     <div class="w-14 h-14 bg-red-100 rounded-xl flex items-center justify-center mb-5">
                         <i class="fas fa-qrcode text-red-600 text-2xl"></i>
@@ -426,7 +426,7 @@
                     </p>
                 </div>
 
-                <!-- Feature 6 -->
+                <!-- Fonctionnalité 6 -->
                 <div class="feature-card bg-white p-8 rounded-2xl border border-gray-100 reveal">
                     <div class="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center mb-5">
                         <i class="fas fa-chart-line text-indigo-600 text-2xl"></i>
@@ -437,7 +437,7 @@
                     </p>
                 </div>
 
-                <!-- Feature 7 -->
+                <!-- Fonctionnalité 7 -->
                 <div class="feature-card bg-white p-8 rounded-2xl border border-gray-100 reveal">
                     <div class="w-14 h-14 bg-pink-100 rounded-xl flex items-center justify-center mb-5">
                         <i class="fas fa-users text-pink-600 text-2xl"></i>
@@ -448,7 +448,7 @@
                     </p>
                 </div>
 
-                <!-- Feature 8 -->
+                <!-- Fonctionnalité 8 -->
                 <div class="feature-card bg-white p-8 rounded-2xl border border-gray-100 reveal">
                     <div class="w-14 h-14 bg-teal-100 rounded-xl flex items-center justify-center mb-5">
                         <i class="fas fa-chalkboard-teacher text-teal-600 text-2xl"></i>
@@ -459,7 +459,7 @@
                     </p>
                 </div>
 
-                <!-- Feature 9 -->
+                <!-- Fonctionnalité 9 -->
                 <div class="feature-card bg-white p-8 rounded-2xl border border-gray-100 reveal">
                     <div class="w-14 h-14 bg-yellow-100 rounded-xl flex items-center justify-center mb-5">
                         <i class="fas fa-building text-yellow-600 text-2xl"></i>
@@ -473,9 +473,9 @@
         </div>
     </section>
 
-    <!-- ============ DEMO VIDEO SECTION ============ -->
+    <!-- ============ VIDÉO DE DÉMONSTRATION ============ -->
     <section id="demo" class="py-20 bg-gradient-to-br from-blue-50 via-white to-green-50 relative overflow-hidden">
-        <!-- Background decoration -->
+        <!-- Décor d'arrière-plan -->
         <div class="absolute inset-0 opacity-5">
             <div class="absolute top-0 left-0 w-96 h-96 bg-blue-500 rounded-full blur-3xl"></div>
             <div class="absolute bottom-0 right-0 w-96 h-96 bg-green-500 rounded-full blur-3xl"></div>
@@ -515,14 +515,14 @@
                 </div>
             </div>
 
-            <!-- Alternative: Screenshots Carousel -->
+            <!-- Variante : carrousel de captures d'écran -->
             <div class="mt-16 reveal">
                 <h3 class="text-2xl font-bold text-center text-gray-900 mb-8">
                     Aperçu de l'interface
                 </h3>
 
                 <div class="grid md:grid-cols-3 gap-6">
-                    <!-- Screenshot 1 -->
+                    <!-- Capture d'écran 1 -->
                     <div class="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition">
                         <div class="aspect-video overflow-hidden">
                             <img src="{{ asset('screenshots/dashboard.jpg') }}" alt="Tableau de bord Simple Ecole" class="w-full h-full object-cover object-top">
@@ -535,7 +535,7 @@
                         </div>
                     </div>
 
-                    <!-- Screenshot 2 -->
+                    <!-- Capture d'écran 2 -->
                     <div class="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition">
                         <div class="aspect-video overflow-hidden">
                             <img src="{{ asset('screenshots/payments.jpg') }}" alt="Gestion des paiements et inscriptions" class="w-full h-full object-cover object-top">
@@ -548,7 +548,7 @@
                         </div>
                     </div>
 
-                    <!-- Screenshot 3 -->
+                    <!-- Capture d'écran 3 -->
                     <div class="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition">
                         <div class="aspect-video overflow-hidden">
                             <img src="{{ asset('screenshots/reports.jpg') }}" alt="Rapports financiers et statistiques" class="w-full h-full object-cover object-top">
@@ -563,7 +563,7 @@
                 </div>
             </div>
 
-            <!-- CTA after demo -->
+            <!-- Appel à l'action après la démo -->
             <div class="mt-12 text-center reveal">
                 <p class="text-lg text-gray-700 mb-6">
                     Convaincu ? Envoyez votre demande dès maintenant !
@@ -576,7 +576,7 @@
         </div>
     </section>
 
-    <!-- ============ SPACES SECTION ============ -->
+    <!-- ============ ESPACES ============ -->
     <section id="spaces" class="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16 reveal">
@@ -640,7 +640,7 @@
         </div>
     </section>
 
-    <!-- ============ PRICING SECTION ============ -->
+    <!-- ============ TARIFS ============ -->
     <section id="pricing" class="py-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-10 reveal">
@@ -658,7 +658,7 @@
                 </span>
             </div>
 
-            <!-- Toggle Mensuel / Annuel -->
+            <!-- Bascule mensuel / annuel -->
             <div class="flex justify-center mb-12 reveal">
                 <div class="inline-flex items-center bg-white border border-gray-200 rounded-full p-1 shadow-sm">
                     <button type="button" class="billing-toggle-btn px-6 py-2 rounded-full text-sm font-bold transition" data-billing="monthly">
@@ -805,7 +805,7 @@
         </div>
     </section>
 
-    <!-- ============ TESTIMONIALS ============ -->
+    <!-- ============ TÉMOIGNAGES ============ -->
     <section class="py-20 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16 reveal">
@@ -875,7 +875,7 @@
         </div>
     </section>
 
-    <!-- ============ CTA SECTION ============ -->
+    <!-- ============ APPEL À L'ACTION ============ -->
     <section class="py-20 gradient-hero relative overflow-hidden">
         <div class="absolute inset-0 opacity-10">
             <div class="absolute top-10 left-1/4 w-72 h-72 bg-white rounded-full blur-3xl"></div>
@@ -926,11 +926,11 @@
         </div>
     </section>
 
-    <!-- ============ FOOTER ============ -->
+    <!-- ============ PIED DE PAGE ============ -->
     <footer id="contact" class="bg-gray-900 text-gray-300 pt-16 pb-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-4 gap-8 mb-12">
-                <!-- Brand -->
+                <!-- Marque -->
                 <div>
                     <div class="flex items-center space-x-2 mb-4">
                         <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-green-500 rounded-lg flex items-center justify-center">
@@ -957,7 +957,7 @@
                     </div>
                 </div>
 
-                <!-- Product -->
+                <!-- Produit -->
                 <div>
                     <h4 class="text-white font-bold mb-4">Produit</h4>
                     <ul class="space-y-2 text-sm">
@@ -1014,7 +1014,7 @@
 
     <!-- ============ SCRIPTS ============ -->
     <script>
-        // Mobile menu
+        // Menu mobile
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
         const closeMenu = document.getElementById('close-menu');
         const mobileMenu = document.getElementById('mobile-menu');
@@ -1022,7 +1022,7 @@
         mobileMenuBtn.addEventListener('click', () => mobileMenu.classList.add('open'));
         closeMenu.addEventListener('click', () => mobileMenu.classList.remove('open'));
 
-        // Scroll reveal
+        // Apparition des blocs au défilement
         const reveals = document.querySelectorAll('.reveal');
         const revealOnScroll = () => {
             reveals.forEach(el => {
@@ -1035,7 +1035,7 @@
         window.addEventListener('scroll', revealOnScroll);
         revealOnScroll();
 
-        // Smooth scroll
+        // Défilement fluide vers les ancres
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
                 const target = document.querySelector(this.getAttribute('href'));
@@ -1060,7 +1060,7 @@
             }
         });
 
-        // Pricing: toggle Mensuel / Annuel
+        // Tarifs : bascule mensuel / annuel
         const billingBtns = document.querySelectorAll('.billing-toggle-btn');
         function setBilling(mode) {
             billingBtns.forEach(btn => {

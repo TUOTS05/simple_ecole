@@ -6,12 +6,17 @@ use App\Events\StudentMarkedAbsent;
 use App\Models\SmsLog;
 use App\Services\Sms\OrangeSmsGateway;
 use Carbon\Carbon;
-use Illuminate\Events\Listeners\Listening;
 use Illuminate\Support\Facades\Log;
 
-// [Listening(events: [StudentMarkedAbsent::class])]
+/**
+ * Prévient le parent par SMS quand son enfant est marqué absent (si l'école a activé les SMS).
+ * Enregistré automatiquement par Laravel grâce au type de l'événement reçu par handle().
+ */
 class SendAbsenceSmsToParent
 {
+    /**
+     * Envoie le SMS d'absence au parent si l'école a configuré les SMS, et trace l'envoi.
+     */
     public function handle(StudentMarkedAbsent $event): void
     {
         $attendance = $event->attendance;
@@ -37,7 +42,7 @@ class SendAbsenceSmsToParent
             return;
         }
 
-        // ✅ MODIFICATION ICI : On lit le template directement depuis la table schools
+        // MODIFICATION ICI : On lit le template directement depuis la table schools
         $template = $school->sms_absence_template
             ?? 'Cher(e) parent, nous vous informons que votre enfant {student_name} ({class_name}) a été absent(e) le {date}. Merci de contacter l\'établissement. {school_name}';
 

@@ -230,7 +230,7 @@
         <div class="signature-label">Signature/ Cachet</div>
         <div class="signature-box"></div>
 
-        <!-- 6. FOOTER -->
+        <!-- 6. PIED DE PAGE -->
         <div class="footer">MERCI POUR VOTRE CONFIANCE!</div>
 
     </div>

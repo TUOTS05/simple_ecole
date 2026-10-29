@@ -11,6 +11,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
+/**
+ * Pointage des présences aux activités extrascolaires.
+ */
 class ExtraAttendanceController extends Controller
 {
     /**
@@ -37,6 +40,9 @@ class ExtraAttendanceController extends Controller
         return view('app.extras.attendances.index', compact('extras', 'extraId', 'date', 'subscriptions'));
     }
 
+    /**
+     * Enregistre les présences d'une séance d'activité.
+     */
     public function store(Request $request)
     {
         $schoolId = session('current_school_id');

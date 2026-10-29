@@ -153,7 +153,7 @@
     </form>
 
     <!-- ========================================== -->
-    <!-- ✅ NOUVELLE SECTION 3 : CHANGEMENT DE MOT DE PASSE -->
+    <!-- Section 3 : changement de mot de passe -->
     <!-- ========================================== -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="bg-gray-50 px-6 py-4 border-b border-gray-100">

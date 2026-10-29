@@ -5,8 +5,15 @@ namespace App\Models\Traits;
 use App\Models\School;
 use Illuminate\Database\Eloquent\Builder;
 
+/**
+ * Cloisonnement automatique d'un modèle par école.
+ */
 trait BelongsToSchool
 {
+    /**
+     * Filtre toutes les lectures sur l'école de l'utilisateur connecté et renseigne school_id à la
+     * création.
+     */
     protected static function bootBelongsToSchool()
     {
         // 1. FILTRAGE AUTOMATIQUE (Lecture)

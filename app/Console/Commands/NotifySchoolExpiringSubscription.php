@@ -8,6 +8,9 @@ use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 
+/**
+ * Prévient les écoles dont l'abonnement arrive à échéance.
+ */
 class NotifySchoolExpiringSubscription extends Command
 {
     /**

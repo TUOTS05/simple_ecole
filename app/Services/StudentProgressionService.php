@@ -5,6 +5,9 @@ namespace App\Services;
 use App\Models\ReportCard;
 use App\Models\Student;
 
+/**
+ * Évolution des moyennes d'un élève au fil des bulletins, pour le graphique de progression.
+ */
 class StudentProgressionService
 {
     /**
@@ -48,6 +51,9 @@ class StudentProgressionService
         return $startDate.'-'.str_pad((string) $this->periodPosition($reportCard), 2, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * Position d'un bulletin dans l'année scolaire, pour trier mois et trimestres ensemble.
+     */
     private function periodPosition(ReportCard $reportCard): int
     {
         if (strtolower($reportCard->period ?? '') === 'trimestriel') {
@@ -65,6 +71,9 @@ class StudentProgressionService
         return $order[mb_strtolower((string) $reportCard->month)] ?? 0;
     }
 
+    /**
+     * Libellé court d'un bulletin (mois ou trimestre, et année).
+     */
     private function label(ReportCard $reportCard): string
     {
         $year = $reportCard->schoolYear->name ?? '';

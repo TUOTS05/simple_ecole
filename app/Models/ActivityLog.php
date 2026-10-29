@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Action importante tracée sur la plateforme (création d'école, renouvellement de contrat…).
+ */
 class ActivityLog extends Model
 {
     protected $fillable = [
@@ -29,10 +32,10 @@ class ActivityLog extends Model
     {
         $user = auth()->user();
 
-        // ✅ Fallback robuste : essaie 'name', puis 'email', puis 'Système'
+        // Fallback robuste : essaie 'name', puis 'email', puis 'Système'
         $finalUserName = $userName ?? ($user ? ($user->name ?? $user->email ?? 'Utilisateur') : 'Système');
 
-        // ✅ Fallback robuste pour le rôle
+        // Fallback robuste pour le rôle
         $finalUserRole = $userRole ?? ($user ? ($user->role ?? 'user') : 'system');
 
         return self::create([

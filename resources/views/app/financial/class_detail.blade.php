@@ -51,7 +51,7 @@
                     <tr class="hover:bg-gray-50 transition">
                         <td class="py-3 px-4 text-sm font-mono text-gray-600">{{ $student->matricule ?? 'N/A' }}</td>
                         
-                        <!-- ✅ LIEN CLIQUABLE VERS LE DÉTAIL DE L'ÉLÈVE (Vue Web) -->
+                        <!-- LIEN CLIQUABLE VERS LE DÉTAIL DE L'ÉLÈVE (Vue Web) -->
                         <td class="py-3 px-4 font-medium text-gray-800">
                             <a href="{{ route('app.financial.student_detail', ['studentId' => $student->student_id, 'school_year_id' => $schoolYearId]) }}" 
                                class="text-primary hover:text-primary-dark hover:underline flex items-center gap-1 transition">

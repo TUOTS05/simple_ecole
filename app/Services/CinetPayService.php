@@ -24,6 +24,9 @@ class CinetPayService
 
     private $devMode;
 
+    /**
+     * Lit la configuration CinetPay (clé, site, mode démo).
+     */
     public function __construct()
     {
         $this->apiKey = config('services.cinetpay.api_key');

@@ -10,6 +10,9 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
+/**
+ * E-mail de bienvenue à une école, avec le mot de passe de son compte administrateur. (Actuellement envoyé nulle part.)
+ */
 class SchoolWelcomeMail extends Mailable
 {
     use Queueable, SerializesModels;
@@ -19,7 +22,7 @@ class SchoolWelcomeMail extends Mailable
     public $password;
 
     /**
-     * Create a new message instance.
+     * Prépare un nouvel e-mail.
      */
     public function __construct(School $school, string $password)
     {
@@ -28,7 +31,7 @@ class SchoolWelcomeMail extends Mailable
     }
 
     /**
-     * Get the message envelope.
+     * Enveloppe de l'e-mail (objet, expéditeur).
      */
     public function envelope(): Envelope
     {
@@ -38,7 +41,7 @@ class SchoolWelcomeMail extends Mailable
     }
 
     /**
-     * Get the message content definition.
+     * Contenu de l'e-mail (vue et données).
      */
     public function content(): Content
     {
@@ -48,7 +51,7 @@ class SchoolWelcomeMail extends Mailable
     }
 
     /**
-     * Get the attachments for the message.
+     * Pièces jointes de l'e-mail.
      *
      * @return array<int, Attachment>
      */

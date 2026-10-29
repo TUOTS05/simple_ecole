@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Présence d'un enfant à la crèche, avec ses heures d'arrivée et de départ.
+ */
 class CrecheAttendance extends Model
 {
     protected $fillable = [

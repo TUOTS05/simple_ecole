@@ -8,8 +8,14 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
+/**
+ * Échéances de paiement ajoutées ou retirées à la main sur une inscription.
+ */
 class StudentInstallmentController extends Controller
 {
+    /**
+     * Ajoute une échéance à une inscription de l'école.
+     */
     public function store(Request $request): RedirectResponse
     {
         $schoolId = (int) $request->user()->school_id;
@@ -34,6 +40,9 @@ class StudentInstallmentController extends Controller
         return back()->with('success', 'Échéance ajoutée avec succès.');
     }
 
+    /**
+     * Supprime une échéance, refusé si elle a déjà été réglée.
+     */
     public function destroy(Request $request, StudentInstallment $installment): RedirectResponse
     {
         abort_unless($installment->school_id === (int) $request->user()->school_id, 403);

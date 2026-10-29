@@ -14,7 +14,7 @@
             color: #000;
         }
         
-        /* HEADER */
+        /* EN-TÊTE */
         .header { 
             display: flex; 
             align-items: center; 
@@ -62,7 +62,7 @@
         }
         .text-right { text-align: right; }
 
-        /* ✅ NOUVEAU : TABLEAU DES STATISTIQUES GLOBALES */
+        /* Tableau des statistiques globales */
         .stats-table {
             width: 100%;
             border-collapse: collapse;
@@ -111,7 +111,7 @@
         }
         .text-center { text-align: center; }
         
-        /* FOOTER FIXE */
+        /* PIED DE PAGE FIXE */
         .footer { 
             position: fixed; 
             bottom: 0; 
@@ -151,7 +151,7 @@
         </tr>
     </table>
 
-    <!-- ✅ NOUVEAU : Tableau des statistiques globales de la classe -->
+    <!-- Statistiques globales de la classe -->
     <table class="stats-table">
         <tr>
             <td>

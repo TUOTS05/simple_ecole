@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Inscription d'un élève à un extra : tarif appliqué, remise, échéances, paiements et affectation au
+ * transport.
+ */
 class ExtraSubscription extends Model
 {
     protected $fillable = [
@@ -94,6 +98,9 @@ class ExtraSubscription extends Model
         return $this->discount_amount > 0;
     }
 
+    /**
+     * Pourcentage déjà payé (attribut payment_rate).
+     */
     public function getPaymentRateAttribute()
     {
         return $this->total_amount > 0

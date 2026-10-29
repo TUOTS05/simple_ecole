@@ -11,6 +11,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
+/**
+ * Fin d'année : décisions du conseil (admis, redouble, saut de classe) et passage des élèves dans
+ * l'année suivante.
+ */
 class EndOfYearController extends Controller
 {
     // 1. Liste des classes pour l'année en cours
@@ -45,7 +49,7 @@ class EndOfYearController extends Controller
             ->with(['reportCards' => function ($q) use ($currentYear) {
                 $q->where('school_year_id', $currentYear->id)
                     ->where(function ($query) {
-                        // ✅ Recherche insensible à la casse (Trimestriel ou trimestriel)
+                        // Recherche insensible à la casse (Trimestriel ou trimestriel)
                         $query->where('period', 'Trimestriel')
                             ->orWhere('period', 'trimestriel');
                     })
@@ -78,7 +82,7 @@ class EndOfYearController extends Controller
             })
             ->value('school_class_id');
 
-        // ✅ CORRECTION : On cherche d'abord si le bulletin T3 existe déjà
+        // On cherche d'abord si le bulletin du 3e trimestre existe déjà
         $existingReportCard = ReportCard::where('student_id', $student->id)
             ->where('school_year_id', $currentYear->id)
             ->where(function ($q) {
@@ -105,7 +109,7 @@ class EndOfYearController extends Controller
                 'school_class_id' => $currentClassId,
                 'period' => 'Trimestriel',
                 'quarter' => 3,
-                'average' => 0.00, // ✅ Contourne l'erreur NOT NULL
+                'average' => 0.00, // Contourne l'erreur NOT NULL
                 'rank' => null,
                 'total_students' => null,
                 'end_of_year_decision' => $request->decision,
@@ -209,6 +213,9 @@ class EndOfYearController extends Controller
         }
     }
 
+    /**
+     * Année scolaire active de l'école connectée ; 404 si aucune n'est active.
+     */
     private function activeYear(): SchoolYear
     {
         $year = SchoolYear::where('school_id', auth()->user()->school_id)->where('is_active', true)->first();

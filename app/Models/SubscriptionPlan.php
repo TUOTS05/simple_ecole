@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Offre d'abonnement : prix et limites (classes, utilisateurs, élèves).
+ */
 class SubscriptionPlan extends Model
 {
     protected $fillable = [

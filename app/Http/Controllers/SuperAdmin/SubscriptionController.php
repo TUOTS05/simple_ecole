@@ -20,8 +20,14 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
+/**
+ * Super-administration : abonnements des écoles, renouvellements et demandes d'abonnement.
+ */
 class SubscriptionController extends Controller
 {
+    /**
+     * Écoles, offres actives et contrats existants.
+     */
     public function index()
     {
         $schools = School::orderBy('name')->get();
@@ -31,6 +37,9 @@ class SubscriptionController extends Controller
         return view('superadmin.subscriptions.index', compact('schools', 'plans', 'contracts'));
     }
 
+    /**
+     * Crée un contrat d'abonnement pour une école, active l'école et génère le PDF du contrat.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -53,7 +62,7 @@ class SubscriptionController extends Controller
         // 1. Générer un numéro de contrat unique
         $contractNumber = 'CTR-'.date('Y').'-'.strtoupper(Str::random(6));
 
-        // ✅ RÈGLE MÉTIER : Désactiver tout contrat "actif" existant pour cette école
+        // RÈGLE MÉTIER : Désactiver tout contrat "actif" existant pour cette école
         Contract::where('school_id', $school->id)
             ->where('status', 'active')
             ->update(['status' => 'expired']);
@@ -143,6 +152,9 @@ class SubscriptionController extends Controller
         $contract->update(['pdf_path' => $filePath]);
     }
 
+    /**
+     * Formulaire de renouvellement, prérempli avec la période suivant le contrat actuel.
+     */
     public function renew($id)
     {
         // Récupération standard du contrat
@@ -154,6 +166,9 @@ class SubscriptionController extends Controller
         return view('superadmin.subscriptions.renew', compact('contract', 'newStartDate', 'newEndDate'));
     }
 
+    /**
+     * Enregistre le renouvellement : nouveau contrat sans chevauchement avec la période en cours.
+     */
     public function storeRenewal(Request $request, $id)
     {
         // Récupération standard du contrat
@@ -188,7 +203,7 @@ class SubscriptionController extends Controller
         // 3. Générer un nouveau numéro de contrat
         $newContractNumber = 'CTR-'.date('Y').'-'.strtoupper(Str::random(6));
 
-        // 4. Créer le NOUVEAU contrat
+        // 4. Création du nouveau contrat
         $newContract = Contract::create([
             'school_id' => $school->id,
             'contract_number' => $newContractNumber,
@@ -262,112 +277,12 @@ class SubscriptionController extends Controller
     /**
      * Approuver une demande et générer le contrat
      */
-    // public function approveRequest(Request $request, \App\Models\SubscriptionRequest $subRequest)
-    // {
-    //     $validated = $request->validate([
-    //         'admin_notes' => 'nullable|string',
-    //     ]);
-
-    //     $school = $subRequest->school;
-    //     $plan = $subRequest->plan;
-
-    //     // 1. Marquer la demande comme approuvée
-    //     $subRequest->update([
-    //         'status' => 'approved',
-    //         'admin_notes' => $validated['admin_notes']
-    //     ]);
-
-    //     // 2. Réutiliser votre logique existante pour créer le CONTRAT
-    //     $contractNumber = 'CTR-' . date('Y') . '-' . strtoupper(\Illuminate\Support\Str::random(6));
-    //     $startDate = now();
-    //     $endDate = $subRequest->duration === 'yearly' ? now()->addYear() : now()->addMonth();
-    //     $amount = $subRequest->duration === 'yearly' ? $plan->yearly_price : $plan->monthly_price;
-
-    //     // Désactiver les anciens contrats actifs
-    //     \App\Models\Contract::where('school_id', $school->id)->where('status', 'active')->update(['status' => 'expired']);
-
-    //     $contract = \App\Models\Contract::create([
-    //         'school_id' => $school->id,
-    //         'contract_number' => $contractNumber,
-    //         'plan_name' => $plan->name,
-    //         'start_date' => $startDate,
-    //         'end_date' => $endDate,
-    //         'amount' => $amount,
-    //         'max_students' => $plan->max_students,
-    //         'max_teachers' => $plan->max_teachers,
-    //         'status' => 'active',
-    //         'signed_at' => now(),
-    //     ]);
-
-    //     // 3. Activer/Mettre à jour l'école
-    //     $school->update([
-    //         'status' => 'active',
-    //         'subscription_plan' => $plan->name,
-    //         'subscription_start_date' => $startDate,
-    //         'subscription_end_date' => $endDate,
-    //         'max_students' => $plan->max_students,
-    //         'trial_ends_at' => null, // On arrête l'essai
-    //     ]);
-
-    //     // 4. Générer le PDF (votre méthode existante)
-    //     $this->generateContractPdf($contract, $school);
-
-    //     // 5. Journaliser
-    //     \App\Models\ActivityLog::logAction('approved_subscription', "A approuvé la demande et activé le contrat {$contractNumber} pour {$school->name}");
-
-    //     // TODO: Envoyer un email à l'école avec le contrat en pièce jointe et les coordonnées de paiement
-
-    //     return redirect()->route('superadmin.subscriptions.index')
-    //         ->with('success', "✅ Demande approuvée ! Le contrat {$contractNumber} a été généré et l'école est active.");
-    // }
 
     // Dans App\Http\Controllers\SuperAdmin\SubscriptionController.php
 
-    // public function approveRequest(SubscriptionRequest $subRequest, Request $request)
-    // {
-    //     // 1. Récupérer l'école spécifique liée à CETTE demande
-    //     $school = $subRequest->school;
-    //     $plan = $subRequest->plan;
-
-    //     $school = $subRequest->school;
-
-    //     // 🛡️ SÉCURITÉ : Empêcher l'activation de l'école de démo
-    //     if (str_contains(strtolower($school->name), 'démo') || str_contains(strtolower($school->email ?? ''), 'demo')) {
-    //         return redirect()->back()->with('error', '⚠️ Impossible d\'activer un abonnement pour l\'école de démonstration.');
-    //     }
-
-    //     // 2. ACTIVER CETTE ÉCOLE (et seulement celle-ci)
-    //     $school->update([
-    //         'status' => 'active',
-    //         'is_active' => true,
-    //         'subscription_plan' => $plan->name,
-    //         'subscription_start_date' => now(),
-    //         'subscription_end_date' => now()->addYear(),
-    //     ]);
-
-    //     // 3. Créer le contrat d'abonnement
-    //     \App\Models\SubscriptionRequest::create([
-    //         'school_id' => $school->id,
-    //         'plan_id' => $plan->id,
-    //         'plan_name' => $plan->name,
-    //         'start_date' => now(),
-    //         'end_date' => now()->addYear(),
-    //         'amount' => $plan->yearly_price,
-    //         'status' => 'active',
-    //     ]);
-
-    //     // 4. Mettre à jour la demande
-    //     $subRequest->update([
-    //         'status' => 'approved',
-    //         'admin_notes' => $request->admin_notes,
-    //     ]);
-
-    //     // 5. (Optionnel) Envoyer un email au directeur avec ses identifiants
-
-    //     return redirect()->route('superadmin.subscriptions.pending')
-    //         ->with('success', "✅ L'école '{$school->name}' a été activée avec succès et le contrat a été généré.");
-    // }
-
+    /**
+     * Valide une demande d'abonnement d'une école (sauf l'école de démo) et crée le contrat.
+     */
     public function approveRequest(SubscriptionRequest $subRequest, Request $request)
     {
         $school = $subRequest->school;
@@ -415,7 +330,7 @@ class SubscriptionController extends Controller
             ]
         );
 
-        // 2. ✅ CRÉER LE CONTRAT D'ABONNEMENT (Dans la table 'subscriptions', PAS 'subscription_requests' !)
+        // 2. CRÉER LE CONTRAT D'ABONNEMENT (Dans la table 'subscriptions', PAS 'subscription_requests' !)
         Subscription::create([
             'school_id' => $school->id,
             'plan_id' => $plan->id,

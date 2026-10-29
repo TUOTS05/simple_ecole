@@ -5,35 +5,18 @@ namespace App\Http\Controllers\Parent;
 use App\Http\Controllers\Controller;
 use App\Models\Grade;
 use App\Models\ReportCard;
-use App\Models\Student;
 use App\Models\Subject;
-use App\Models\User;
 use App\Services\StudentProgressionService;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+/**
+ * Espace parent : notes et bulletins de ses enfants.
+ */
 class GradeController extends Controller
 {
     /**
      * Liste des bulletins d'un élève
      */
-    // public function index($studentId)
-    // {
-    //     $parent = auth()->user();
-
-    //     // Vérifier l'accès
-    //     $student = $parent->children()
-    //         ->where('students.id', $studentId)
-    //         ->with('school')
-    //         ->firstOrFail();
-
-    //     // Récupérer tous les bulletins de cet élève
-    //     $reportCards = ReportCard::where('student_id', $studentId)
-    //         ->with(['schoolYear', 'schoolClass'])
-    //         ->orderBy('school_year_id', 'desc')
-    //         ->get();
-
-    //     return view('parent.grades.index', compact('student', 'reportCards'));
-    // }
 
     /**
      * Liste des bulletins d'un élève
@@ -48,7 +31,7 @@ class GradeController extends Controller
             ->with('school')
             ->firstOrFail();
 
-        // ✅ 2. Récupérer TOUS les enfants pour le menu déroulant
+        // 2. Récupérer TOUS les enfants pour le menu déroulant
         $siblings = $parent->children()->get();
 
         // 3. Récupérer tous les bulletins de cet élève

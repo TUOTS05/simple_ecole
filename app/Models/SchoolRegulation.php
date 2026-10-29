@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Version du règlement intérieur d'une école ; chaque publication crée une nouvelle version.
+ */
 class SchoolRegulation extends Model
 {
     protected $fillable = [

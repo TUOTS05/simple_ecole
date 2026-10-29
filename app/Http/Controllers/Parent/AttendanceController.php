@@ -8,13 +8,19 @@ use App\Models\Enrollment;
 use App\Models\SchoolYear;
 use Illuminate\Http\Request;
 
+/**
+ * Espace parent : présences et absences de ses enfants.
+ */
 class AttendanceController extends Controller
 {
+    /**
+     * Présences d'un enfant du parent, sur une période (30 derniers jours par défaut).
+     */
     public function index(Request $request, $studentId)
     {
         $parent = auth()->user();
 
-        // 1. Vérifier l'accès à l'enfant demandé (Votre logique, intacte)
+        // 1. L'enfant demandé doit être celui du parent connecté
         $student = $parent->children()->where('students.id', $studentId)->firstOrFail();
 
         // 2. Récupérer TOUS les enfants pour le menu déroulant
@@ -29,7 +35,7 @@ class AttendanceController extends Controller
             ->first();
         $schoolClassName = $enrollment ? $enrollment->schoolClass->name : 'Classe non assignée';
 
-        // 4. NOUVEAU : Gestion des filtres de dates (par défaut : 30 derniers jours)
+        // 4. Filtres de dates (par défaut : 30 derniers jours)
         $startDate = $request->get('start_date', now()->subDays(30)->format('Y-m-d'));
         $endDate = $request->get('end_date', now()->format('Y-m-d'));
 

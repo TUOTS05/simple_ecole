@@ -14,8 +14,14 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
+/**
+ * Espace enseignant : appel des élèves (avec scan de la carte scolaire), historique et exports.
+ */
 class AttendanceController extends Controller
 {
+    /**
+     * Synthèse des présences des classes de l'enseignant, avec les heures d'absence par élève.
+     */
     public function index(Request $request)
     {
         $teacher = auth()->user();
@@ -26,7 +32,7 @@ class AttendanceController extends Controller
             return view('teacher.attendance.index', [
                 'assignments' => $assignments,
                 'summaries' => collect(),
-                'studentAbsenceHours' => collect(), // ✅ Ajouté pour éviter les erreurs
+                'studentAbsenceHours' => collect(), // Ajouté pour éviter les erreurs
                 'selectedClassId' => null,
                 'selectedPeriod' => 'all',
                 'groupBy' => 'day',
@@ -80,7 +86,7 @@ class AttendanceController extends Controller
 
         $summaries = $query->paginate(20);
 
-        // ✅ 2. NOUVEAU : Calcul des heures d'absence par élève (Déplacé ici, dans index)
+        // 2. Heures d'absence par élève
         $studentAbsenceHours = collect();
         if ($selectedClassId) {
             $studentAbsenceHours = DB::table('attendances')
@@ -109,10 +115,13 @@ class AttendanceController extends Controller
             'endDate',
             'attendanceHasPeriod',
             'summaries',
-            'studentAbsenceHours' // ✅ Passé à la vue
+            'studentAbsenceHours' // Passé à la vue
         ));
     }
 
+    /**
+     * Feuille d'appel d'une classe de l'enseignant pour une date et une demi-journée.
+     */
     public function create(Request $request)
     {
         $teacher = auth()->user();
@@ -187,6 +196,9 @@ class AttendanceController extends Controller
         ]);
     }
 
+    /**
+     * Historique des appels d'une classe de l'enseignant.
+     */
     public function history($classId = null)
     {
         $teacher = auth()->user();
@@ -219,6 +231,9 @@ class AttendanceController extends Controller
         return view('teacher.attendance.history', compact('class', 'attendances'));
     }
 
+    /**
+     * Enregistre l'appel ; chaque nouvelle absence déclenche l'événement qui prévient le parent.
+     */
     public function store(Request $request)
     {
         $teacher = auth()->user();
@@ -287,7 +302,7 @@ class AttendanceController extends Controller
                 }
             }
 
-            // ✅ La méthode store doit SEULEMENT rediriger après succès
+            // La méthode store doit SEULEMENT rediriger après succès
             return redirect()->route('teacher.attendance.index', ['class_id' => $validated['class_id']])
                 ->with('success', '✅ Appel enregistré avec succès !');
         } catch (\Exception $e) {
@@ -297,6 +312,9 @@ class AttendanceController extends Controller
         }
     }
 
+    /**
+     * Exporte en Excel les présences des classes de l'enseignant sur une période.
+     */
     public function exportAttendanceExcel(Request $request)
     {
         $teacher = auth()->user();
@@ -312,93 +330,9 @@ class AttendanceController extends Controller
         );
     }
 
-    // public function exportAttendancePdf(Request $request)
-    // {
-    //     $teacher = auth()->user();
-    //     $assignedClassIds = $teacher->teacherAssignments()->pluck('school_class_id')->toArray();
-
-    //     $classId = $request->get('class_id');
-    //     $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
-    //     $endDate = $request->get('end_date', now()->format('Y-m-d'));
-
-    //     // On réutilise la même logique de requête que pour l'Excel
-    //     $query = \App\Models\Attendance::query()
-    //         ->select(
-    //             'attendances.date',
-    //             'attendances.period',
-    //             'school_classes.name as class_name',
-    //             DB::raw("CONCAT(students.last_name, ' ', students.first_name) as student_name"),
-    //             'attendances.status',
-    //             'attendances.notes'
-    //         )
-    //         ->join('students', 'attendances.student_id', '=', 'students.id')
-    //         ->join('school_classes', 'attendances.school_class_id', '=', 'school_classes.id')
-    //         ->whereIn('attendances.school_class_id', $assignedClassIds)
-    //         ->whereBetween('attendances.date', [$startDate, $endDate])
-    //         ->orderBy('attendances.date', 'desc');
-
-    //     if ($classId) $query->where('attendances.school_class_id', $classId);
-
-    //     $attendances = $query->get();
-    //     $className = $classId ? \App\Models\SchoolClass::find($classId)->name : 'Toutes mes classes';
-
-    //     $pdf = Pdf::loadView('teacher.exports.attendance_pdf', compact('attendances', 'className', 'startDate', 'endDate'));
-    //     return $pdf->download('presences_' . date('Y-m-d') . '.pdf');
-    // }
-
-    //     public function exportAttendancePdf(Request $request)
-    // {
-    //     $teacher = auth()->user();
-    //     $assignedClassIds = $teacher->teacherAssignments()->pluck('school_class_id')->toArray();
-
-    //     $classId = $request->get('class_id');
-    //     $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
-    //     $endDate = $request->get('end_date', now()->format('Y-m-d'));
-
-    //     // ✅ 1. Récupérer le nom complet de l'enseignant connecté
-    //     $teacherName = trim(($teacher->first_name ?? '') . ' ' . ($teacher->last_name ?? '')) ?: ($teacher->name ?? 'Enseignant non spécifié');
-
-    //     // 2. Requête pour les données du tableau
-    //     $query = \App\Models\Attendance::query()
-    //         ->select(
-    //             'attendances.date',
-    //             'attendances.period',
-    //             'school_classes.name as class_name',
-    //             DB::raw("CONCAT(students.last_name, ' ', students.first_name) as student_name"),
-    //             'attendances.status',
-    //             'attendances.notes'
-    //         )
-    //         ->join('students', 'attendances.student_id', '=', 'students.id')
-    //         ->join('school_classes', 'attendances.school_class_id', '=', 'school_classes.id')
-    //         ->whereIn('attendances.school_class_id', $assignedClassIds)
-    //         ->whereBetween('attendances.date', [$startDate, $endDate])
-    //         ->orderBy('attendances.date', 'desc')
-    //         ->orderBy('attendances.period', 'desc'); // Tri cohérent
-
-    //     if ($classId) {
-    //         $query->where('attendances.school_class_id', $classId);
-    //     }
-
-    //     $attendances = $query->get();
-
-    //     $className = $classId ? \App\Models\SchoolClass::find($classId)->name : 'Toutes mes classes';
-
-    //     // ✅ 3. Année scolaire (à adapter si vous avez une relation school_year sur la classe)
-    //     $schoolYear = '2025-2026';
-
-    //     // ✅ 4. Passage de toutes les variables à la vue, y compris teacherName
-    //     $pdf = Pdf::loadView('teacher.exports.attendance_pdf', compact(
-    //         'attendances',
-    //         'className',
-    //         'startDate',
-    //         'endDate',
-    //         'teacherName',
-    //         'schoolYear'
-    //     ));
-
-    //     return $pdf->download('rapport_presences_absences_' . date('Y-m-d') . '.pdf');
-    // }
-
+    /**
+     * Exporte en PDF les présences des classes de l'enseignant sur une période.
+     */
     public function exportAttendancePdf(Request $request)
     {
         $teacher = auth()->user();
@@ -411,15 +345,13 @@ class AttendanceController extends Controller
         $teacherName = trim(($teacher->first_name ?? '').' '.($teacher->last_name ?? '')) ?: ($teacher->name ?? 'Enseignant non spécifié');
         $schoolYear = '2025-2026'; // Adaptez si vous avez une relation school_year
 
-        // ✅ 1. Récupération du chemin absolu du logo de l'école
+        // 1. Récupération du chemin absolu du logo de l'école
         // Adaptez 'school.logo' selon votre modèle réel (ex: $teacher->school->logo)
         $schoolLogoPath = null;
         if (isset($teacher->school) && $teacher->school->logo) {
             // Si le logo est stocké dans storage/app/public
             $schoolLogoPath = public_path('storage/'.$teacher->school->logo);
 
-            // OU si le logo est directement dans public/images/
-            // $schoolLogoPath = public_path('images/' . $teacher->school->logo);
         }
 
         // Fallback vers un logo par défaut si aucun n'est trouvé
@@ -457,7 +389,7 @@ class AttendanceController extends Controller
             'endDate',
             'teacherName',
             'schoolYear',
-            'schoolLogoPath' // ✅ 2. Passage du chemin absolu à la vue
+            'schoolLogoPath' // 2. Passage du chemin absolu à la vue
         ));
 
         // Optionnel : pour forcer le format A4 et l'orientation

@@ -10,8 +10,15 @@ use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Stocks des extras (uniformes, fournitures, kits) : articles et mouvements d'entrée, de sortie et de
+ * vente.
+ */
 class ExtraStockController extends Controller
 {
+    /**
+     * Articles en stock et historique des mouvements.
+     */
     public function index(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -34,6 +41,9 @@ class ExtraStockController extends Controller
         return view('app.extras.stocks.index', compact('items', 'movements', 'itemId', 'students'));
     }
 
+    /**
+     * Crée un article de stock.
+     */
     public function itemsStore(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -58,6 +68,9 @@ class ExtraStockController extends Controller
         return back()->with('success', '✅ Article ajouté avec succès !');
     }
 
+    /**
+     * Met à jour un article de stock.
+     */
     public function itemsUpdate(Request $request, $id)
     {
         $item = ExtraStockItem::where('school_id', session('current_school_id'))->findOrFail($id);
@@ -78,6 +91,9 @@ class ExtraStockController extends Controller
         return back()->with('success', '✅ Article mis à jour avec succès !');
     }
 
+    /**
+     * Supprime un article, refusé s'il a déjà des mouvements.
+     */
     public function itemsDestroy($id)
     {
         $item = ExtraStockItem::where('school_id', session('current_school_id'))->findOrFail($id);
@@ -91,6 +107,10 @@ class ExtraStockController extends Controller
         return back()->with('success', '✅ Article supprimé avec succès !');
     }
 
+    /**
+     * Enregistre un mouvement de stock et met à jour la quantité ; refuse une sortie supérieure au
+     * stock disponible.
+     */
     public function movementsStore(Request $request)
     {
         $schoolId = session('current_school_id');

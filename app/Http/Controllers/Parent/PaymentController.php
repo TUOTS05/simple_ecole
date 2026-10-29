@@ -8,6 +8,9 @@ use App\Models\Payment;
 use App\Models\StudentInstallment;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+/**
+ * Espace parent : frais de scolarité, échéances et paiements de ses enfants.
+ */
 class PaymentController extends Controller
 {
     /**
@@ -23,7 +26,7 @@ class PaymentController extends Controller
             ->with('school')
             ->firstOrFail();
 
-        // ✅ AJOUT : Récupérer TOUS les enfants pour le menu déroulant
+        // Tous les enfants du parent, pour le menu déroulant
         $siblings = $parent->children()->get();
 
         // 2. Récupérer l'inscription de l'élève pour l'année active de SON école (un parent peut
@@ -63,7 +66,7 @@ class PaymentController extends Controller
 
         return view('parent.payments.index', compact(
             'student',
-            'siblings',         // ✅ AJOUTÉ ICI POUR CORRIGER L'ERREUR
+            'siblings',         // AJOUTÉ ICI POUR CORRIGER L'ERREUR
             'enrollment',
             'installments',
             'payments',

@@ -257,7 +257,7 @@
             @if($signaturePath)<img src="{{ $signaturePath }}" alt="Signature" style="max-height: 40px; max-width: 40%;">@endif
         </div>
 
-        <!-- 6. FOOTER -->
+        <!-- 6. PIED DE PAGE -->
         @if($rec['footer_text'])
         <div class="footer">{{ $rec['footer_text'] }}</div>
         @endif

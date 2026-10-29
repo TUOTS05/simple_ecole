@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
+/**
+ * Profil de l'école (identité, logo, coordonnées) et compte de son administrateur.
+ */
 class ProfileController extends Controller
 {
     /**
@@ -33,7 +36,7 @@ class ProfileController extends Controller
         $schoolId = session('current_school_id') ?? $user->school_id;
         $school = School::find($schoolId);
 
-        // ✅ CORRECTION ICI : Préciser que la colonne unique est 'email', pas 'user_email'
+        // La colonne vérifiée est 'email' (le champ du formulaire s'appelle 'user_email')
         $validatedUser = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',

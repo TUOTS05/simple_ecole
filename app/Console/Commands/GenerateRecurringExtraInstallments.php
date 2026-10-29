@@ -7,12 +7,18 @@ use App\Models\ExtraSubscription;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
+/**
+ * Génère chaque mois les échéances des extras facturés sans date de fin.
+ */
 class GenerateRecurringExtraInstallments extends Command
 {
     protected $signature = 'extras:generate-monthly-installments';
 
     protected $description = "Génère l'échéance du mois pour les abonnements extras à facturation mensuelle continue (tarif « is_open_ended »).";
 
+    /**
+     * Crée l'échéance du mois en cours pour chaque abonnement concerné qui ne l'a pas encore.
+     */
     public function handle()
     {
         $currentPeriod = now()->format('Y-m');

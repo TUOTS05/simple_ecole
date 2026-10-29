@@ -5,6 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Paiement reçu pour une inscription à la cantine ; à l'enregistrement, il met à jour les montants de
+ * l'inscription.
+ */
 class CanteenPayment extends Model
 {
     protected $fillable = [

@@ -1,4 +1,4 @@
-<!-- Sidebar -->
+<!-- Barre latérale -->
 <aside
     x-data="{ sidebarOpen: localStorage.getItem('sidebarOpen') !== 'false' }"
     x-init="$watch('sidebarOpen', val => localStorage.setItem('sidebarOpen', val))"
@@ -119,7 +119,7 @@
         </a>
         @endif
 
-        <!-- ✅ LIEN MESSAGES PARENT AVEC BADGE DE NOTIFICATION -->
+        <!-- LIEN MESSAGES PARENT AVEC BADGE DE NOTIFICATION -->
         <a href="{{ route('parent.messages.index') }}" class="flex items-center justify-between px-3 py-3 rounded-lg transition {{ request()->routeIs('parent.messages.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
             <div class="flex items-center">
                 <span class="text-xl min-w-[24px] text-center">✉️</span>
@@ -258,7 +258,7 @@
             </div>
         </div>
 
-        <!-- ✅ GROUPE : RAPPORTS -->
+        <!-- GROUPE : RAPPORTS -->
         <div x-data="{ open: {{ request()->routeIs('app.report-cards.*') || request()->routeIs('app.financial.*') || (request()->routeIs('app.students.index') && request()->has('export')) ? 'true' : 'false' }} }" class="space-y-1">
             <button @click="if(!sidebarOpen) sidebarOpen = true; open = !open" title="Rapports"
                 class="w-full flex items-center justify-between px-3 py-3 rounded-lg transition text-gray-700 hover:bg-gray-100 focus:outline-none">
@@ -389,7 +389,7 @@
         </div>
         @endif
 
-        <!-- ✅ Menu déroulant Communication (Admin) — le personnel y accède via son module « Messagerie » -->
+        <!-- Menu déroulant Communication (Admin) — le personnel y accède via son module « Messagerie » -->
         @if(auth()->user()->isSchoolAdmin())
         <div x-data="{ open: {{ request()->routeIs('app.messages.*') ? 'true' : 'false' }} }" class="space-y-1">
             <button @click="if(!sidebarOpen) sidebarOpen = true; open = !open" title="Communication"
@@ -434,7 +434,7 @@
 
     </nav>
     @endif
-    <!-- Footer Sidebar -->
+    <!-- Bas de la barre latérale -->
     <div class="p-3 border-t border-gray-200 flex-shrink-0 space-y-2">
         
         @if(auth()->user()->isSchoolAdmin())
@@ -461,7 +461,7 @@
                 <span x-show="sidebarOpen" class="ml-2 whitespace-nowrap">Mon Profil</span>
             </a>
 
-        {{-- ✅ SOLUTION ULTIME : Vérifie le rôle OU la présence d'enfants --}}
+        {{-- SOLUTION ULTIME : Vérifie le rôle OU la présence d'enfants --}}
         @elseif(auth()->user()->isParent() || (method_exists(auth()->user(), 'children') && auth()->user()->children->isNotEmpty()))
             <a href="{{ route('parent.profile.edit') }}" title="Mon Profil" class="flex items-center justify-center px-3 py-2 rounded-lg hover:bg-gray-100 transition text-gray-700 text-sm font-medium">
                 <svg class="w-5 h-5 min-w-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -9,6 +9,9 @@ use App\Models\TeacherAssignment;
 use App\Models\User;
 use Illuminate\Http\Request;
 
+/**
+ * Affectation des enseignants aux classes pour l'année scolaire.
+ */
 class TeacherAssignmentController extends Controller
 {
     /**

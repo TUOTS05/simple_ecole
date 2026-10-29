@@ -9,10 +9,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
+/**
+ * Connexion et déconnexion, avec redirection vers l'espace correspondant au rôle.
+ */
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Display the login view.
+     * Affiche l'écran de connexion.
      */
     public function create(): View
     {
@@ -20,7 +23,7 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Handle an incoming authentication request.
+     * Traite une tentative de connexion.
      */
     public function store(LoginRequest $request)
     {
@@ -32,7 +35,7 @@ class AuthenticatedSessionController extends Controller
         if (method_exists($user, 'isParent') && $user->isParent()) {
             return redirect()->intended(route('parent.dashboard'));
         }
-        // ✅ Redirection explicite selon le rôle (remplace la ligne dashboardRouteName())
+        // Redirection explicite selon le rôle (remplace la ligne dashboardRouteName())
         if (method_exists($user, 'isTeacher') && $user->isTeacher()) {
             return redirect()->intended(route('teacher.dashboard'));
         }
@@ -55,7 +58,7 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Destroy an authenticated session.
+     * Déconnecte l'utilisateur et invalide sa session.
      */
     public function destroy(Request $request): RedirectResponse
     {

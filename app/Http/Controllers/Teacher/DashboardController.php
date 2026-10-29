@@ -7,6 +7,9 @@ use App\Models\Attendance;
 use App\Models\SchoolYear;
 use App\Models\TeacherAssignment;
 
+/**
+ * Espace enseignant : tableau de bord et classes affectées.
+ */
 class DashboardController extends Controller
 {
     /**

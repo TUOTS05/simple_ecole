@@ -10,8 +10,14 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
+/**
+ * Frais de scolarité de l'école, par année et par niveau.
+ */
 class FeeController extends Controller
 {
+    /**
+     * Liste des frais, filtrable par année.
+     */
     public function index(Request $request): View
     {
         $schoolId = $this->schoolId($request);
@@ -35,6 +41,9 @@ class FeeController extends Controller
         return view('app.fees.create', $this->formData($request));
     }
 
+    /**
+     * Crée un frais pour l'école connectée.
+     */
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validated($request);
@@ -45,6 +54,9 @@ class FeeController extends Controller
         return redirect()->route('app.fees.index')->with('success', 'Frais créé avec succès.');
     }
 
+    /**
+     * Détail d'un frais.
+     */
     public function show(Request $request, Fee $fee): View
     {
         $this->ensureBelongsToSchool($request, $fee);
@@ -52,6 +64,9 @@ class FeeController extends Controller
         return view('app.fees.show', compact('fee'));
     }
 
+    /**
+     * Formulaire de modification d'un frais.
+     */
     public function edit(Request $request, Fee $fee): View
     {
         $this->ensureBelongsToSchool($request, $fee);
@@ -59,6 +74,9 @@ class FeeController extends Controller
         return view('app.fees.edit', array_merge(['fee' => $fee], $this->formData($request)));
     }
 
+    /**
+     * Met à jour un frais.
+     */
     public function update(Request $request, Fee $fee): RedirectResponse
     {
         $this->ensureBelongsToSchool($request, $fee);
@@ -67,6 +85,9 @@ class FeeController extends Controller
         return redirect()->route('app.fees.index')->with('success', 'Frais mis à jour avec succès.');
     }
 
+    /**
+     * Supprime un frais.
+     */
     public function destroy(Request $request, Fee $fee): RedirectResponse
     {
         $this->ensureBelongsToSchool($request, $fee);
@@ -75,6 +96,9 @@ class FeeController extends Controller
         return redirect()->route('app.fees.index')->with('success', 'Frais supprimé avec succès.');
     }
 
+    /**
+     * Données des formulaires : années de l'école et niveaux autorisés par son abonnement.
+     */
     private function formData(Request $request): array
     {
         $schoolId = $this->schoolId($request);
@@ -85,6 +109,9 @@ class FeeController extends Controller
         ];
     }
 
+    /**
+     * Valide le formulaire ; l'année choisie doit appartenir à l'école.
+     */
     private function validated(Request $request): array
     {
         $schoolId = $this->schoolId($request);

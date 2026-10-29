@@ -10,8 +10,14 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Suivi des présences côté administration : synthèse par classe et par période, détail d'une journée.
+ */
 class AttendanceController extends Controller
 {
+    /**
+     * Synthèse des présences par classe, regroupée par jour, semaine, mois ou année selon le filtre.
+     */
     public function index(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -93,6 +99,9 @@ class AttendanceController extends Controller
         ));
     }
 
+    /**
+     * Détail des présences d'une journée donnée, toutes classes confondues.
+     */
     public function showByDate(string $date)
     {
         $schoolId = session('current_school_id');

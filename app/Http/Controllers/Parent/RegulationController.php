@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Storage;
  */
 class RegulationController extends Controller
 {
+    /**
+     * Affiche la version en vigueur du règlement intérieur et l'éventuelle acceptation du parent.
+     */
     public function show()
     {
         $parent = auth()->user();
@@ -24,6 +27,10 @@ class RegulationController extends Controller
         ]);
     }
 
+    /**
+     * Enregistre l'acceptation du règlement par le parent, seulement si la version n'a pas changé
+     * entre-temps.
+     */
     public function accept(Request $request)
     {
         $parent = auth()->user();
@@ -46,6 +53,9 @@ class RegulationController extends Controller
             ->with('success', 'Merci, votre acceptation du règlement intérieur a bien été enregistrée.');
     }
 
+    /**
+     * Télécharge le PDF de la version en vigueur du règlement.
+     */
     public function download()
     {
         $regulation = SchoolRegulation::currentFor(auth()->user()->school_id);

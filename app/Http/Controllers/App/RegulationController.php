@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Storage;
  */
 class RegulationController extends Controller
 {
+    /**
+     * Versions du règlement intérieur, avec leur nombre d'acceptations.
+     */
     public function index()
     {
         $schoolId = session('current_school_id');
@@ -31,6 +34,10 @@ class RegulationController extends Controller
         ]);
     }
 
+    /**
+     * Publie une nouvelle version du règlement (texte et/ou PDF) ; les parents devront l'accepter à
+     * nouveau.
+     */
     public function store(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -82,6 +89,9 @@ class RegulationController extends Controller
         return view('app.regulations.show', compact('regulation', 'parents', 'acceptedAt'));
     }
 
+    /**
+     * Télécharge le PDF d'une version du règlement.
+     */
     public function download(SchoolRegulation $regulation)
     {
         $this->authorizeSchool($regulation);

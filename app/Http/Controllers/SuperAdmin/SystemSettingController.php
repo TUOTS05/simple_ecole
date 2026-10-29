@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Super-administration : réglages globaux de la plateforme (maintenance, support, apparence…).
+ */
 class SystemSettingController extends Controller
 {
     /**

@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Tarif du goûter pour une classe de maternelle et une année, avec sa modalité de paiement.
+ */
 class GouterRate extends Model
 {
     protected $fillable = [

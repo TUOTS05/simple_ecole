@@ -10,8 +10,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
+/**
+ * Envoi de messages aux parents : à un parent précis, à une classe ou à toute l'école.
+ */
 class BroadcastMessageController extends Controller
 {
+    /**
+     * Formulaire d'envoi, avec les classes et les parents de l'école (et le nom de leurs enfants).
+     */
     public function create()
     {
         $schoolId = auth()->user()->school_id;
@@ -21,11 +27,11 @@ class BroadcastMessageController extends Controller
 
         // 2. Récupérer les parents ayant au moins un enfant dans cette école, avec leurs enfants
         $parents = User::whereHas('children', function ($q) use ($schoolId) {
-            // ✅ CORRECTION : Préciser la table 'students'
+            // Colonne préfixée par 'students' : la jointure pivot rend 'school_id' ambigu
             $q->where('students.school_id', $schoolId);
         })
             ->with(['children' => function ($q) use ($schoolId) {
-                // ✅ CORRECTION : Préciser la table 'students'
+                // Colonne préfixée par 'students' : la jointure pivot rend 'school_id' ambigu
                 $q->where('students.school_id', $schoolId);
             }])
             ->orderBy('last_name')
@@ -41,6 +47,10 @@ class BroadcastMessageController extends Controller
         return view('app.messages.broadcast', compact('classes', 'parents'));
     }
 
+    /**
+     * Enregistre le message : individuel (destinataire fixé) ou diffusé (visible par la classe ou
+     * toute l'école).
+     */
     public function store(Request $request)
     {
         $schoolId = auth()->user()->school_id;
@@ -69,7 +79,7 @@ class BroadcastMessageController extends Controller
         } elseif ($validated['target_type'] === 'parent') {
             // Récupérer les noms des enfants de ce parent dans cette école
             $parent = User::with(['children' => function ($q) use ($schoolId) {
-                // ✅ CORRECTION : Préciser la table 'students' ici aussi
+                // Colonne préfixée par 'students' : la jointure pivot rend 'school_id' ambigu
                 $q->where('students.school_id', $schoolId);
             }])->find($validated['receiver_id']);
 

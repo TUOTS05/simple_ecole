@@ -6,10 +6,13 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Restreint une route à certains rôles ; pour le personnel, l'accès dépend des modules de sa fonction.
+ */
 class CheckRole
 {
     /**
-     * Handle an incoming request.
+     * Traite la requête entrante.
      *
      * @param  Closure(Request): (Response)  $next
      * @param  string  ...$roles  Les rôles autorisés (ex: 'super_admin', 'school_admin')

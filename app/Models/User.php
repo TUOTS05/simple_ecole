@@ -12,6 +12,10 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * Utilisateur de la plateforme ; son rôle détermine son espace (super-admin, école, personnel,
+ * enseignant, parent).
+ */
 class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable;
@@ -30,6 +34,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'remember_token',
     ];
 
+    /**
+     * Conversions automatiques des attributs.
+     */
     protected function casts(): array
     {
         return [
@@ -58,6 +65,9 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role === 'teacher';
     }
 
+    /**
+     * Vrai pour un compte parent, quelle que soit la casse du rôle enregistré.
+     */
     public function isParent(): bool
     {
         // strtolower et trim garantissent que 'Parent', ' parent ' ou 'PARENT' seront reconnus comme 'parent'
@@ -116,6 +126,9 @@ class User extends Authenticatable implements MustVerifyEmail
         return Str::is($patterns, $routeName);
     }
 
+    /**
+     * Route d'accueil selon le rôle ; pour le personnel, le premier module autorisé par sa fonction.
+     */
     public function dashboardRouteName(): string
     {
         if ($this->isStaff()) {
@@ -174,7 +187,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function teacherAssignments()
     {
-        // ✅ Changement de 'teacher_id' en 'user_id'
+        // Changement de 'teacher_id' en 'user_id'
         return $this->hasMany(TeacherAssignment::class, 'user_id');
     }
 }

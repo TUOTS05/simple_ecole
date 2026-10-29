@@ -8,6 +8,9 @@ use App\Models\SubscriptionPlan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
+/**
+ * Super-administration : offres d'abonnement (prix et limites).
+ */
 class SubscriptionPlanController extends Controller
 {
     /**

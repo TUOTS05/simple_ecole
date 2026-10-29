@@ -23,6 +23,9 @@ use Illuminate\Support\Facades\Storage;
  */
 class DocumentSettingsController extends Controller
 {
+    /**
+     * Page de personnalisation des documents PDF de l'école.
+     */
     public function edit()
     {
         $school = School::findOrFail(session('current_school_id'));
@@ -33,6 +36,10 @@ class DocumentSettingsController extends Controller
         ]);
     }
 
+    /**
+     * Enregistre les réglages des documents (en-tête, couleurs, bulletin, carte, reçu) et les images
+     * de cachet et de signature.
+     */
     public function update(Request $request)
     {
         $school = School::findOrFail(session('current_school_id'));
@@ -159,6 +166,9 @@ class DocumentSettingsController extends Controller
         return $pdf->stream("apercu_{$type}.pdf");
     }
 
+    /**
+     * Bulletin fictif, non enregistré, pour l'aperçu.
+     */
     private function sampleReportCard(School $school): array
     {
         $subjects = collect([
@@ -179,6 +189,9 @@ class DocumentSettingsController extends Controller
         return ['reportCard' => $reportCard, 'allSubjects' => $subjects];
     }
 
+    /**
+     * Reçu de paiement fictif, non enregistré, pour l'aperçu.
+     */
     private function sampleReceipt(): array
     {
         $payment = (new Payment)->forceFill([

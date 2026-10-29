@@ -35,7 +35,7 @@
                         </div>
                     </div>
                     
-                    <!-- Email -->
+                    <!-- Adresse e-mail -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
                         <input type="email" name="email" value="{{ old('email', $user->email) }}" required

@@ -28,7 +28,7 @@
                             @error('name') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
                         </div>
 
-                        <!-- Slug -->
+                        <!-- Identifiant d'URL (slug) -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Slug (URL)</label>
                             <input type="text" name="slug" id="slug" value="{{ old('slug') }}" readonly
@@ -92,7 +92,7 @@
                             @error('admin_name') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
                         </div>
 
-                        <!-- Email -->
+                        <!-- Adresse e-mail -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Email (servira de login) *</label>
                             <input type="email" name="admin_email" value="{{ old('admin_email') }}" required

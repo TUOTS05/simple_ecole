@@ -8,6 +8,9 @@ use App\Services\OrangeSmsService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
+/**
+ * Relance par SMS les parents dont une échéance de scolarité est en retard.
+ */
 class SendLatePaymentNotifications extends Command
 {
     protected $signature = 'notifications:late-payments';
@@ -16,12 +19,18 @@ class SendLatePaymentNotifications extends Command
 
     private $smsService;
 
+    /**
+     * Reçoit le service d'envoi de SMS.
+     */
     public function __construct(OrangeSmsService $smsService)
     {
         parent::__construct();
         $this->smsService = $smsService;
     }
 
+    /**
+     * Envoie un SMS à chaque parent concerné et trace chaque envoi.
+     */
     public function handle()
     {
         $this->info('🔍 Détection des échéances en retard...');
@@ -97,6 +106,9 @@ class SendLatePaymentNotifications extends Command
         return 0;
     }
 
+    /**
+     * Texte du SMS : école, échéance, montant restant et date d'échéance.
+     */
     private function buildMessage($student, $installment, $remainingAmount): string
     {
         $schoolName = $student->school->name ?? 'L\'école';

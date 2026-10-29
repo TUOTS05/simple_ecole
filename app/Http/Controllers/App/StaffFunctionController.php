@@ -12,6 +12,10 @@ use Illuminate\Validation\Rule;
  */
 class StaffFunctionController extends Controller
 {
+    /**
+     * Fonctions administratives de l'école, avec leur nombre de membres et des suggestions prêtes à
+     * l'emploi.
+     */
     public function index()
     {
         $functions = StaffFunction::where('school_id', session('current_school_id'))
@@ -26,6 +30,9 @@ class StaffFunctionController extends Controller
         ]);
     }
 
+    /**
+     * Formulaire de création d'une fonction.
+     */
     public function create()
     {
         return view('app.staff-functions.form', [
@@ -34,6 +41,9 @@ class StaffFunctionController extends Controller
         ]);
     }
 
+    /**
+     * Crée une fonction pour l'école connectée.
+     */
     public function store(Request $request)
     {
         $function = new StaffFunction($this->validated($request));
@@ -64,6 +74,9 @@ class StaffFunctionController extends Controller
             ->with('success', 'Fonctions types ajoutées : adaptez-les librement.');
     }
 
+    /**
+     * Formulaire de modification d'une fonction et de ses accès.
+     */
     public function edit(StaffFunction $staffFunction)
     {
         $this->authorizeSchool($staffFunction);
@@ -74,6 +87,9 @@ class StaffFunctionController extends Controller
         ]);
     }
 
+    /**
+     * Met à jour une fonction et ses accès.
+     */
     public function update(Request $request, StaffFunction $staffFunction)
     {
         $this->authorizeSchool($staffFunction);
@@ -84,6 +100,9 @@ class StaffFunctionController extends Controller
             ->with('success', "Fonction « {$staffFunction->name} » mise à jour.");
     }
 
+    /**
+     * Supprime une fonction, refusé tant qu'elle est attribuée à des membres du personnel.
+     */
     public function destroy(StaffFunction $staffFunction)
     {
         $this->authorizeSchool($staffFunction);
@@ -98,6 +117,9 @@ class StaffFunctionController extends Controller
             ->with('success', 'Fonction supprimée.');
     }
 
+    /**
+     * Valide le formulaire : nom unique dans l'école, accès limités aux modules connus.
+     */
     private function validated(Request $request, ?StaffFunction $function = null): array
     {
         $validated = $request->validate([

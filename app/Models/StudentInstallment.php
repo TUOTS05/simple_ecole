@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Échéance de paiement d'une inscription (frais d'inscription ou tranche de scolarité).
+ */
 class StudentInstallment extends Model
 {
     protected $fillable = [

@@ -17,12 +17,18 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Réinitialise l'école de démonstration (commande planifiée).
+ */
 class DemoReset extends Command
 {
     protected $signature = 'demo:reset';
 
     protected $description = 'Réinitialise l\'école de démonstration en relançant le DemoSchoolSeeder';
 
+    /**
+     * Supprime les données de l'école de démo puis la recrée avec le jeu de données de démonstration.
+     */
     public function handle()
     {
         $this->info('🔄 Début de la réinitialisation de la démo...');

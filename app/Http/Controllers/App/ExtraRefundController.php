@@ -10,8 +10,14 @@ use App\Models\ExtraSubscription;
 use App\Models\SchoolYear;
 use Illuminate\Http\Request;
 
+/**
+ * Remboursements d'extras (activité annulée, désinscription…).
+ */
 class ExtraRefundController extends Controller
 {
+    /**
+     * Inscriptions remboursables (déjà payées) et historique des remboursements.
+     */
     public function index(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -54,6 +60,10 @@ class ExtraRefundController extends Controller
         return response()->json(['suggested_amount' => $subscription->suggestedRefundAmount()]);
     }
 
+    /**
+     * Enregistre un remboursement, plafonné au montant déjà payé ; l'inscription peut être résiliée
+     * en même temps.
+     */
     public function store(Request $request)
     {
         $schoolId = session('current_school_id');

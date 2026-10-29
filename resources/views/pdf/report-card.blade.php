@@ -30,7 +30,7 @@
             padding: 15mm;
         }
 
-        /* ✅ CADRE GLOBAL AUTOUR DU BULLETIN */
+        /* CADRE GLOBAL AUTOUR DU BULLETIN */
         .bulletin-container {
             border: 2px solid {{ $primaryColor }};
             padding: 20px;
@@ -134,7 +134,7 @@
             border: 1px solid #000;
             padding: 5px 6px;
             font-size: 9px;
-            width: 33.33%; /* ✅ 3 colonnes égales sur la même ligne */
+            width: 33.33%; /* 3 colonnes égales sur la même ligne */
         }
         .summary-cell strong {
             font-weight: bold;
@@ -180,7 +180,7 @@
 </head>
 <body>
 
-    <!-- ✅ DÉBUT DU CADRE GLOBAL -->
+    <!-- DÉBUT DU CADRE GLOBAL -->
     <div class="bulletin-container">
 
         <!-- En-tête : Logo à gauche, Infos école à droite -->
@@ -336,7 +336,7 @@
             @endphp
 
             @if($isThirdTrimester)
-                <!-- ✅ BLOC DÉCISION DU CONSEIL DE CLASSE (Uniquement au 3ème trimestre) -->
+                <!-- BLOC DÉCISION DU CONSEIL DE CLASSE (Uniquement au 3ème trimestre) -->
                 <div style="border: 2px solid #000; padding: 12px; margin-bottom: 15px; background-color: #f9fafb; text-align: center;">
                     <div style="font-weight: bold; text-transform: uppercase; margin-bottom: 10px; font-size: 12px; letter-spacing: 1px;">
                         DÉCISION DU CONSEIL DE CLASSE
@@ -369,7 +369,7 @@
                     @endif
                 </div>
             @else
-                <!-- ✅ COMPORTEMENT NORMAL POUR 1er et 2ème TRIMESTRE -->
+                <!-- COMPORTEMENT NORMAL POUR 1er et 2ème TRIMESTRE -->
                 <div style="margin-bottom: 15px;">
                     <div style="font-weight: bold; text-transform: uppercase; margin-bottom: 5px; font-size: 10px;">
                         APPRÉCIATION DU CONSEIL DE CLASSE
@@ -411,7 +411,7 @@
         @endif
 
     </div>
-    <!-- ✅ FIN DU CADRE GLOBAL -->
+    <!-- FIN DU CADRE GLOBAL -->
 
 </body>
 </html>

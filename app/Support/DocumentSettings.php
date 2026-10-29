@@ -63,6 +63,9 @@ class DocumentSettings
         ],
     ];
 
+    /**
+     * Réglages des documents d'une école, complétés par les valeurs par défaut.
+     */
     public static function for(?School $school): array
     {
         $saved = $school?->settings['documents'] ?? [];

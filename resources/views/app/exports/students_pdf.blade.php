@@ -14,7 +14,7 @@
             color: #000;
         }
         
-        /* HEADER */
+        /* EN-TÊTE */
         .header { 
             display: flex; 
             align-items: center; 
@@ -99,7 +99,7 @@
             text-align: center; 
         }
         
-        /* FOOTER FIXE (Comme Word) */
+        /* PIED DE PAGE FIXE (comme dans Word) */
         .footer { 
             position: fixed; 
             bottom: 0; 

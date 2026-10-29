@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Acceptation d'une version du règlement intérieur par un parent (date et adresse IP).
+ */
 class RegulationAcceptance extends Model
 {
     public $timestamps = false;

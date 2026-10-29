@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Inscription d'un élève dans une classe pour une année scolaire, avec son échéancier de frais.
+ */
 class Enrollment extends Model
 {
     use SoftDeletes;
@@ -59,7 +62,7 @@ class Enrollment extends Model
         return $this->hasMany(Payment::class);
     }
 
-    // Helpers
+    // Méthodes utilitaires
     public function isReserved(): bool
     {
         return $this->status === 'reserved';
@@ -108,6 +111,9 @@ class Enrollment extends Model
         return $this->hasMany(CanteenSubscription::class);
     }
 
+    /**
+     * Inscription active à la cantine pour l'année active.
+     */
     public function currentCanteenSubscription()
     {
         return $this->hasOne(CanteenSubscription::class)

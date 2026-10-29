@@ -16,6 +16,9 @@ use Illuminate\Validation\Rule;
  */
 class StaffMemberController extends Controller
 {
+    /**
+     * Liste du personnel administratif de l'école, avec la fonction de chacun.
+     */
     public function index()
     {
         $staff = User::where('school_id', session('current_school_id'))
@@ -28,6 +31,9 @@ class StaffMemberController extends Controller
         return view('app.staff.index', compact('staff'));
     }
 
+    /**
+     * Formulaire de création d'un compte du personnel.
+     */
     public function create()
     {
         return view('app.staff.form', [
@@ -36,6 +42,9 @@ class StaffMemberController extends Controller
         ]);
     }
 
+    /**
+     * Crée un compte du personnel, dans la limite d'utilisateurs de l'abonnement.
+     */
     public function store(Request $request)
     {
         $validated = $this->validated($request);
@@ -66,6 +75,9 @@ class StaffMemberController extends Controller
             ->with('success', "Compte de {$member->full_name} créé.");
     }
 
+    /**
+     * Formulaire de modification d'un compte du personnel.
+     */
     public function edit(User $member)
     {
         $this->authorizeMember($member);
@@ -76,6 +88,9 @@ class StaffMemberController extends Controller
         ]);
     }
 
+    /**
+     * Met à jour un compte du personnel ; le mot de passe n'est changé que s'il est saisi.
+     */
     public function update(Request $request, User $member)
     {
         $this->authorizeMember($member);
@@ -99,6 +114,9 @@ class StaffMemberController extends Controller
             ->with('success', "Compte de {$member->full_name} mis à jour.");
     }
 
+    /**
+     * Supprime un compte du personnel.
+     */
     public function destroy(User $member)
     {
         $this->authorizeMember($member);
@@ -114,6 +132,9 @@ class StaffMemberController extends Controller
         return StaffFunction::where('school_id', session('current_school_id'))->orderBy('name')->get();
     }
 
+    /**
+     * Valide le formulaire ; la fonction choisie doit appartenir à l'école.
+     */
     private function validated(Request $request, ?User $member = null): array
     {
         return $request->validate([

@@ -18,7 +18,7 @@
         </div>
     @endif
     
-    <!-- Header -->
+    <!-- En-tête -->
     <div class="flex justify-between items-center mb-6">
         <div>
             <h1 class="text-3xl font-bold text-gray-800">Gestion des Utilisateurs</h1>

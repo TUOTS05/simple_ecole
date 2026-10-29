@@ -8,8 +8,14 @@ use App\Models\ExtraMenu;
 use App\Models\ExtraSubscription;
 use Illuminate\Http\Request;
 
+/**
+ * Menus des extras de restauration, saisis jour par jour.
+ */
 class ExtraMenuController extends Controller
 {
+    /**
+     * Menus d'un extra pour un mois donné.
+     */
     public function index(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -40,6 +46,9 @@ class ExtraMenuController extends Controller
         return view('app.extras.menus.index', compact('extras', 'extraId', 'month', 'menus', 'studentsWithRestrictions'));
     }
 
+    /**
+     * Enregistre (ou remplace) le menu d'un jour.
+     */
     public function store(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -64,6 +73,9 @@ class ExtraMenuController extends Controller
             ->with('success', '✅ Menu enregistré avec succès !');
     }
 
+    /**
+     * Supprime le menu d'un jour.
+     */
     public function destroy($id)
     {
         $menu = ExtraMenu::where('school_id', session('current_school_id'))->findOrFail($id);

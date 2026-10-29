@@ -16,6 +16,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
+/**
+ * Espace parent : extras de ses enfants, paiement en ligne (CinetPay), reçus et suivi du bus.
+ */
 class ExtraController extends Controller
 {
     /**
@@ -189,6 +192,9 @@ class ExtraController extends Controller
         return back()->with('success', '✅ Le service a été suspendu. Contactez l\'établissement pour le réactiver.');
     }
 
+    /**
+     * Reçu PDF d'un paiement d'extra d'un enfant du parent.
+     */
     public function downloadReceipt($studentId, $subscriptionId, $paymentId)
     {
         $parent = auth()->user();
@@ -327,6 +333,9 @@ class ExtraController extends Controller
         return view('parent.extras.pay-online-simulate', compact('student', 'onlinePayment'));
     }
 
+    /**
+     * Mode démo uniquement : valide ou refuse le paiement simulé.
+     */
     public function payOnlineSimulateConfirm(Request $request, ExtraOnlinePaymentService $service, CinetPayService $cinetPay, $studentId, $transaction)
     {
         abort_unless($cinetPay->isDevMode(), 404);
@@ -352,6 +361,9 @@ class ExtraController extends Controller
     // SUIVI GPS DU BUS
     // ==========================================
 
+    /**
+     * Carte de suivi du bus de l'enfant (abonnement de transport actif requis).
+     */
     public function trackBus($studentId, $subscriptionId)
     {
         $parent = auth()->user();
@@ -371,6 +383,9 @@ class ExtraController extends Controller
         return view('parent.extras.track-bus', compact('student', 'subscription'));
     }
 
+    /**
+     * AJAX : dernière position connue du bus de l'enfant.
+     */
     public function trackBusData($studentId, $subscriptionId)
     {
         $parent = auth()->user();

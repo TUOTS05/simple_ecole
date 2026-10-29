@@ -16,8 +16,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
+/**
+ * Inscriptions des élèves pour une année scolaire, avec génération de leur échéancier de paiement.
+ */
 class EnrollmentController extends Controller
 {
+    /**
+     * Liste des inscriptions, filtrable par année, classe et statut.
+     */
     public function index(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -33,7 +39,7 @@ class EnrollmentController extends Controller
             $query->where('status', $request->status);
         }
 
-        // ✅ AJOUT DU FILTRE PAR CLASSE
+        // Filtre optionnel par classe
         if ($request->filled('class_id')) {
             $query->where('school_class_id', $request->class_id);
         }
@@ -51,12 +57,15 @@ class EnrollmentController extends Controller
 
         $schoolYears = SchoolYear::where('school_id', $schoolId)->orderBy('start_date', 'desc')->get();
 
-        // ✅ AJOUT : Récupérer les classes pour le menu déroulant
+        // Classes proposées dans le menu déroulant du filtre
         $classes = SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
 
         return view('app.enrollments.index', compact('enrollments', 'schoolYears', 'classes'));
     }
 
+    /**
+     * Formulaire d'inscription.
+     */
     public function create()
     {
         $schoolId = session('current_school_id');
@@ -92,6 +101,10 @@ class EnrollmentController extends Controller
         ));
     }
 
+    /**
+     * Inscrit un élève : crée l'élève, son parent si besoin, l'inscription et l'échéancier des frais,
+     * le tout dans une transaction.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -117,8 +130,8 @@ class EnrollmentController extends Controller
             'mother_occupation' => 'nullable|string|max:100',
 
             'guardian_type' => 'required|in:father,mother,other',
-            'guardian_first_name' => 'required|string|max:100', // NOUVEAU
-            'guardian_last_name' => 'required|string|max:100',  // NOUVEAU
+            'guardian_first_name' => 'required|string|max:100', // Prénom et nom séparés pour créer le compte parent
+            'guardian_last_name' => 'required|string|max:100',
             'guardian_phone' => 'required|string|max:20',
             'guardian_email' => 'required|email|max:100',       // RENDU OBLIGATOIRE
             'guardian_relation' => 'nullable|string|max:50',
@@ -341,6 +354,9 @@ class EnrollmentController extends Controller
         }
     }
 
+    /**
+     * Détail d'une inscription et de ses paiements.
+     */
     public function show(Enrollment $enrollment)
     {
         if ($enrollment->school_id !== session('current_school_id')) {
@@ -352,6 +368,9 @@ class EnrollmentController extends Controller
         return view('app.enrollments.show', compact('enrollment'));
     }
 
+    /**
+     * Formulaire de modification d'une inscription.
+     */
     public function edit(Enrollment $enrollment)
     {
         if ($enrollment->school_id !== session('current_school_id')) {
@@ -369,6 +388,9 @@ class EnrollmentController extends Controller
         return view('app.enrollments.edit', compact('enrollment', 'students', 'schoolYears', 'schoolClasses'));
     }
 
+    /**
+     * Met à jour la classe ou le statut d'une inscription.
+     */
     public function update(Request $request, Enrollment $enrollment)
     {
         if ($enrollment->school_id !== session('current_school_id')) {
@@ -387,6 +409,9 @@ class EnrollmentController extends Controller
             ->with('success', 'Inscription mise à jour !');
     }
 
+    /**
+     * Supprime une inscription, refusé si des paiements y sont rattachés.
+     */
     public function destroy(Enrollment $enrollment)
     {
         if ($enrollment->school_id !== session('current_school_id')) {
@@ -422,7 +447,7 @@ class EnrollmentController extends Controller
             $query->where('status', $request->status);
         }
 
-        // ✅ FILTRE PAR CLASSE
+        // FILTRE PAR CLASSE
         if ($request->filled('class_id')) {
             $query->where('school_class_id', $request->class_id);
         }

@@ -42,7 +42,7 @@
     
     <div class="max-w-3xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden">
         
-        <!-- HEADER -->
+        <!-- EN-TÊTE -->
         <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-10 text-center">
             <div class="text-5xl mb-3">📜</div>
             <h1 class="text-3xl font-bold mb-2">Contrat d'utilisation</h1>
@@ -52,7 +52,7 @@
             </p>
         </div>
 
-        <!-- CONTENT -->
+        <!-- CONTENU -->
         <div class="p-8">
             
             <!-- Messages d'erreur -->
@@ -147,7 +147,7 @@
             </form>
         </div>
 
-        <!-- FOOTER -->
+        <!-- PIED DE PAGE -->
         <div class="bg-gray-50 px-8 py-4 text-center text-xs text-gray-500 border-t">
             © {{ date('Y') }} {{ config('app.name') }}. Tous droits réservés.
         </div>

@@ -35,14 +35,14 @@
     <div class="flex h-screen overflow-hidden">
         
         
-        <!-- SIDEBAR -->
+        <!-- BARRE LATÉRALE -->
         @include('components.sidebar')
         
         <!-- CONTENU PRINCIPAL -->
         <div class="flex-1 flex flex-col overflow-hidden">
             @include('components.trial-banner')
             
-            <!-- HEADER -->
+            <!-- EN-TÊTE -->
             @include('components.header')
             
             <!-- ZONE DE CONTENU -->

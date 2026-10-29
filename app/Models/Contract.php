@@ -6,11 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Contrat d'abonnement d'une école à une offre, sur une période.
+ */
 class Contract extends Model
 {
     use SoftDeletes;
 
-    // ✅ Colonnes qui existent réellement dans votre table 'contracts'
+    // Colonnes qui existent réellement dans votre table 'contracts'
     protected $fillable = [
         'school_id',
         'contract_number',

@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Applique la migration.
      */
     public function up(): void
     {
@@ -47,13 +47,13 @@ return new class extends Migration
             $table->string('previous_school', 255)->nullable()->after('permanent_address');
             $table->text('remarks')->nullable()->after('previous_school');
 
-            // ✅ NOUVEAU : Stockage des 4 documents administratifs (JSON)
+            // Les 4 documents administratifs, stockés en JSON
             $table->json('documents')->nullable()->after('remarks');
         });
     }
 
     /**
-     * Reverse the migrations.
+     * Annule la migration.
      */
     public function down(): void
     {

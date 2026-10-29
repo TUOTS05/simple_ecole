@@ -12,10 +12,13 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
+/**
+ * Super-administration : gestion des écoles clientes.
+ */
 class SchoolController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Affiche la liste.
      */
     public function index(Request $request)
     {
@@ -48,7 +51,7 @@ class SchoolController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Affiche le formulaire de création.
      */
     public function create()
     {
@@ -56,157 +59,13 @@ class SchoolController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Enregistre un nouvel élément.
      */
-    // public function store(Request $request)
-    // {
-    //     $validated = $request->validate([
-    //         'name' => 'required|string|max:255',
-    //         'email' => 'required|email|max:255',
-    //         'phone' => 'required|number|max:10',
-    //         'address' => 'required|string',
-    //         'school_type' => 'required|in:maternelle,primaire,both', // ✅ AJOUTÉ
-    //         'status' => 'required|in:active,suspended,expired', // ✅ UNIFORMISÉ
-    //         'subscription_plan' => 'required|in:basic,premium,enterprise',
-    //         'subscription_start_date' => 'required|date',
-    //         'subscription_end_date' => 'required|date|after_or_equal:subscription_start_date',
-    //         'max_students' => 'required|integer|min:1',
-    //         'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-    //     ]);
 
-    //             // ✅ VALIDATION MÉTIER : Une école active doit avoir un abonnement valide
-    //     if ($validated['status'] === 'active') {
-    //         if (empty($validated['subscription_plan'])) {
-    //             return back()->withErrors(['subscription_plan' => 'Une école active doit avoir un plan d\'abonnement.']);
-    //         }
-    //         if (empty($validated['subscription_start_date']) || empty($validated['subscription_end_date'])) {
-    //             return back()->withErrors(['subscription_end_date' => 'Une école active doit avoir des dates d\'abonnement.']);
-    //         }
-    //     }
-
-    //     // ✅ CORRECTION : Générer le slug de manière fiable
-    //     $validated['slug'] = Str::slug($validated['name']);
-
-    //     // Gérer l'upload du logo
-    //     if ($request->hasFile('logo')) {
-    //         $validated['logo'] = $request->file('logo')->store('schools/logos', 'public');
-    //     }
-
-    //     School::create($validated);
-
-    //     return redirect()->route('superadmin.schools.index')
-    //         ->with('success', '✅ École créée avec succès !');
-    // }
-
-    //     public function store(Request $request)
-    // {
-    //     $validated = $request->validate([
-    //         'name' => 'required|string|max:255',
-    //         'email' => 'required|email|max:255',
-    //         'phone' => 'nullable|string|max:50',
-    //         'address' => 'nullable|string',
-    //         'school_type' => 'required|in:maternelle,primaire,both',
-    //         'status' => 'required|in:active,suspended,expired',
-    //         'subscription_plan' => 'required|in:basic,premium,enterprise',
-    //         'subscription_start_date' => 'required|date',
-    //         'subscription_end_date' => 'required|date|after_or_equal:subscription_start_date',
-    //         'max_students' => 'required|integer|min:1',
-    //         'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-    //     ]);
-
-    //     // ✅ VALIDATION MÉTIER : Une école active doit avoir un abonnement valide
-    //     if ($validated['status'] === 'active') {
-    //         if (empty($validated['subscription_plan'])) {
-    //             return back()->withErrors(['subscription_plan' => 'Une école active doit avoir un plan d\'abonnement.']);
-    //         }
-    //         if (empty($validated['subscription_start_date']) || empty($validated['subscription_end_date'])) {
-    //             return back()->withErrors(['subscription_end_date' => 'Une école active doit avoir des dates d\'abonnement.']);
-    //         }
-    //     }
-
-    //     $validated['slug'] = Str::slug($validated['name']);
-
-    //     if ($request->hasFile('logo')) {
-    //         $validated['logo'] = $request->file('logo')->store('schools/logos', 'public');
-    //     }
-
-    //     School::create($validated);
-
-    //     return redirect()->route('superadmin.schools.index')
-    //         ->with('success', '✅ École créée avec succès !');
-    // }
-
-    //     public function store(Request $request)
-    // {
-    //     $validated = $request->validate([
-    //         'name' => 'required|string|max:255',
-    //         'email' => 'required|email|max:255|unique:users,email', // Doit être unique car ce sera le login
-    //         'phone' => 'nullable|string|max:50',
-    //         'address' => 'nullable|string',
-    //         'school_type' => 'required|in:maternelle,primaire,both',
-    //         'subscription_plan' => 'required|string',
-    //         'subscription_start_date' => 'required|date',
-    //         'subscription_end_date' => 'required|date|after_or_equal:subscription_start_date',
-    //         'max_students' => 'required|integer|min:1',
-    //         'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-    //     ]);
-
-    //     // 1. Génération du token de validation sécurisé
-    //     $validationToken = \Illuminate\Support\Str::random(32);
-
-    //             // 2. Préparation des données de l'école (Statut forcé à 'suspended' en attendant la validation)
-    //     $baseSlug = \Illuminate\Support\Str::slug($validated['name']);
-    //     $slug = $baseSlug;
-    //     $counter = 1;
-
-    //     // Boucle pour garantir l'unicité du slug (ex: groupe-scolaire-chigata, groupe-scolaire-chigata-1, etc.)
-    //     while (\App\Models\School::where('slug', $slug)->exists()) {
-    //         $slug = $baseSlug . '-' . $counter;
-    //         $counter++;
-    //     }
-
-    //     $schoolData = array_merge($validated, [
-    //         'status' => 'suspended',
-    //         'validation_token' => $validationToken,
-    //         'slug' => $slug,
-    //     ]);
-
-    //     if ($request->hasFile('logo')) {
-    //         $schoolData['logo'] = $request->file('logo')->store('schools/logos', 'public');
-    //     }
-
-    //     // 3. Création de l'école
-    //     $school = \App\Models\School::create($schoolData);
-
-    //             // 4. Création automatique du compte Admin de l'école
-    //     $adminPassword = \Illuminate\Support\Str::random(10); // Mot de passe aléatoire de 10 caractères
-
-    //     \App\Models\User::create([
-    //         'first_name' => 'Administrateur',
-    //         'last_name' => $validated['name'], // Le nom de l'école sert de nom de famille pour l'admin par défaut
-    //         'name' => 'Administrateur ' . $validated['name'], // Gardé au cas où votre modèle l'utilise aussi
-    //         'email' => $validated['email'],
-    //         'password' => \Illuminate\Support\Facades\Hash::make($adminPassword),
-    //         'role' => 'school_admin',
-    //         'school_id' => $school->id,
-    //     ]);
-
-    //     // 5. Envoi de l'email de bienvenue et de validation du contrat
-    //     // (Nous créerons la classe d'email à l'étape 2.2)
-    //     try {
-    //         \Illuminate\Support\Facades\Mail::to($validated['email'])->send(
-    //             new \App\Mail\SchoolWelcomeMail($school, $adminPassword)
-    //         );
-    //     } catch (\Exception $e) {
-    //         // En cas d'échec d'envoi, on log l'erreur mais on ne bloque pas la création
-    //         \Illuminate\Support\Facades\Log::error('Échec envoi email welcome school: ' . $e->getMessage());
-    //     }
-
-    //     // 6. Redirection avec les identifiants affichés au Super Admin
-    //     return redirect()->route('superadmin.schools.index')
-    //         ->with('success', "✅ École créée avec succès !\n\n👤 Email Admin : {$validated['email']}\n🔑 Mot de passe : {$adminPassword}\n\n⚠️ Un email de validation a été envoyé. L'école sera activée après validation du contrat.");
-    // }
-
+    /**
+     * Crée une école (slug unique, logo facultatif) et son administrateur ; l'école reste en attente
+     * d'abonnement.
+     */
     public function store(Request $request)
     {
         // 1. Validation des données du formulaire
@@ -241,7 +100,7 @@ class SchoolController extends Controller
             'school_type' => $validated['school_type'],
             'address' => $validated['address'] ?? null,
             'phone' => $validated['phone'] ?? null,
-            'status' => 'suspended', // ✅ FORCÉ À SUSPENDED (En attente d'abonnement)
+            'status' => 'suspended', // FORCÉ À SUSPENDED (En attente d'abonnement)
         ];
 
         // Gérer l'upload du logo
@@ -288,7 +147,7 @@ class SchoolController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Affiche le détail d'un élément.
      */
     public function show(School $school)
     {
@@ -298,7 +157,7 @@ class SchoolController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Affiche le formulaire de modification.
      */
     public function edit(School $school)
     {
@@ -306,7 +165,7 @@ class SchoolController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Met à jour un élément.
      */
     public function update(Request $request, School $school)
     {
@@ -314,15 +173,15 @@ class SchoolController extends Controller
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:schools,slug,'.$school->id,
             'school_type' => 'required|in:maternelle,primaire,both,creche',
-            'status' => 'required|in:active,suspended,expired', // ✅ UNIFORMISÉ (suppression de 'trial')
-            'subscription_plan' => 'required|in:basic,premium,enterprise', // ✅ AJOUTÉ POUR SAAS
-            'subscription_start_date' => 'required|date', // ✅ AJOUTÉ POUR SAAS
-            'subscription_end_date' => 'required|date', // ✅ AJOUTÉ POUR SAAS
-            'max_students' => 'required|integer|min:1', // ✅ AJOUTÉ POUR SAAS
+            'status' => 'required|in:active,suspended,expired', // UNIFORMISÉ (suppression de 'trial')
+            'subscription_plan' => 'required|in:basic,premium,enterprise', // AJOUTÉ POUR SAAS
+            'subscription_start_date' => 'required|date', // AJOUTÉ POUR SAAS
+            'subscription_end_date' => 'required|date', // AJOUTÉ POUR SAAS
+            'max_students' => 'required|integer|min:1', // AJOUTÉ POUR SAAS
             'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        // ✅ LOGIQUE MÉTIER : Si la date de fin est dans le passé, forcer le statut à 'expired'
+        // LOGIQUE MÉTIER : Si la date de fin est dans le passé, forcer le statut à 'expired'
         if (Carbon::parse($validated['subscription_end_date'])->isPast()) {
             $validated['status'] = 'expired';
         }
@@ -347,35 +206,11 @@ class SchoolController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Supprime un élément.
      */
-    // public function destroy(School $school)
-    // {
-    //     // Vérifier que l'école n'a pas d'utilisateurs
-    //     if ($school->users()->count() > 0) {
-    //         return redirect()->route('superadmin.schools.index')
-    //             ->with('error', '❌ Impossible de supprimer : cette école possède des utilisateurs.');
-    //     }
-
-    //     // Vérifier que l'école n'a pas d'élèves
-    //     if ($school->students()->count() > 0) {
-    //         return redirect()->route('superadmin.schools.index')
-    //             ->with('error', '❌ Impossible de supprimer : cette école possède des élèves.');
-    //     }
-
-    //     // Supprimer le logo s'il existe
-    //     if ($school->logo) {
-    //         Storage::disk('public')->delete($school->logo);
-    //     }
-
-    //     $school->delete();
-
-    //     return redirect()->route('superadmin.schools.index')
-    //         ->with('success', '✅ École supprimée avec succès !');
-    // }
 
     /**
-     * Remove the specified resource from storage (Soft Delete).
+     * Supprime un élément (suppression logique, récupérable).
      */
     public function destroy(School $school)
     {

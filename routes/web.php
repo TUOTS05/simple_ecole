@@ -57,11 +57,6 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-// Page d'accueil - Toujours afficher la page de connexion
-// Route::get('/', function () {
-//     return view('auth.login');
-// });
-
 // ═══════════════════════════════════════════════════════════════
 // ROUTES PUBLIQUES - VALIDATION DU CONTRAT ÉCOLE
 // ═══════════════════════════════════════════════════════════════
@@ -78,7 +73,7 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
     Route::resource('/users', UserController::class);
     Route::resource('/plans', SubscriptionPlanController::class)->except(['show']);
 
-    // ✅ AJOUTEZ CETTE LIGNE POUR LES JOURNAUX D'ACTIVITÉ
+    // Journaux d'activité
     Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
 
     // Paramètres système
@@ -183,7 +178,7 @@ Route::middleware(['auth', 'school.active', 'role:school_admin', 'tenant'])->pre
         // 📨 MESSAGERIE ADMIN ÉCOLE
         Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
 
-        // ✅ IMPORTANT : Les routes spécifiques (sans paramètre dynamique) DOIVENT être placées AVANT les routes avec {message}
+        // IMPORTANT : Les routes spécifiques (sans paramètre dynamique) DOIVENT être placées AVANT les routes avec {message}
         Route::get('/messages/broadcast', [BroadcastMessageController::class, 'create'])->name('messages.broadcast');
         Route::post('/messages/broadcast', [BroadcastMessageController::class, 'store'])->name('messages.broadcast.store');
 
@@ -322,7 +317,7 @@ Route::middleware(['auth', 'teacher', 'school.active', 'tenant'])->prefix('teach
     // Page de sélection de la classe pour les notes (accessible depuis le sidebar)
     Route::get('/grades', [GradeController::class, 'selectClass'])->name('grades.select');
     // ==========================================
-    // ✅ PROFIL ENSEIGNANT (Ces 3 lignes sont OBLIGATOIRES)
+    // PROFIL ENSEIGNANT (Ces 3 lignes sont OBLIGATOIRES)
     // ==========================================
     Route::get('/profile', [App\Http\Controllers\Teacher\ProfileController::class, 'index'])->name('profile.index');
     Route::put('/profile', [App\Http\Controllers\Teacher\ProfileController::class, 'update'])->name('profile.update');

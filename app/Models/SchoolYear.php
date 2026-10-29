@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Année scolaire d'une école ; une seule est active à la fois.
+ */
 class SchoolYear extends Model
 {
     protected $fillable = [
@@ -38,7 +41,7 @@ class SchoolYear extends Model
         return $this->hasMany(Enrollment::class);
     }
 
-    // Helpers
+    // Méthodes utilitaires
     public function isActive(): bool
     {
         return $this->is_active;

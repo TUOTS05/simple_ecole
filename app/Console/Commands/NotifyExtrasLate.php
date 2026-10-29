@@ -10,12 +10,18 @@ use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 
+/**
+ * Relance les parents dont une échéance d'extra est en retard.
+ */
 class NotifyExtrasLate extends Command
 {
     protected $signature = 'notify:extras-late';
 
     protected $description = "Envoie une alerte aux parents dont une échéance d'extra est en retard de paiement.";
 
+    /**
+     * Envoie une relance (e-mail et WhatsApp) pour chaque échéance d'extra non réglée et échue.
+     */
     public function handle(ExtraWhatsAppNotifier $whatsapp)
     {
         $this->info("🔍 Vérification des échéances d'extras en retard...");

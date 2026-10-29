@@ -8,8 +8,14 @@ use App\Models\Teacher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
+/**
+ * Comptes des enseignants de l'école.
+ */
 class TeacherController extends Controller
 {
+    /**
+     * Liste des enseignants.
+     */
     public function index()
     {
         $schoolId = session('current_school_id');
@@ -27,6 +33,9 @@ class TeacherController extends Controller
         return view('app.teachers.create');
     }
 
+    /**
+     * Crée un compte enseignant, dans la limite d'utilisateurs de l'abonnement.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -63,6 +72,9 @@ class TeacherController extends Controller
             ->with('success', 'Enseignant créé avec succès !');
     }
 
+    /**
+     * Formulaire de modification d'un enseignant.
+     */
     public function edit(Teacher $teacher)
     {
         if ($teacher->school_id !== session('current_school_id')) {
@@ -72,6 +84,9 @@ class TeacherController extends Controller
         return view('app.teachers.edit', compact('teacher'));
     }
 
+    /**
+     * Met à jour un enseignant ; le mot de passe n'est changé que s'il est saisi.
+     */
     public function update(Request $request, Teacher $teacher)
     {
         if ($teacher->school_id !== session('current_school_id')) {
@@ -103,6 +118,9 @@ class TeacherController extends Controller
             ->with('success', 'Enseignant mis à jour avec succès !');
     }
 
+    /**
+     * Supprime un enseignant, refusé s'il est encore affecté à des classes.
+     */
     public function destroy(Teacher $teacher)
     {
         if ($teacher->school_id !== session('current_school_id')) {

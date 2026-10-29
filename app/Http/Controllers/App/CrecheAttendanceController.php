@@ -8,6 +8,9 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use Illuminate\Http\Request;
 
+/**
+ * Pointage des présences de la crèche (arrivées et départs des tout-petits).
+ */
 class CrecheAttendanceController extends Controller
 {
     /**
@@ -39,6 +42,9 @@ class CrecheAttendanceController extends Controller
         return view('app.creche.attendances.index', compact('classes', 'classId', 'date', 'students'));
     }
 
+    /**
+     * Enregistre les présences de la crèche d'une classe pour une journée.
+     */
     public function store(Request $request)
     {
         $schoolId = session('current_school_id');

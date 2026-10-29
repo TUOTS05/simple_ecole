@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
+/**
+ * Profil personnel d'un membre du personnel administratif (accessible quelle que soit sa fonction).
+ */
 class StaffProfileController extends Controller
 {
     /**
@@ -19,6 +22,9 @@ class StaffProfileController extends Controller
         return view('app.staff-profile.edit', ['user' => auth()->user()]);
     }
 
+    /**
+     * Met à jour le nom et l'adresse e-mail du membre connecté.
+     */
     public function update(Request $request)
     {
         $user = auth()->user();
@@ -36,6 +42,9 @@ class StaffProfileController extends Controller
         return back()->with('success', '✅ Vos informations personnelles ont été mises à jour avec succès.');
     }
 
+    /**
+     * Change le mot de passe après vérification du mot de passe actuel.
+     */
     public function updatePassword(Request $request)
     {
         $request->validate([
