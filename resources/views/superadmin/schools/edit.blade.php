@@ -29,7 +29,7 @@
                                 @error('name') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
                             </div>
                             
-                            <!-- Slug -->
+                            <!-- Identifiant d'URL (slug) -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Slug (URL) *</label>
                                 <input type="text" name="slug" id="slug" value="{{ old('slug', $school->slug) }}" required
@@ -49,7 +49,7 @@
                                 @error('school_type') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
                             </div>
 
-                            <!-- Email -->
+                            <!-- Adresse e-mail -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2" >Email de contact *</label>
                                 <input type="email" name="email" value="{{ old('email', $school->email) }}" required

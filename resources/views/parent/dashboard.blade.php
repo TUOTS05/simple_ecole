@@ -5,7 +5,14 @@
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    
+
+    @if($pendingRegulation = \App\Models\SchoolRegulation::pendingFor(auth()->user()))
+    <a href="{{ route('parent.regulation.show') }}" class="block bg-yellow-50 border-l-4 border-yellow-400 text-yellow-900 p-4 mb-6 rounded-lg hover:bg-yellow-100 transition">
+        📜 <strong>{{ $pendingRegulation->version > 1 ? 'Le règlement intérieur a été mis à jour.' : 'L\'école a publié son règlement intérieur.' }}</strong>
+        Merci d'en prendre connaissance et de l'accepter →
+    </a>
+    @endif
+
     <!-- En-tête accueillant -->
     <div class="bg-gradient-to-r from-primary to-primary-dark rounded-xl shadow-md p-6 mb-8 text-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

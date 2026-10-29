@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Tarif d'un extra pour une année, éventuellement propre à une classe.
+ */
 class ExtraTarif extends Model
 {
     protected $fillable = [

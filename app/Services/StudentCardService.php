@@ -12,6 +12,9 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Génère la carte scolaire PDF d'un élève, avec son QR code de vérification.
+ */
 class StudentCardService
 {
     /**
@@ -27,7 +30,7 @@ class StudentCardService
         // ne sait générer du PNG qu'avec Imagick — non installé sur ce serveur (seul GD l'est).
         // On rasterise donc nous-mêmes le QR en PNG via un back-end GD maison, puis on l'intègre
         // en data URI dans un <img>, comme le logo et la photo déjà présents sur cette carte.
-        $writer = new Writer(new ImageRenderer(new RendererStyle(150), new GdPngImageBackEnd()));
+        $writer = new Writer(new ImageRenderer(new RendererStyle(150), new GdPngImageBackEnd));
         $qrPng = $writer->writeString($qrToken);
         $qrImageData = 'data:image/png;base64,'.base64_encode($qrPng);
 

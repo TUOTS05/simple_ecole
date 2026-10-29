@@ -18,17 +18,25 @@ use App\Models\SchoolYear;
 use App\Models\Student;
 use App\Models\StudentInstallment;
 use App\Services\ExtraPaymentNotifier;
+use App\Support\SchoolRules;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Extras (services et prestations : activités, sorties, garderie…) : catalogue, tarifs, créneaux,
+ * inscriptions, paiements et rapports.
+ */
 class ExtraController extends Controller
 {
     // ==========================================
     // CATÉGORIES
     // ==========================================
 
+    /**
+     * Liste des catégories d'extras.
+     */
     public function categoriesIndex()
     {
         $schoolId = session('current_school_id');
@@ -42,6 +50,9 @@ class ExtraController extends Controller
         return view('app.extras.categories.index', compact('categories'));
     }
 
+    /**
+     * Crée une catégorie d'extras.
+     */
     public function categoriesStore(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -61,6 +72,9 @@ class ExtraController extends Controller
         return back()->with('success', '✅ Catégorie créée avec succès !');
     }
 
+    /**
+     * Met à jour une catégorie d'extras.
+     */
     public function categoriesUpdate(Request $request, $id)
     {
         $category = ExtraCategory::where('school_id', session('current_school_id'))->findOrFail($id);
@@ -77,6 +91,9 @@ class ExtraController extends Controller
         return back()->with('success', '✅ Catégorie mise à jour avec succès !');
     }
 
+    /**
+     * Supprime une catégorie, refusé si elle contient encore des extras.
+     */
     public function categoriesDestroy($id)
     {
         $category = ExtraCategory::where('school_id', session('current_school_id'))->findOrFail($id);
@@ -94,6 +111,9 @@ class ExtraController extends Controller
     // CATALOGUE DES EXTRAS
     // ==========================================
 
+    /**
+     * Catalogue des extras, filtrable par catégorie.
+     */
     public function catalogueIndex(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -111,6 +131,9 @@ class ExtraController extends Controller
         return view('app.extras.catalogue.index', compact('extras', 'categories', 'categoryId'));
     }
 
+    /**
+     * Formulaire de création d'un extra (exige au moins une catégorie).
+     */
     public function catalogueCreate()
     {
         $schoolId = session('current_school_id');
@@ -125,12 +148,15 @@ class ExtraController extends Controller
         return view('app.extras.catalogue.create', compact('categories'));
     }
 
+    /**
+     * Crée un extra du catalogue.
+     */
     public function catalogueStore(Request $request)
     {
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'extra_category_id' => 'required|exists:extra_categories,id',
+            'extra_category_id' => ['required', SchoolRules::exists('extra_categories')],
             'code' => 'required|string|max:30',
             'name' => 'required|string|max:150',
             'description' => 'nullable|string|max:1000',
@@ -160,24 +186,30 @@ class ExtraController extends Controller
             ->with('success', '✅ Extra créé avec succès ! Ajoutez maintenant un tarif.');
     }
 
+    /**
+     * Fiche d'un extra : informations, tarifs et créneaux.
+     */
     public function catalogueEdit($id)
     {
         $extra = Extra::where('school_id', session('current_school_id'))->findOrFail($id);
         $categories = ExtraCategory::where('school_id', $extra->school_id)->orderBy('name')->get();
         $classes = SchoolClass::where('school_id', $extra->school_id)->orderBy('name')->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
         $tarifs = $extra->tarifs()->with('schoolYear', 'schoolClass')->orderByDesc('school_year_id')->get();
         $schedules = $extra->schedules()->orderBy('day_of_week')->orderBy('start_time')->get();
 
         return view('app.extras.catalogue.edit', compact('extra', 'categories', 'classes', 'schoolYears', 'tarifs', 'schedules'));
     }
 
+    /**
+     * Met à jour un extra du catalogue.
+     */
     public function catalogueUpdate(Request $request, $id)
     {
         $extra = Extra::where('school_id', session('current_school_id'))->findOrFail($id);
 
         $validated = $request->validate([
-            'extra_category_id' => 'required|exists:extra_categories,id',
+            'extra_category_id' => ['required', SchoolRules::exists('extra_categories')],
             'code' => 'required|string|max:30',
             'name' => 'required|string|max:150',
             'description' => 'nullable|string|max:1000',
@@ -215,11 +247,14 @@ class ExtraController extends Controller
         return back()->with('success', '✅ Extra mis à jour avec succès !');
     }
 
+    /**
+     * Supprime un extra, refusé s'il a des inscriptions en cours.
+     */
     public function catalogueDestroy($id)
     {
         $extra = Extra::where('school_id', session('current_school_id'))->findOrFail($id);
 
-        if ($extra->subscriptions()->whereIn('status', ['active', 'validated', 'requested', 'pending'])->exists()) {
+        if ($extra->subscriptions()->whereIn('status', ['active', 'completed', 'validated', 'requested', 'pending'])->exists()) {
             return back()->withErrors(['error' => 'Impossible de supprimer un extra qui a des inscriptions en cours.']);
         }
 
@@ -232,13 +267,16 @@ class ExtraController extends Controller
     // TARIFS (sous-formulaire de la fiche extra)
     // ==========================================
 
+    /**
+     * Ajoute un tarif à un extra, pour une année et éventuellement une classe.
+     */
     public function tarifsStore(Request $request, $extraId)
     {
         $extra = Extra::where('school_id', session('current_school_id'))->findOrFail($extraId);
 
         $validated = $request->validate([
-            'school_year_id' => 'required|exists:school_years,id',
-            'school_class_id' => 'nullable|exists:school_classes,id',
+            'school_year_id' => ['required', SchoolRules::exists('school_years')],
+            'school_class_id' => ['nullable', SchoolRules::exists('school_classes')],
             'amount' => 'required|numeric|min:0',
             'periods_count' => 'nullable|integer|min:1|max:12',
             'is_open_ended' => 'nullable|boolean',
@@ -267,6 +305,9 @@ class ExtraController extends Controller
         return back()->with('success', '✅ Tarif ajouté avec succès !');
     }
 
+    /**
+     * Met à jour un tarif d'extra.
+     */
     public function tarifsUpdate(Request $request, $id)
     {
         $tarif = ExtraTarif::whereHas('extra', fn ($q) => $q->where('school_id', session('current_school_id')))
@@ -294,6 +335,9 @@ class ExtraController extends Controller
         return back()->with('success', '✅ Tarif mis à jour avec succès !');
     }
 
+    /**
+     * Supprime un tarif, refusé s'il est déjà utilisé par une inscription.
+     */
     public function tarifsDestroy($id)
     {
         $tarif = ExtraTarif::whereHas('extra', fn ($q) => $q->where('school_id', session('current_school_id')))
@@ -313,6 +357,9 @@ class ExtraController extends Controller
     // PLANNING (activités : jours/horaires)
     // ==========================================
 
+    /**
+     * Ajoute un créneau hebdomadaire à un extra.
+     */
     public function schedulesStore(Request $request, $extraId)
     {
         $extra = Extra::where('school_id', session('current_school_id'))->findOrFail($extraId);
@@ -329,6 +376,9 @@ class ExtraController extends Controller
         return redirect()->route('extras.catalogue.edit', $extra->id)->with('success', '✅ Créneau ajouté avec succès !');
     }
 
+    /**
+     * Supprime un créneau d'un extra.
+     */
     public function schedulesDestroy($id)
     {
         $schedule = ExtraSchedule::whereHas('extra', fn ($q) => $q->where('school_id', session('current_school_id')))->findOrFail($id);
@@ -342,6 +392,9 @@ class ExtraController extends Controller
     // AJAX
     // ==========================================
 
+    /**
+     * AJAX : classes d'un cycle, pour les listes déroulantes en cascade.
+     */
     public function classesByCycle(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -355,6 +408,9 @@ class ExtraController extends Controller
         return response()->json($classes);
     }
 
+    /**
+     * AJAX : élèves d'une classe pour l'année choisie.
+     */
     public function studentsByClass(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -372,6 +428,10 @@ class ExtraController extends Controller
         return response()->json($students);
     }
 
+    /**
+     * AJAX : tarif applicable à un extra pour une classe et une année (tarif de la classe, sinon tarif
+     * général).
+     */
     public function tarifForClass(Request $request)
     {
         $extraId = $request->query('extra_id');
@@ -408,10 +468,13 @@ class ExtraController extends Controller
     // INSCRIPTIONS
     // ==========================================
 
+    /**
+     * Liste des inscriptions aux extras, filtrable par extra et par statut.
+     */
     public function subscriptionsIndex(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $extraId = $request->get('extra_id', '');
         $status = $request->get('status', '');
 
@@ -430,31 +493,37 @@ class ExtraController extends Controller
         $subscriptions = $query->orderByDesc('created_at')->get();
 
         $extras = Extra::where('school_id', $schoolId)->orderBy('name')->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.extras.subscriptions.index', compact(
             'subscriptions', 'extras', 'schoolYears', 'schoolYearId', 'extraId', 'status'
         ));
     }
 
+    /**
+     * Formulaire d'inscription d'élèves à un extra.
+     */
     public function subscriptionsCreate(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
 
         $extras = Extra::where('school_id', $schoolId)->where('status', 'active')->orderBy('name')->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.extras.subscriptions.create', compact('extras', 'schoolYears', 'schoolYearId'));
     }
 
+    /**
+     * Inscrit un ou plusieurs élèves à un extra, en appliquant tarif, remises et échéancier.
+     */
     public function subscriptionsStore(Request $request)
     {
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'extra_id' => 'required|exists:extras,id',
-            'school_year_id' => 'required|exists:school_years,id',
+            'extra_id' => ['required', SchoolRules::exists('extras')],
+            'school_year_id' => ['required', SchoolRules::exists('school_years')],
             'enrollments' => 'required|array|min:1',
             'enrollments.*.selected' => 'required|boolean',
             'enrollments.*.periods' => 'nullable|array',
@@ -616,6 +685,9 @@ class ExtraController extends Controller
         }
     }
 
+    /**
+     * Annule une inscription à un extra, refusé si un paiement a déjà été reçu.
+     */
     public function subscriptionsDestroy($id)
     {
         $subscription = ExtraSubscription::where('school_id', session('current_school_id'))->findOrFail($id);
@@ -761,10 +833,13 @@ class ExtraController extends Controller
     // PAIEMENTS
     // ==========================================
 
+    /**
+     * Liste des paiements d'extras de l'année.
+     */
     public function paymentsIndex(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $extraId = $request->get('extra_id', '');
 
         $query = ExtraPayment::where('school_id', $schoolId)
@@ -779,7 +854,7 @@ class ExtraController extends Controller
         $payments = $query->paginate(20)->withQueryString();
 
         $extras = Extra::where('school_id', $schoolId)->orderBy('name')->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         // Abonnements avec un reste à payer, pour le formulaire d'enregistrement de paiement.
         $unpaidSubscriptions = ExtraSubscription::where('school_id', $schoolId)
@@ -794,12 +869,15 @@ class ExtraController extends Controller
         ));
     }
 
+    /**
+     * Enregistre un paiement d'extra et le répartit sur l'inscription.
+     */
     public function paymentsStore(Request $request)
     {
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'extra_subscription_id' => 'required|exists:extra_subscriptions,id',
+            'extra_subscription_id' => ['required', SchoolRules::exists('extra_subscriptions')],
             'amount' => 'required|numeric|min:1',
             'payment_date' => 'required|date',
             'payment_method' => 'required|in:cash,mobile_money,transfer,check',
@@ -846,6 +924,9 @@ class ExtraController extends Controller
         }
     }
 
+    /**
+     * Reçu PDF d'un paiement d'extra.
+     */
     public function paymentsReceipt(ExtraPayment $payment)
     {
         if ($payment->school_id !== session('current_school_id')) {
@@ -900,10 +981,13 @@ class ExtraController extends Controller
         return $query->orderByDesc('remaining_amount')->get();
     }
 
+    /**
+     * Rapport des inscriptions aux extras restant à payer.
+     */
     public function reportsUnpaid(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $extraId = $request->get('extra_id', '');
 
         $unpaid = $this->unpaidSubscriptionsQuery($schoolId, $schoolYearId, $extraId);
@@ -914,15 +998,18 @@ class ExtraController extends Controller
         ];
 
         $extras = Extra::where('school_id', $schoolId)->orderBy('name')->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.extras.reports.unpaid', compact('unpaid', 'globalStats', 'extras', 'schoolYears', 'schoolYearId', 'extraId'));
     }
 
+    /**
+     * Version PDF du rapport des impayés d'extras.
+     */
     public function reportsUnpaidPdf(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $extraId = $request->get('extra_id', '');
 
         $unpaid = $this->unpaidSubscriptionsQuery($schoolId, $schoolYearId, $extraId);
@@ -941,10 +1028,13 @@ class ExtraController extends Controller
         return $pdf->download('Impayes_Extras_'.now()->format('Y-m-d').'.pdf');
     }
 
+    /**
+     * Liste PDF des inscriptions aux extras.
+     */
     public function subscriptionsPdf(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $extraId = $request->get('extra_id', '');
         $status = $request->get('status', '');
 
@@ -974,10 +1064,13 @@ class ExtraController extends Controller
         return $pdf->download('Liste_Inscrits_Extras_'.now()->format('Y-m-d').'.pdf');
     }
 
+    /**
+     * Tableau de bord des extras : inscriptions, montants facturés et encaissés, évolution mensuelle.
+     */
     public function dashboard(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
 
         $subscriptions = ExtraSubscription::where('school_id', $schoolId)
             ->where('school_year_id', $schoolYearId)
@@ -1027,7 +1120,7 @@ class ExtraController extends Controller
             ];
         });
 
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.extras.dashboard', compact('kpis', 'byExtra', 'monthlyRevenue', 'schoolYears', 'schoolYearId'));
     }
@@ -1036,6 +1129,9 @@ class ExtraController extends Controller
     // FACTURE CONSOLIDÉE (scolarité + tous les extras d'un élève sur un mois)
     // ==========================================
 
+    /**
+     * Facture regroupant tous les extras d'un élève pour un mois.
+     */
     public function consolidatedInvoiceIndex(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -1052,11 +1148,18 @@ class ExtraController extends Controller
         ));
     }
 
+    /**
+     * Version PDF de la facture regroupée d'un élève.
+     */
     public function consolidatedInvoicePdf(Request $request)
     {
         $schoolId = session('current_school_id');
-        $studentId = $request->get('student_id');
-        $month = $request->get('month', now()->format('Y-m'));
+        $validated = $request->validate([
+            'student_id' => ['required', SchoolRules::exists('students')],
+            'month' => 'nullable|date_format:Y-m',
+        ]);
+        $studentId = (int) $validated['student_id'];
+        $month = $validated['month'] ?? now()->format('Y-m');
 
         $data = $this->buildConsolidatedInvoiceData($schoolId, $studentId, $month);
         $school = School::find($schoolId);

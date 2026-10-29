@@ -64,7 +64,7 @@
                         $suggestion = $average >= 10 ? 'admis' : 'redouble';
                         $currentDecision = $reportCard ? $reportCard->end_of_year_decision : 'en_attente';
                         
-                        // ✅ Détection du CM2 pour adapter l'affichage
+                        // Détection du CM2 pour adapter l'affichage
                         $isCM2 = strtoupper($class->level) === 'CM2';
                     @endphp
                     <tr class="hover:bg-gray-50 transition-colors">
@@ -90,7 +90,7 @@
                             <form action="{{ route('app.end-of-year.update-decision', $student->id) }}" method="POST" class="space-y-2">
                                 @csrf
                                 
-                                {{-- ✅ Options adaptées pour le CM2 --}}
+                                {{-- Options adaptées pour le CM2 --}}
                                 <select name="decision" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 border">
                                     @if($isCM2)
                                         <option value="admis" {{ $currentDecision === 'admis' ? 'selected' : '' }}>✅ Admis au concours d'entrée en 6ème</option>
@@ -102,7 +102,7 @@
                                     @endif
                                 </select>
 
-                                {{-- ✅ Masquer la classe de destination si c'est le CM2 --}}
+                                {{-- Masquer la classe de destination si c'est le CM2 --}}
                                 @if(!$isCM2)
                                     <select name="next_school_class_id" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 border">
                                         @if($nextClass)

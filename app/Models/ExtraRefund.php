@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Remboursement accordé sur une inscription à un extra.
+ */
 class ExtraRefund extends Model
 {
     protected $fillable = [

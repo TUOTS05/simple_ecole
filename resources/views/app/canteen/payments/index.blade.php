@@ -109,7 +109,7 @@
         </form>
     </div>
 
-    <!-- ✅ HISTORIQUE DES PAIEMENTS : AFFICHAGE CONDITIONNEL -->
+    <!-- HISTORIQUE DES PAIEMENTS : AFFICHAGE CONDITIONNEL -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden" x-data="{ showResults: {{ $classId || $month ? 'true' : 'false' }} }">
         <div class="p-6 border-b border-gray-100 bg-gray-50">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
@@ -156,7 +156,7 @@
             </div>
         </div>
         
-        <!-- ✅ Affichage conditionnel : vide par défaut, résultats après recherche -->
+        <!-- Affichage conditionnel : vide par défaut, résultats après recherche -->
         <div x-show="showResults" x-transition>
             <div class="overflow-x-auto">
                 <table class="w-full">
@@ -202,7 +202,7 @@
             @endif
         </div>
 
-        <!-- ✅ Message d'accueil quand aucun filtre n'est appliqué -->
+        <!-- Message d'accueil quand aucun filtre n'est appliqué -->
         <div x-show="!showResults" class="py-16 text-center">
             <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>

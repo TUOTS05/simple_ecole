@@ -14,7 +14,7 @@
         </div>
     </div>
 
-    <!-- ✅ SÉLECTEUR D'ENFANT (visible seulement s'il y a plus d'un enfant) -->
+    <!-- SÉLECTEUR D'ENFANT (visible seulement s'il y a plus d'un enfant) -->
     @if($siblings->count() > 1)
     <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <span class="font-semibold text-blue-800 text-sm">Vous avez plusieurs enfants. Sélectionnez celui dont vous voulez voir les paiements :</span>

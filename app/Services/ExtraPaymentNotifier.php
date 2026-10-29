@@ -15,8 +15,15 @@ use Illuminate\Support\Facades\Mail;
  */
 class ExtraPaymentNotifier
 {
+    /**
+     * Reçoit le service de notification WhatsApp.
+     */
     public function __construct(private ExtraWhatsAppNotifier $whatsapp) {}
 
+    /**
+     * Prévient le parent qu'un paiement d'extra a été enregistré (WhatsApp, puis e-mail s'il a une
+     * adresse).
+     */
     public function sendConfirmation(ExtraPayment $payment): void
     {
         $payment->loadMissing('subscription.student', 'subscription.extra');

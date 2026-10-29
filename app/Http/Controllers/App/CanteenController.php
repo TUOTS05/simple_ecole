@@ -11,16 +11,24 @@ use App\Models\Enrollment;
 use App\Models\SchoolClass;
 use App\Models\SchoolYear;
 use App\Models\Student;
+use App\Support\SchoolRules;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Cantine scolaire : tarifs mensuels par classe, inscriptions, paiements et rapports d'impayés.
+ */
 class CanteenController extends Controller
 {
     // ==========================================
     // MÉTHODES AJAX POUR LE FORMULAIRE DYNAMIQUE
     // ==========================================
 
+    /**
+     * AJAX : classes d'un cycle (maternelle, primaire…), pour les listes déroulantes en cascade.
+     */
     public function getClassesByCycle(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -34,6 +42,9 @@ class CanteenController extends Controller
         return response()->json($classes);
     }
 
+    /**
+     * AJAX : élèves affectés à une classe pour l'année choisie.
+     */
     public function getStudentsByClass(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -55,56 +66,17 @@ class CanteenController extends Controller
         return response()->json($students);
     }
 
-    // public function getSubscriptionsByClass(Request $request)
-    // {
-    //     $schoolId = session('current_school_id');
-    //     $schoolYearId = $request->query('school_year_id');
-    //     $classId = $request->query('class_id');
-
-    //     if (!$schoolYearId || !$classId) {
-    //         return response()->json([]);
-    //     }
-
-    //     $subscriptions = CanteenSubscription::where('school_id', $schoolId)
-    //         ->where('school_year_id', $schoolYearId)
-    //         ->where('remaining_amount', '>', 0) // ✅ RÉACTIVÉ : On ne montre que ceux qui ont un reste à payer
-    //         ->whereHas('canteenRate', function($q) use ($classId) {
-    //             $q->where('school_class_id', $classId);
-    //         })
-    //         ->with([
-    //             'student',
-    //             'canteenRate.schoolClass',
-    //             'installments' => function($q) {
-    //                 $q->where('status', '!=', 'paid')->orderBy('due_date', 'asc');
-    //             }
-    //         ])
-    //         ->get()
-    //         ->map(function($sub) {
-    //             $unpaidMonths = $sub->installments->map(function($inst) {
-    //                 return \Carbon\Carbon::parse($inst->month . '-01')->translatedFormat('F Y');
-    //             })->toArray();
-
-    //             return [
-    //                 'id' => $sub->id,
-    //                 'student_name' => $sub->student ? ($sub->student->last_name . ' ' . $sub->student->first_name) : 'Élève inconnu',
-    //                 'matricule' => $sub->student ? $sub->student->matricule : 'N/A',
-    //                 'remaining' => $sub->remaining_amount,
-    //                 'class_name' => $sub->canteenRate && $sub->canteenRate->schoolClass ? $sub->canteenRate->schoolClass->name : 'N/A',
-    //                 'unpaid_months' => $unpaidMonths
-    //             ];
-    //         });
-
-    //     return response()->json($subscriptions);
-    // }
-
     // ==========================================
     // GESTION DES TARIFS
     // ==========================================
 
+    /**
+     * Liste des tarifs de cantine de l'année, par classe.
+     */
     public function ratesIndex(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
 
         $rates = CanteenRate::where('canteen_rates.school_id', $schoolId)
             ->where('canteen_rates.school_year_id', $schoolYearId)
@@ -114,29 +86,35 @@ class CanteenController extends Controller
             ->with('schoolClass')
             ->get();
 
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.canteen.rates.index', compact('rates', 'schoolYears', 'schoolYearId'));
     }
 
+    /**
+     * Formulaire de création d'un tarif.
+     */
     public function ratesCreate(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
 
         $classes = SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.canteen.rates.create', compact('classes', 'schoolYears', 'schoolYearId'));
     }
 
+    /**
+     * Enregistre un tarif mensuel pour une classe (un seul tarif par classe et par année).
+     */
     public function ratesStore(Request $request)
     {
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'school_year_id' => 'required|exists:school_years,id',
-            'school_class_id' => 'required|exists:school_classes,id',
+            'school_year_id' => ['required', SchoolRules::exists('school_years')],
+            'school_class_id' => ['required', SchoolRules::exists('school_classes')],
             'monthly_rate' => 'required|numeric|min:0',
             'months_count' => 'required|integer|min:1|max:12',
             'start_month' => 'required|date_format:Y-m',
@@ -162,21 +140,27 @@ class CanteenController extends Controller
             ->with('success', '✅ Tarif de cantine créé avec succès !');
     }
 
+    /**
+     * Formulaire de modification d'un tarif.
+     */
     public function ratesEdit($id)
     {
         $rate = CanteenRate::where('school_id', session('current_school_id'))->findOrFail($id);
         $classes = SchoolClass::where('school_id', $rate->school_id)->orderBy('name')->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.canteen.rates.edit', compact('rate', 'classes', 'schoolYears'));
     }
 
+    /**
+     * Met à jour un tarif de cantine.
+     */
     public function ratesUpdate(Request $request, $id)
     {
         $rate = CanteenRate::where('school_id', session('current_school_id'))->findOrFail($id);
 
         $validated = $request->validate([
-            'school_class_id' => 'required|exists:school_classes,id',
+            'school_class_id' => ['required', SchoolRules::exists('school_classes')],
             'monthly_rate' => 'required|numeric|min:0',
             'months_count' => 'required|integer|min:1|max:12',
             'start_month' => 'required|date_format:Y-m',
@@ -190,6 +174,9 @@ class CanteenController extends Controller
             ->with('success', '✅ Tarif mis à jour avec succès !');
     }
 
+    /**
+     * Supprime un tarif de cantine.
+     */
     public function ratesDestroy($id)
     {
         $rate = CanteenRate::where('school_id', session('current_school_id'))->findOrFail($id);
@@ -204,10 +191,13 @@ class CanteenController extends Controller
     // INSCRIPTIONS DES ÉLÈVES
     // ==========================================
 
+    /**
+     * Liste des élèves inscrits à la cantine, filtrable par classe.
+     */
     public function subscriptionsIndex(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $classId = $request->get('class_id');
 
         $query = CanteenSubscription::where('school_id', $schoolId)
@@ -220,18 +210,30 @@ class CanteenController extends Controller
 
         $subscriptions = $query->get();
         $classes = SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         $rates = CanteenRate::where('school_id', $schoolId)
             ->where('school_year_id', $schoolYearId)
             ->with('schoolClass')
             ->get();
 
+        // Tarif mensuel et mois facturables de chaque classe, pour le formulaire d'inscription :
+        // les mois proposés sont ceux de la période du tarif, pas une liste fixe.
+        $ratesByClass = $rates->mapWithKeys(fn ($rate) => [$rate->school_class_id => [
+            'monthly_rate' => (float) $rate->monthly_rate,
+            'months' => collect(CarbonPeriod::create($rate->start_month.'-01', '1 month', $rate->end_month.'-01'))
+                ->map(fn ($month) => ['value' => $month->format('Y-m'), 'label' => ucfirst($month->locale('fr')->translatedFormat('F Y'))])
+                ->values(),
+        ]]);
+
         return view('app.canteen.subscriptions.index', compact(
-            'subscriptions', 'classes', 'schoolYears', 'schoolYearId', 'classId', 'rates'
+            'subscriptions', 'classes', 'schoolYears', 'schoolYearId', 'classId', 'rates', 'ratesByClass'
         ));
     }
 
+    /**
+     * Annule l'inscription d'un élève à la cantine.
+     */
     public function subscriptionsDestroy($id)
     {
         $subscription = CanteenSubscription::where('school_id', session('current_school_id'))->findOrFail($id);
@@ -246,121 +248,17 @@ class CanteenController extends Controller
     // PAIEMENTS
     // ==========================================
 
-    // public function paymentsIndex(Request $request)
-    // {
-    //     $schoolId = session('current_school_id');
-    //     $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
-    //     $classId = $request->get('class_id', ''); // ✅ AJOUTÉ pour le filtre
-
-    //     $payments = CanteenPayment::where('school_id', $schoolId)
-    //         ->whereHas('subscription', fn($q) => $q->where('school_year_id', $schoolYearId))
-    //         ->with(['subscription.student', 'subscription.canteenRate.schoolClass', 'receivedByUser'])
-    //         ->orderBy('payment_date', 'desc')
-    //         ->paginate(20);
-
-    //     $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
-    //     $classes = \App\Models\SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
-
-    //     return view('app.canteen.payments.index', compact('payments', 'schoolYears', 'schoolYearId', 'classId', 'classes'));
-    // }
-
-    //     public function paymentsIndex(Request $request)
-    // {
-    //     $schoolId = session('current_school_id');
-    //     $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
-    //     $classId = $request->get('class_id', '');
-    //     $studentId = $request->get('student_id', '');
-
-    //     // Construction de la requête avec les filtres
-    //     $query = CanteenPayment::where('school_id', $schoolId)
-    //         ->whereHas('subscription', fn($q) => $q->where('school_year_id', $schoolYearId))
-    //         ->with(['subscription.student', 'subscription.canteenRate.schoolClass', 'receivedByUser'])
-    //         ->orderBy('payment_date', 'desc');
-
-    //     if ($classId) {
-    //         $query->whereHas('subscription.canteenRate', fn($q) => $q->where('school_class_id', $classId));
-    //     }
-
-    //     if ($studentId) {
-    //         $query->whereHas('subscription', fn($q) => $q->where('student_id', $studentId));
-    //     }
-
-    //     $payments = $query->paginate(20);
-
-    //     $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
-    //     $classes = \App\Models\SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
-
-    //     // Récupérer la liste des élèves inscrits à la cantine cette année pour le filtre
-    //     $students = \App\Models\CanteenSubscription::where('school_id', $schoolId)
-    //         ->where('school_year_id', $schoolYearId)
-    //         ->with('student')
-    //         ->get()
-    //         ->pluck('student')
-    //         ->unique('id')
-    //         ->sortBy(function($student) {
-    //             return $student->last_name . ' ' . $student->first_name;
-    //         });
-
-    //     return view('app.canteen.payments.index', compact(
-    //         'payments', 'schoolYears', 'schoolYearId', 'classId', 'studentId', 'classes', 'students'
-    //     ));
-    // }
-
-    //     public function paymentsIndex(Request $request)
-    // {
-    //     $schoolId = session('current_school_id');
-    //     $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
-    //     $classId = $request->get('class_id', '');
-    //     $month = $request->get('month', '');
-
-    //     $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
-    //     $classes = \App\Models\SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
-
-    //     $availableMonths = [
-    //         '2026-09' => 'Septembre 2026', '2026-10' => 'Octobre 2026', '2026-11' => 'Novembre 2026',
-    //         '2026-12' => 'Décembre 2026', '2027-01' => 'Janvier 2027', '2027-02' => 'Février 2027',
-    //         '2027-03' => 'Mars 2027', '2027-04' => 'Avril 2027', '2027-05' => 'Mai 2027', '2027-06' => 'Juin 2027',
-    //     ];
-
-    //     // ✅ Si aucun filtre n'est appliqué, on retourne une liste vide
-    //     if (!$classId && !$month) {
-    //         $payments = collect(); // Collection vide
-    //         return view('app.canteen.payments.index', compact(
-    //             'payments', 'schoolYears', 'schoolYearId', 'classId', 'month', 'classes', 'availableMonths'
-    //         ));
-    //     }
-
-    //     // Construction de la requête avec filtres
-    //     $query = CanteenPayment::where('school_id', $schoolId)
-    //         ->whereHas('subscription', fn($q) => $q->where('school_year_id', $schoolYearId))
-    //         ->with(['subscription.student', 'subscription.canteenRate.schoolClass', 'receivedByUser'])
-    //         ->orderBy('payment_date', 'desc');
-
-    //     // Filtre par classe
-    //     if ($classId) {
-    //         $query->whereHas('subscription.canteenRate', fn($q) => $q->where('school_class_id', $classId));
-    //     }
-
-    //     // Filtre par mois : on cherche les paiements liés à des subscriptions qui ont un installment pour ce mois
-    //     if ($month) {
-    //         $query->whereHas('subscription.installments', fn($q) => $q->where('month', $month));
-    //     }
-
-    //     $payments = $query->paginate(20);
-
-    //     return view('app.canteen.payments.index', compact(
-    //         'payments', 'schoolYears', 'schoolYearId', 'classId', 'month', 'classes', 'availableMonths'
-    //     ));
-    // }
-
+    /**
+     * Paiements de cantine, affichés seulement une fois une classe ou un mois choisi.
+     */
     public function paymentsIndex(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $classId = $request->get('class_id', '');
         $month = $request->get('month', '');
 
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
         $classes = SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
 
         $availableMonths = [
@@ -369,7 +267,7 @@ class CanteenController extends Controller
             '2027-03' => 'Mars 2027', '2027-04' => 'Avril 2027', '2027-05' => 'Mai 2027', '2027-06' => 'Juin 2027',
         ];
 
-        // ✅ CORRECTION : Retourner un paginateur vide (et non une collection) pour que hasPages() fonctionne
+        // Paginateur vide (et non une collection) : la vue appelle hasPages()
         if (! $classId && ! $month) {
             $payments = CanteenPayment::where('id', 0)->paginate(20);
 
@@ -399,13 +297,16 @@ class CanteenController extends Controller
         ));
     }
 
+    /**
+     * Enregistre un paiement de cantine et le répartit sur les échéances de l'abonnement.
+     */
     public function paymentsStore(Request $request)
     {
         $schoolId = session('current_school_id');
         $userId = auth()->id();
 
         $validated = $request->validate([
-            'canteen_subscription_id' => 'required|exists:canteen_subscriptions,id',
+            'canteen_subscription_id' => ['required', SchoolRules::exists('canteen_subscriptions')],
             'amount' => 'required|numeric|min:1',
             'payment_date' => 'required|date',
             'payment_method' => 'required|in:cash,mobile_money,transfer,check',
@@ -470,10 +371,14 @@ class CanteenController extends Controller
     // RAPPORTS CANTINE
     // ==========================================
 
+    /**
+     * Rapport d'une classe : situation de paiement de chaque élève inscrit, éventuellement pour un
+     * mois.
+     */
     public function classDetail(Request $request, $classId)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $selectedMonth = $request->get('month', '');
 
         $class = SchoolClass::where('school_id', $schoolId)->findOrFail($classId);
@@ -512,7 +417,7 @@ class CanteenController extends Controller
             return $student;
         })->sortBy('last_name')->sortBy('first_name');
 
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         $availableMonths = [
             '' => 'Tous les mois (Vue Globale)',
@@ -524,9 +429,12 @@ class CanteenController extends Controller
         return view('app.canteen.reports.class_detail', compact('class', 'students', 'schoolYears', 'schoolYearId', 'selectedMonth', 'availableMonths'));
     }
 
+    /**
+     * Rapport d'un élève : abonnement, échéances et paiements de cantine.
+     */
     public function studentDetail(Request $request, $studentId)
     {
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $student = Student::where('school_id', session('current_school_id'))->findOrFail($studentId);
 
         $subscription = CanteenSubscription::where('student_id', $studentId)
@@ -560,15 +468,18 @@ class CanteenController extends Controller
             $inst->save();
         }
 
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.canteen.reports.student_detail', compact('student', 'subscription', 'installments', 'payments', 'schoolYears', 'schoolYearId'));
     }
 
+    /**
+     * Rapport des impayés de cantine regroupés par classe.
+     */
     public function unpaidByClass(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $filterClassId = $request->get('class_id', '');
         $filterMonth = $request->get('month', '');
 
@@ -619,7 +530,7 @@ class CanteenController extends Controller
                 : 0,
         ];
 
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
         $allClasses = SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
 
         $availableMonths = [
@@ -633,7 +544,7 @@ class CanteenController extends Controller
     }
 
     // ==========================================
-    // 1. CORRECTION DE LA LISTE DES PAIEMENTS
+    // 1. Liste des paiements
     // ==========================================
     public function getSubscriptionsByClass(Request $request)
     {
@@ -645,7 +556,7 @@ class CanteenController extends Controller
             return response()->json([]);
         }
 
-        // ✅ CORRECTION MAJEURE : On ne se fie plus aveuglément à 'remaining_amount > 0'
+        // On ne se fie pas à 'remaining_amount > 0' seul
         // On cherche les abonnements qui ont AU MOINS un mois impayé ou partiel
         $subscriptions = CanteenSubscription::where('school_id', $schoolId)
             ->where('school_year_id', $schoolYearId)
@@ -684,14 +595,14 @@ class CanteenController extends Controller
     }
 
     // ==========================================
-    // 2. CORRECTION DE L'INSCRIPTION (PLUS DE SILENCE)
+    // 2. Inscription : toute erreur est remontée à l'utilisateur
     // ==========================================
     public function subscriptionsStore(Request $request)
     {
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'school_year_id' => 'required|exists:school_years,id',
+            'school_year_id' => ['required', SchoolRules::exists('school_years')],
             'enrollments' => 'required|array|min:1',
             'enrollments.*.selected' => 'required|boolean',
             'enrollments.*.months' => 'required|array|min:1',
@@ -741,7 +652,7 @@ class CanteenController extends Controller
                 $paidNow = $data['amount'];
 
                 if ($existing) {
-                    // ✅ AMÉLIORATION : Au lieu de sauter silencieusement, on MET À JOUR l'abonnement existant
+                    // AMÉLIORATION : Au lieu de sauter silencieusement, on MET À JOUR l'abonnement existant
                     // On ajoute les nouveaux mois au total dû, puis on recalcule paid_amount/remaining_amount/status
                     // à partir des paiements réels (paid_amount ne change pas ici).
                     $existing->total_amount += $newTotalAmount;

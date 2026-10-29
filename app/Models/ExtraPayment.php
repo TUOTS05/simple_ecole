@@ -5,6 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Paiement reçu pour une inscription à un extra ; à l'enregistrement, il met à jour les montants de
+ * l'inscription.
+ */
 class ExtraPayment extends Model
 {
     protected $fillable = [

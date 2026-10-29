@@ -9,18 +9,27 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
+/**
+ * Feuille de résumé financier d'un élève pour une année.
+ */
 class StudentSummaryExport implements FromCollection, WithHeadings, WithMapping
 {
     protected $studentId;
 
     protected $schoolYearId;
 
+    /**
+     * Élève et année concernés.
+     */
     public function __construct($studentId, $schoolYearId)
     {
         $this->studentId = $studentId;
         $this->schoolYearId = $schoolYearId;
     }
 
+    /**
+     * Une ligne : élève, classe et totaux dus, payés et restants.
+     */
     public function collection()
     {
         $student = Student::find($this->studentId);
@@ -50,6 +59,9 @@ class StudentSummaryExport implements FromCollection, WithHeadings, WithMapping
         return ['Matricule', 'Nom et Prénom', 'Classe', 'Total Dû (FCFA)', 'Total Payé (FCFA)', 'Reste (FCFA)', 'Taux (%)'];
     }
 
+    /**
+     * Ligne de résumé de l'élève.
+     */
     public function map($row): array
     {
         return [

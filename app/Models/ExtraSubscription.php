@@ -6,8 +6,18 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Inscription d'un élève à un extra : tarif appliqué, remise, échéances, paiements et affectation au
+ * transport.
+ */
 class ExtraSubscription extends Model
 {
+    /**
+     * Statuts d'un service en cours : « completed » signifie seulement « entièrement payé »
+     * (voir recalculateAmounts), le service continue jusqu'à sa résiliation.
+     */
+    public const RUNNING_STATUSES = ['active', 'completed'];
+
     protected $fillable = [
         'school_id', 'student_id', 'extra_id', 'extra_tarif_id', 'school_year_id',
         'total_amount', 'paid_amount', 'remaining_amount', 'status',
@@ -94,6 +104,9 @@ class ExtraSubscription extends Model
         return $this->discount_amount > 0;
     }
 
+    /**
+     * Pourcentage déjà payé (attribut payment_rate).
+     */
     public function getPaymentRateAttribute()
     {
         return $this->total_amount > 0

@@ -11,17 +11,24 @@ use App\Models\GouterSubscription;
 use App\Models\SchoolClass;
 use App\Models\SchoolYear;
 use App\Models\Student;
+use App\Support\SchoolRules;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Goûter de la maternelle : tarifs par classe, inscriptions, paiements, reçus et impayés.
+ */
 class GouterController extends Controller
 {
     // ==========================================
     // MÉTHODES AJAX POUR LE FORMULAIRE DYNAMIQUE
     // ==========================================
 
+    /**
+     * AJAX : classes du cycle maternelle.
+     */
     public function getMaternelleClasses(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -34,6 +41,9 @@ class GouterController extends Controller
         return response()->json($classes);
     }
 
+    /**
+     * AJAX : élèves affectés à une classe pour l'année choisie.
+     */
     public function getStudentsByClass(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -55,6 +65,9 @@ class GouterController extends Controller
         return response()->json($students);
     }
 
+    /**
+     * AJAX : inscriptions au goûter d'une classe qui ont encore un reste à payer.
+     */
     public function getSubscriptionsByClass(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -95,10 +108,13 @@ class GouterController extends Controller
     // GESTION DES TARIFS
     // ==========================================
 
+    /**
+     * Liste des tarifs du goûter de l'année.
+     */
     public function ratesIndex(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
 
         $rates = GouterRate::where('gouter_rates.school_id', $schoolId)
             ->where('gouter_rates.school_year_id', $schoolYearId)
@@ -108,32 +124,38 @@ class GouterController extends Controller
             ->with('schoolClass')
             ->get();
 
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.gouter.rates.index', compact('rates', 'schoolYears', 'schoolYearId'));
     }
 
+    /**
+     * Formulaire de création d'un tarif (classes de maternelle uniquement).
+     */
     public function ratesCreate(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
 
         $classes = SchoolClass::where('school_id', $schoolId)
             ->whereRaw('LOWER(cycle) = ?', ['maternelle'])
             ->orderBy('name')
             ->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.gouter.rates.create', compact('classes', 'schoolYears', 'schoolYearId'));
     }
 
+    /**
+     * Enregistre un tarif et calcule le montant de chaque échéance selon la modalité de paiement.
+     */
     public function ratesStore(Request $request)
     {
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'school_year_id' => 'required|exists:school_years,id',
-            'school_class_id' => 'required|exists:school_classes,id',
+            'school_year_id' => ['required', SchoolRules::exists('school_years')],
+            'school_class_id' => ['required', SchoolRules::exists('school_classes')],
             'total_amount' => 'required|numeric|min:0',
             'payment_modality' => 'required|in:unique,mensuel,trimestriel,semestriel',
             'description' => 'nullable|string|max:500',
@@ -174,6 +196,9 @@ class GouterController extends Controller
             ->with('success', '✅ Tarif de goûter créé avec succès !');
     }
 
+    /**
+     * Formulaire de modification d'un tarif.
+     */
     public function ratesEdit($id)
     {
         $rate = GouterRate::where('school_id', session('current_school_id'))->findOrFail($id);
@@ -181,17 +206,20 @@ class GouterController extends Controller
             ->whereRaw('LOWER(cycle) = ?', ['maternelle'])
             ->orderBy('name')
             ->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.gouter.rates.edit', compact('rate', 'classes', 'schoolYears'));
     }
 
+    /**
+     * Met à jour un tarif et recalcule le montant des échéances.
+     */
     public function ratesUpdate(Request $request, $id)
     {
         $rate = GouterRate::where('school_id', session('current_school_id'))->findOrFail($id);
 
         $validated = $request->validate([
-            'school_class_id' => 'required|exists:school_classes,id',
+            'school_class_id' => ['required', SchoolRules::exists('school_classes')],
             'total_amount' => 'required|numeric|min:0',
             'payment_modality' => 'required|in:unique,mensuel,trimestriel,semestriel',
             'description' => 'nullable|string|max:500',
@@ -212,6 +240,9 @@ class GouterController extends Controller
             ->with('success', '✅ Tarif mis à jour avec succès !');
     }
 
+    /**
+     * Supprime un tarif du goûter.
+     */
     public function ratesDestroy($id)
     {
         $rate = GouterRate::where('school_id', session('current_school_id'))->findOrFail($id);
@@ -240,10 +271,13 @@ class GouterController extends Controller
     // INSCRIPTIONS DES ÉLÈVES
     // ==========================================
 
+    /**
+     * Liste des élèves inscrits au goûter, filtrable par classe.
+     */
     public function subscriptionsIndex(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $classId = $request->get('class_id');
 
         $query = GouterSubscription::where('school_id', $schoolId)
@@ -259,7 +293,7 @@ class GouterController extends Controller
             ->whereRaw('LOWER(cycle) = ?', ['maternelle'])
             ->orderBy('name')
             ->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         $rates = GouterRate::where('school_id', $schoolId)
             ->where('school_year_id', $schoolYearId)
@@ -271,12 +305,15 @@ class GouterController extends Controller
         ));
     }
 
+    /**
+     * Inscrit les élèves sélectionnés au goûter et génère leur échéancier.
+     */
     public function subscriptionsStore(Request $request)
     {
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'school_year_id' => 'required|exists:school_years,id',
+            'school_year_id' => ['required', SchoolRules::exists('school_years')],
             'students' => 'required|array|min:1',
             'students.*.selected' => 'required|boolean',
             'students.*.amount' => 'required|numeric|min:0',
@@ -387,6 +424,9 @@ class GouterController extends Controller
         }
     }
 
+    /**
+     * Annule l'inscription d'un élève au goûter.
+     */
     public function subscriptionsDestroy($id)
     {
         $subscription = GouterSubscription::where('school_id', session('current_school_id'))->findOrFail($id);
@@ -401,13 +441,16 @@ class GouterController extends Controller
     // PAIEMENTS
     // ==========================================
 
+    /**
+     * Liste des paiements du goûter, filtrable par classe.
+     */
     public function paymentsIndex(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $classId = $request->get('class_id', '');
 
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
         $classes = SchoolClass::where('school_id', $schoolId)
             ->whereRaw('LOWER(cycle) = ?', ['maternelle'])
             ->orderBy('name')
@@ -433,12 +476,15 @@ class GouterController extends Controller
         ));
     }
 
+    /**
+     * Enregistre un paiement du goûter ; le modèle met ensuite à jour les montants de l'inscription.
+     */
     public function paymentsStore(Request $request)
     {
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'gouter_subscription_id' => 'required|exists:gouter_subscriptions,id',
+            'gouter_subscription_id' => ['required', SchoolRules::exists('gouter_subscriptions')],
             'amount' => 'required|numeric|min:1',
             'payment_date' => 'required|date',
             'payment_method' => 'required|in:cash,mobile_money,transfer,check',
@@ -527,6 +573,9 @@ class GouterController extends Controller
         return $payment;
     }
 
+    /**
+     * Reçu PDF d'un paiement du goûter.
+     */
     public function receipt(GouterPayment $payment)
     {
         if ($payment->school_id !== session('current_school_id')) {
@@ -559,10 +608,13 @@ class GouterController extends Controller
     // RAPPORTS
     // ==========================================
 
+    /**
+     * Rapport des impayés du goûter regroupés par classe.
+     */
     public function unpaidByClass(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $filterClassId = $request->get('class_id', '');
 
         $query = DB::table('school_classes')
@@ -603,7 +655,7 @@ class GouterController extends Controller
                 : 0,
         ];
 
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
         $allClasses = SchoolClass::where('school_id', $schoolId)
             ->whereRaw('LOWER(cycle) = ?', ['maternelle'])
             ->orderBy('name')

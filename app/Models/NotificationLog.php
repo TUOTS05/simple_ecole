@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Trace d'une notification envoyée à un parent (canal, contenu, statut).
+ */
 class NotificationLog extends Model
 {
     protected $table = 'notifications_log';

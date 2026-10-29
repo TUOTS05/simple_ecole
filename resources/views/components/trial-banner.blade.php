@@ -8,7 +8,8 @@ $isDemo = $user && $user->email === 'demo@schoolmanager.com';
 // Sinon, on vérifie si c'est une vraie école en essai
 $isTrial = !$isDemo && $school && method_exists($school, 'isTrialActive') && $school->isTrialActive();
 
-$showBanner = $isDemo || $isTrial;
+// L'abonnement concerne l'administration de l'école : ni le personnel, ni les enseignants, ni les parents.
+$showBanner = $user && $user->isSchoolAdmin() && ($isDemo || $isTrial);
 @endphp
 
 @if($showBanner)

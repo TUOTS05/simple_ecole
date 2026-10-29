@@ -7,10 +7,13 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+/**
+ * Validation du formulaire de profil.
+ */
 class ProfileUpdateRequest extends FormRequest
 {
     /**
-     * Get the validation rules that apply to the request.
+     * Règles de validation de la requête.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */

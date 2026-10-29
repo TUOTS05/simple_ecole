@@ -8,18 +8,27 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
+/**
+ * Feuille des échéances d'un élève pour une année.
+ */
 class StudentInstallmentsExport implements FromCollection, WithHeadings, WithMapping
 {
     protected $studentId;
 
     protected $schoolYearId;
 
+    /**
+     * Élève et année concernés.
+     */
     public function __construct($studentId, $schoolYearId)
     {
         $this->studentId = $studentId;
         $this->schoolYearId = $schoolYearId;
     }
 
+    /**
+     * Échéances de l'inscription de l'élève, par date d'échéance.
+     */
     public function collection()
     {
         $enrollment = Enrollment::where('student_id', $this->studentId)
@@ -36,6 +45,9 @@ class StudentInstallmentsExport implements FromCollection, WithHeadings, WithMap
         return ['Type', 'Description', 'Montant (FCFA)', 'Montant Payé (FCFA)', 'Date Échéance', 'Statut'];
     }
 
+    /**
+     * Une ligne par échéance.
+     */
     public function map($row): array
     {
         return [

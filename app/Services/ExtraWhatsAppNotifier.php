@@ -17,8 +17,14 @@ use App\Models\Student;
  */
 class ExtraWhatsAppNotifier
 {
+    /**
+     * Reçoit le service WhatsApp.
+     */
     public function __construct(private WhatsAppService $whatsapp) {}
 
+    /**
+     * Rappel WhatsApp d'une échéance d'extra à venir.
+     */
     public function sendUpcoming(ExtraInstallment $installment): ?bool
     {
         $installment->loadMissing('subscription.student', 'subscription.extra');
@@ -40,6 +46,9 @@ class ExtraWhatsAppNotifier
         );
     }
 
+    /**
+     * Relance WhatsApp d'une échéance d'extra en retard.
+     */
     public function sendLate(ExtraInstallment $installment): ?bool
     {
         $installment->loadMissing('subscription.student', 'subscription.extra');
@@ -61,6 +70,9 @@ class ExtraWhatsAppNotifier
         );
     }
 
+    /**
+     * Confirmation WhatsApp d'un paiement d'extra.
+     */
     public function sendPaymentConfirmed(ExtraPayment $payment): ?bool
     {
         $payment->loadMissing('subscription.student', 'subscription.extra');

@@ -7,8 +7,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
+/**
+ * Espace enseignant : profil et mot de passe.
+ */
 class ProfileController extends Controller
 {
+    /**
+     * Affiche le profil de l'enseignant.
+     */
     public function index()
     {
         $user = Auth::user();
@@ -16,6 +22,9 @@ class ProfileController extends Controller
         return view('teacher.profile.index', compact('user'));
     }
 
+    /**
+     * Met à jour le nom et l'adresse e-mail de l'enseignant.
+     */
     public function update(Request $request)
     {
         $user = Auth::user();
@@ -33,6 +42,9 @@ class ProfileController extends Controller
         return back()->with('success', '✅ Vos informations ont été mises à jour avec succès.');
     }
 
+    /**
+     * Change le mot de passe après vérification du mot de passe actuel.
+     */
     public function updatePassword(Request $request)
     {
         $user = Auth::user();

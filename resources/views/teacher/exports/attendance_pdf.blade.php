@@ -115,7 +115,7 @@
         </div>
     </div>
 
-    <!-- ✅ Utilisation d'un tableau invisible pour un alignement gauche/droite garanti dans DomPDF -->
+    <!-- Utilisation d'un tableau invisible pour un alignement gauche/droite garanti dans DomPDF -->
     <table class="info-table">
         <tr>
             <td style="width: 50%;">

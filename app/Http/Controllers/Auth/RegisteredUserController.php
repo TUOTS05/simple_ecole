@@ -13,10 +13,13 @@ use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
+/**
+ * Inscription publique d'un parent.
+ */
 class RegisteredUserController extends Controller
 {
     /**
-     * Display the registration view.
+     * Affiche le formulaire d'inscription.
      */
     public function create(): View
     {
@@ -24,7 +27,7 @@ class RegisteredUserController extends Controller
     }
 
     /**
-     * Handle an incoming registration request.
+     * Traite une demande d'inscription.
      *
      * @throws ValidationException
      */

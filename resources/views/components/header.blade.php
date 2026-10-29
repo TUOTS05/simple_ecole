@@ -1,16 +1,15 @@
-<!-- Header -->
-<!-- Header -->
-<header class="h-16 bg-white shadow-md border-b-4 border-primary flex items-center justify-between px-6">
+<!-- En-tête -->
+<header class="h-16 bg-white shadow-md border-b-4 border-primary flex items-center justify-between px-4 md:px-6 gap-4">
 
-    <!-- Titre de la page -->
-    <div>
-        <h2 class="text-xl font-semibold text-gray-800">
+    <!-- Titre de la page (une seule ligne, tronquée sur petit écran) -->
+    <div class="min-w-0">
+        <h2 class="text-lg md:text-xl font-semibold text-gray-800 truncate">
             @yield('page_title', 'Dashboard')
         </h2>
     </div>
 
-    <!-- Infos utilisateur -->
-    <div class="flex items-center space-x-4">
+    <!-- Infos utilisateur : masquées sur mobile, faute de place -->
+    <div class="hidden md:flex items-center space-x-4 flex-shrink-0">
 
         {{-- AFFICHAGE DU NOM DE L'ÉCOLE --}}
         @if(session('current_school'))
@@ -48,11 +47,7 @@
                     {{ auth()->user()->first_name }} {{ auth()->user()->last_name }}
                 </div>
                 <div class="text-xs text-gray-500">
-                    @if(auth()->user()->isSuperAdmin())
-                    Super Admin
-                    @else
-                    Admin École
-                    @endif
+                    {{ auth()->user()->roleLabel() }}
                 </div>
             </div>
         </div>

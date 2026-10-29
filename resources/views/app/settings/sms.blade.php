@@ -62,7 +62,7 @@
             </div>
         </div>
 
-        <!-- Template -->
+        <!-- Modèle -->
         <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
                 <span class="mr-2">📝</span> Template du message d'absence

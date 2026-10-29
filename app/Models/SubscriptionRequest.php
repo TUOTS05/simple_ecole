@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Demande d'abonnement faite par une école, à valider par le super-administrateur.
+ */
 class SubscriptionRequest extends Model
 {
     protected $fillable = ['school_id', 'plan_id', 'duration', 'status', 'admin_notes'];

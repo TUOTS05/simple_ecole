@@ -8,10 +8,13 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Place l'école de l'utilisateur, et son année active, en session pour toute la requête.
+ */
 class CheckTenant
 {
     /**
-     * Handle an incoming request.
+     * Traite la requête entrante.
      *
      * @param  Closure(Request): (Response)  $next
      */

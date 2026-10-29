@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * École cliente de la plateforme : identité, type, abonnement, période d'essai et réglages.
+ */
 class School extends Model
 {
     use SoftDeletes;
@@ -17,7 +20,7 @@ class School extends Model
         'email', 'phone', 'address', 'sms_enabled',
         'orange_sms_api_url', 'orange_sms_client_id', 'orange_sms_client_secret',
         'orange_sms_sender_name', 'sms_absence_template',
-        // ✅ Ajouts pour l'essai gratuit et le SaaS
+        // Ajouts pour l'essai gratuit et le SaaS
         'trial_ends_at', 'is_active', 'type',
     ];
 
@@ -26,7 +29,7 @@ class School extends Model
         'subscription_start_date' => 'date',
         'subscription_end_date' => 'date',
         'sms_enabled' => 'boolean',
-        // ✅ Ajouts pour que les dates d'essai fonctionnent avec isFuture()
+        // Ajouts pour que les dates d'essai fonctionnent avec isFuture()
         'trial_ends_at' => 'date',
         'is_active' => 'boolean',
     ];
@@ -58,7 +61,7 @@ class School extends Model
     }
 
     // ==========================================
-    // ✅ HELPERS POUR L'ESSAI GRATUIT (CEUX QUI MANQUAIENT)
+    // HELPERS POUR L'ESSAI GRATUIT (CEUX QUI MANQUAIENT)
     // ==========================================
 
     public function isTrialActive(): bool
@@ -66,6 +69,9 @@ class School extends Model
         return $this->trial_ends_at && $this->trial_ends_at->isFuture();
     }
 
+    /**
+     * Nombre de jours d'essai restants (0 si l'essai est terminé).
+     */
     public function trialDaysRemaining(): int
     {
         if (! $this->isTrialActive()) {
@@ -99,6 +105,9 @@ class School extends Model
         return $this->school_type === 'creche';
     }
 
+    /**
+     * Niveaux de classe autorisés selon le type d'école (crèche, maternelle, primaire ou mixte).
+     */
     public function getAllowedLevels(): array
     {
         $maternelleLevels = ['TPS', 'PS', 'MS', 'GS'];
@@ -118,6 +127,9 @@ class School extends Model
     // HELPERS POUR LA GESTION SAAS
     // ==========================================
 
+    /**
+     * Vrai si l'école n'a ni abonnement en cours ni période d'essai valide.
+     */
     public function isExpired(): bool
     {
         // Abonnement payant en cours de validité ?
@@ -149,6 +161,9 @@ class School extends Model
         return $this->max_users !== null && $this->activeUserCount() >= $this->max_users;
     }
 
+    /**
+     * Badge HTML du statut de l'école (expirée, suspendue, en essai, active).
+     */
     public function getStatusBadgeAttribute(): string
     {
         if ($this->isExpired() || $this->status === 'expired') {

@@ -16,10 +16,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Paiements des frais de scolarité : saisie, reçus, annulation et exports.
+ */
 class PaymentController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Affiche la liste.
      */
     public function index(Request $request)
     {
@@ -50,7 +53,7 @@ class PaymentController extends Controller
             $query->whereDate('payment_date', '<=', $request->date_to);
         }
 
-        // ✅ AJOUT DU FILTRE PAR CLASSE
+        // Filtre optionnel par classe
         if ($request->filled('class_id')) {
             $query->whereHas('enrollment', function ($q) use ($request) {
                 $q->where('school_class_id', $request->class_id);
@@ -60,7 +63,7 @@ class PaymentController extends Controller
         $payments = $query->orderBy('payment_date', 'desc')->paginate(15);
         $payments->appends($request->query());
 
-        // ✅ AJOUT : Récupérer les classes pour le menu déroulant
+        // Classes proposées dans le menu déroulant du filtre
         $classes = SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
         $schoolYears = SchoolYear::where('school_id', $schoolId)->orderBy('start_date', 'desc')->get();
 
@@ -68,7 +71,7 @@ class PaymentController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Affiche le formulaire de création.
      */
     public function create(Request $request)
     {
@@ -129,7 +132,7 @@ class PaymentController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Enregistre un nouvel élément.
      */
     public function store(Request $request)
     {
@@ -206,7 +209,7 @@ class PaymentController extends Controller
         // Variable pour stocker le chemin de la carte (sera null si ce n'est pas une inscription)
         $cardPath = null;
 
-        // 5. ✅ RÈGLE SPÉCIALE : Si c'est un paiement d'inscription
+        // 5. RÈGLE SPÉCIALE : Si c'est un paiement d'inscription
         if ($validatedData['payment_type'] === 'registration') {
             $student->update(['status' => 'active']);
 
@@ -224,7 +227,7 @@ class PaymentController extends Controller
             ->orderBy('due_date', 'asc')
             ->get();
 
-        // 7. ✅ GÉNÉRATION DU REÇU DE PAIEMENT
+        // 7. GÉNÉRATION DU REÇU DE PAIEMENT
         $receiptPdf = Pdf::loadView('pdf.receipt', [
             'payment' => $payment,
             'student' => $student,
@@ -242,7 +245,7 @@ class PaymentController extends Controller
         // Sauvegarder le chemin du reçu dans la table payments (UNE SEULE FOIS)
         $payment->update(['receipt_path' => $receiptPath]);
 
-        // 8. ✅ REDIRECTION AVEC LES LIENS DE TÉLÉCHARGEMENT (Reçu + Carte)
+        // 8. REDIRECTION AVEC LES LIENS DE TÉLÉCHARGEMENT (Reçu + Carte)
         $receiptUrl = asset('storage/'.$receiptPath);
 
         $successMessage = '
@@ -271,7 +274,7 @@ class PaymentController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Affiche le détail d'un élément.
      */
     public function show(Payment $payment)
     {
@@ -282,7 +285,7 @@ class PaymentController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Supprime un élément.
      */
     public function destroy(Payment $payment)
     {
@@ -428,7 +431,7 @@ class PaymentController extends Controller
                             'paid_amount' => (float) $inst->paid_amount,
                             'remaining' => (float) ($inst->amount - $inst->paid_amount),
                             'status' => $inst->status,
-                            'type' => $inst->type, // <-- 🎯 AJOUT CRUCIAL ICI
+                            'type' => $inst->type, // Nécessaire au formulaire pour distinguer inscription et scolarité
                         ];
                     }),
                 ]);
@@ -460,7 +463,7 @@ class PaymentController extends Controller
         if ($request->filled('payment_type')) {
             $query->where('payment_type', $request->payment_type);
         }
-        // ✅ AJOUT DU FILTRE PAR CLASSE POUR L'EXPORT DES PAIEMENTS
+        // Filtre optionnel par classe pour l'export des paiements
         if ($request->filled('class_id')) {
             $query->whereHas('enrollment', function ($q) use ($request) {
                 $q->where('school_class_id', $request->class_id);
@@ -491,7 +494,7 @@ class PaymentController extends Controller
         $callback = function () use ($payments) {
             $file = fopen('php://output', 'w');
 
-            // ✅ BOM UTF-8 : Indispensable pour qu'Excel lise correctement les accents (é, à, ô)
+            // BOM UTF-8 : Indispensable pour qu'Excel lise correctement les accents (é, à, ô)
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
 
             // En-têtes des colonnes

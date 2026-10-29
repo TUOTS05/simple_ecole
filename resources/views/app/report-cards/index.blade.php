@@ -17,7 +17,7 @@
         <p class="text-gray-600 mt-1">Gérez les compositions et bulletins des élèves</p>
     </div>
     <div class="flex gap-2">
-        {{-- ✅ NOUVEAU : Bouton de téléchargement en masse --}}
+        {{-- Téléchargement de tous les bulletins en un seul PDF --}}
         @php $hasFilter = request('period') || request('month') || request('quarter') || request('school_year_id'); @endphp
         @if($hasFilter)
             <a href="{{ route('app.report-cards.bulk-download', request()->query()) }}"
@@ -54,7 +54,7 @@
             </select>
         </div>
 
-        <!-- ✅ Champ Mois (Visible par défaut si Mensuel ou pas de filtre) -->
+        <!-- Champ Mois (Visible par défaut si Mensuel ou pas de filtre) -->
         <div id="filter_monthField" class="{{ request('period') === 'Trimestriel' ? 'hidden' : '' }}">
             <label class="block text-sm font-medium text-gray-700 mb-2">Mois</label>
             <select name="month" id="filter_monthSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary bg-white">
@@ -74,7 +74,7 @@
             </select>
         </div>
 
-        <!-- ✅ Champ Trimestre (Caché par défaut si Mensuel ou pas de filtre) -->
+        <!-- Champ Trimestre (Caché par défaut si Mensuel ou pas de filtre) -->
         <div id="filter_quarterField" class="{{ request('period') === 'Mensuel' ? 'hidden' : '' }}">
             <label class="block text-sm font-medium text-gray-700 mb-2">Trimestre</label>
             <select name="quarter" id="filter_quarterSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary bg-white">
@@ -202,7 +202,7 @@
     </div>
 @endif
 
-<!-- ✅ SCRIPT INFAILLIBLE POUR LE BASCULEMENT -->
+<!-- SCRIPT INFAILLIBLE POUR LE BASCULEMENT -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const periodSelect = document.getElementById('filter_periodSelect');

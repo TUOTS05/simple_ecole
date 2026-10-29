@@ -8,9 +8,16 @@ use App\Models\SchoolClass;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
+/**
+ * Envoi de messages aux parents : à un parent précis, à une classe ou à toute l'école.
+ */
 class BroadcastMessageController extends Controller
 {
+    /**
+     * Formulaire d'envoi, avec les classes et les parents de l'école (et le nom de leurs enfants).
+     */
     public function create()
     {
         $schoolId = auth()->user()->school_id;
@@ -20,11 +27,11 @@ class BroadcastMessageController extends Controller
 
         // 2. Récupérer les parents ayant au moins un enfant dans cette école, avec leurs enfants
         $parents = User::whereHas('children', function ($q) use ($schoolId) {
-            // ✅ CORRECTION : Préciser la table 'students'
+            // Colonne préfixée par 'students' : la jointure pivot rend 'school_id' ambigu
             $q->where('students.school_id', $schoolId);
         })
             ->with(['children' => function ($q) use ($schoolId) {
-                // ✅ CORRECTION : Préciser la table 'students'
+                // Colonne préfixée par 'students' : la jointure pivot rend 'school_id' ambigu
                 $q->where('students.school_id', $schoolId);
             }])
             ->orderBy('last_name')
@@ -40,18 +47,28 @@ class BroadcastMessageController extends Controller
         return view('app.messages.broadcast', compact('classes', 'parents'));
     }
 
+    /**
+     * Enregistre le message : individuel (destinataire fixé) ou diffusé (visible par la classe ou
+     * toute l'école).
+     */
     public function store(Request $request)
     {
-        // Validation conditionnelle : target_id requis si classe, receiver_id requis si parent
+        $schoolId = auth()->user()->school_id;
+
+        // Validation conditionnelle : target_id requis si classe, receiver_id requis si parent.
+        // Classe et parent doivent appartenir à l'école, sinon on écrirait aux familles d'une autre école.
         $validated = $request->validate([
             'target_type' => 'required|in:all,class,parent',
-            'target_id' => 'nullable|required_if:target_type,class|exists:school_classes,id',
-            'receiver_id' => 'nullable|required_if:target_type,parent|exists:users,id',
+            'target_id' => ['nullable', 'required_if:target_type,class', Rule::exists('school_classes', 'id')->where('school_id', $schoolId)],
+            'receiver_id' => [
+                'nullable',
+                'required_if:target_type,parent',
+                Rule::exists('users', 'id')->where(fn ($q) => $q->whereIn('id', User::whereHas('children', fn ($c) => $c->where('students.school_id', $schoolId))->select('users.id'))),
+            ],
             'subject' => 'required|string|max:255',
             'message' => 'required|string',
         ]);
 
-        $schoolId = auth()->user()->school_id;
         $senderId = auth()->id();
         $targetInfo = 'Tous les parents de l\'école'; // Valeur par défaut
 
@@ -62,7 +79,7 @@ class BroadcastMessageController extends Controller
         } elseif ($validated['target_type'] === 'parent') {
             // Récupérer les noms des enfants de ce parent dans cette école
             $parent = User::with(['children' => function ($q) use ($schoolId) {
-                // ✅ CORRECTION : Préciser la table 'students' ici aussi
+                // Colonne préfixée par 'students' : la jointure pivot rend 'school_id' ambigu
                 $q->where('students.school_id', $schoolId);
             }])->find($validated['receiver_id']);
 

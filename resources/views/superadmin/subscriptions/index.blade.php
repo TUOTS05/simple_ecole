@@ -58,7 +58,7 @@
                             <option value="">Choisir un plan</option>
                             @foreach($plans as $plan)
                                 <option value="{{ $plan->id }}" 
-                                    data-price="{{ $plan->yearly_price }}"  {{-- ✅ Changé de price à yearly_price --}}
+                                    data-price="{{ $plan->yearly_price }}"  {{-- Changé de price à yearly_price --}}
                                     data-name="{{ $plan->name }}"
                                     {{ old('plan_id') == $plan->id ? 'selected' : '' }}>
                                     {{ $plan->name }} - {{ number_format($plan->yearly_price, 0, ',', ' ') }} FCFA/an

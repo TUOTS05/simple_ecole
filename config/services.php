@@ -4,13 +4,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Third Party Services
+    | Services tiers
     |--------------------------------------------------------------------------
     |
-    | This file is for storing the credentials for third party services such
-    | as Mailgun, Postmark, AWS and more. This file provides the de facto
-    | location for this type of information, allowing packages to have
-    | a conventional file to locate the various service credentials.
+    | Identifiants des services externes (envoi d'e-mails, CinetPay, WhatsApp…),
+    | regroupés ici pour que chaque module les trouve au même endroit.
     |
     */
 
@@ -67,7 +65,8 @@ return [
         'site_id' => env('CINETPAY_SITE_ID'),
         // Tant qu'aucune clé API n'est configurée, le service simule le paiement
         // (page de simulation locale) au lieu d'appeler la vraie API CinetPay.
-        'dev_mode' => env('CINETPAY_DEV_MODE', true),
+        // Jamais par défaut en production : la simulation y validerait des paiements fictifs.
+        'dev_mode' => env('CINETPAY_DEV_MODE', env('APP_ENV') !== 'production'),
     ],
 
 ];

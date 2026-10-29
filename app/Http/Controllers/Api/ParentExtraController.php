@@ -21,6 +21,9 @@ use Illuminate\Http\Request;
  */
 class ParentExtraController extends Controller
 {
+    /**
+     * Enfants du parent connecté.
+     */
     public function children(Request $request)
     {
         $children = $request->user()->children()->with('school')->get();
@@ -39,6 +42,9 @@ class ParentExtraController extends Controller
         ]);
     }
 
+    /**
+     * Extras d'un enfant pour l'année active de son école.
+     */
     public function subscriptions(Request $request, $studentId)
     {
         $student = $this->childOrFail($request, $studentId);
@@ -72,6 +78,9 @@ class ParentExtraController extends Controller
         ]);
     }
 
+    /**
+     * Échéances d'une inscription à un extra.
+     */
     public function installments(Request $request, $studentId, $subscriptionId)
     {
         $subscription = $this->subscriptionOrFail($request, $studentId, $subscriptionId);
@@ -93,6 +102,9 @@ class ParentExtraController extends Controller
         ]);
     }
 
+    /**
+     * Paiements d'une inscription à un extra.
+     */
     public function payments(Request $request, $studentId, $subscriptionId)
     {
         $subscription = $this->subscriptionOrFail($request, $studentId, $subscriptionId);
@@ -112,7 +124,7 @@ class ParentExtraController extends Controller
 
     /**
      * Dernière position connue du bus de l'élève. Même règle que côté
-     * web : abonnement actif uniquement, et position marquée obsolète
+     * web : abonnement en service uniquement (payé ou non), et position marquée obsolète
      * au-delà de 10 minutes.
      */
     public function busPosition(Request $request, $studentId, $subscriptionId)
@@ -150,6 +162,9 @@ class ParentExtraController extends Controller
         return $request->user()->children()->where('students.id', $studentId)->firstOrFail();
     }
 
+    /**
+     * Inscription d'un enfant du parent, ou 404 (éventuellement limitée aux inscriptions actives).
+     */
     private function subscriptionOrFail(
         Request $request,
         $studentId,
@@ -159,7 +174,7 @@ class ParentExtraController extends Controller
         $student = $this->childOrFail($request, $studentId);
 
         return ExtraSubscription::where('student_id', $student->id)
-            ->when($activeOnly, fn ($q) => $q->where('status', 'active'))
+            ->when($activeOnly, fn ($q) => $q->whereIn('status', ExtraSubscription::RUNNING_STATUSES))
             ->findOrFail($subscriptionId);
     }
 }

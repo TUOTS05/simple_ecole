@@ -9,10 +9,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 
+/**
+ * Profil et paramètres du compte de l'utilisateur connecté (espace super-administrateur).
+ */
 class ProfileController extends Controller
 {
     /**
-     * Display the user's profile form.
+     * Affiche le formulaire du profil.
      */
     public function edit(Request $request): View
     {
@@ -22,7 +25,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update the user's profile information.
+     * Met à jour les informations du profil.
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
@@ -38,7 +41,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Delete the user's account.
+     * Supprime le compte de l'utilisateur.
      */
     public function destroy(Request $request): RedirectResponse
     {

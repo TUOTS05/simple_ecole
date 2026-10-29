@@ -129,21 +129,6 @@
 
 <!-- JavaScript pour les fonctionnalités dynamiques -->
 <script>
-// 1. Logique pour pré-remplir les champs du gardien si père ou mère est sélectionné
-// function toggleGuardianFields() {
-//     const guardianType = document.querySelector('input[name="guardian_type"]:checked');
-//     if (!guardianType) return;
-
-//     const guardianName = document.querySelector('input[name="guardian_name"]');
-
-//     if (guardianType.value === 'father') {
-//         const fatherName = document.querySelector('input[name="father_name"]').value;
-//         if (fatherName) guardianName.value = fatherName;
-//     } else if (guardianType.value === 'mother') {
-//         const motherName = document.querySelector('input[name="mother_name"]').value;
-//         if (motherName) guardianName.value = motherName;
-//     }
-// }
 
 function toggleGuardianFields() {
     const guardianType = document.querySelector('input[name="guardian_type"]:checked').value;

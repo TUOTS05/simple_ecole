@@ -9,8 +9,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * Utilisateur de la plateforme ; son rôle détermine son espace (super-admin, école, personnel,
+ * enseignant, parent).
+ */
 class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable;
@@ -29,6 +34,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'remember_token',
     ];
 
+    /**
+     * Conversions automatiques des attributs.
+     */
     protected function casts(): array
     {
         return [
@@ -57,40 +65,97 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role === 'teacher';
     }
 
+    /**
+     * Vrai pour un compte parent, quelle que soit la casse du rôle enregistré.
+     */
     public function isParent(): bool
     {
         // strtolower et trim garantissent que 'Parent', ' parent ' ou 'PARENT' seront reconnus comme 'parent'
         return strtolower(trim($this->role ?? '')) === 'parent';
     }
 
-    public function isAccountant(): bool
+    /**
+     * Membre du personnel administratif dont les accès dépendent de sa fonction
+     * (voir StaffFunction et config/school_permissions.php).
+     */
+    public function isStaff(): bool
     {
-        return strtolower(trim($this->role ?? '')) === 'accountant';
+        return $this->role === 'staff';
     }
 
-    public function isCanteenManager(): bool
+    /**
+     * Libellé du rôle à afficher ; pour le personnel, le nom de sa fonction.
+     */
+    public function roleLabel(): string
     {
-        return strtolower(trim($this->role ?? '')) === 'canteen_manager';
+        return match ($this->role) {
+            'super_admin' => 'Super Admin',
+            'school_admin' => 'Admin École',
+            'staff' => $this->staffFunction->name ?? 'Personnel',
+            'teacher' => 'Enseignant',
+            'parent' => 'Parent',
+            default => ucfirst((string) $this->role),
+        };
     }
 
-    public function isTransportManager(): bool
+    public function staffFunction(): BelongsTo
     {
-        return strtolower(trim($this->role ?? '')) === 'transport_manager';
+        return $this->belongsTo(StaffFunction::class);
     }
 
+    /**
+     * Modules accordés à ce membre du personnel ; une fonction d'une autre école (rattachement
+     * incohérent) n'accorde rien.
+     */
+    public function staffModules(): array
+    {
+        if (! $this->isStaff() || ! $this->staffFunction || $this->staffFunction->school_id !== $this->school_id) {
+            return [];
+        }
+
+        return $this->staffFunction->modules();
+    }
+
+    public function hasModule(string $module): bool
+    {
+        return $this->isSchoolAdmin() || in_array($module, $this->staffModules(), true);
+    }
+
+    /**
+     * Un membre du personnel peut-il ouvrir cette route ? Refus par défaut : seules les routes
+     * des modules de sa fonction (et son profil) sont ouvertes.
+     */
+    public function staffCanAccessRoute(?string $routeName): bool
+    {
+        if (! $routeName) {
+            return false;
+        }
+
+        $modules = config('school_permissions.modules');
+        $patterns = config('school_permissions.always');
+
+        foreach ($this->staffModules() as $module) {
+            array_push($patterns, ...$modules[$module]['routes']);
+        }
+
+        return Str::is($patterns, $routeName);
+    }
+
+    /**
+     * Route d'accueil selon le rôle ; pour le personnel, le premier module autorisé par sa fonction.
+     */
     public function dashboardRouteName(): string
     {
+        if ($this->isStaff()) {
+            $first = $this->staffModules()[0] ?? null;
+
+            return $first ? config("school_permissions.modules.{$first}.home") : 'app.staff-profile.edit';
+        }
+
         return match ($this->role) {
             'super_admin' => 'superadmin.dashboard',
             'teacher' => 'teacher.dashboard',
             'parent' => 'parent.dashboard',
-            // Le personnel comptable n'a accès qu'aux inscriptions et paiements : pas de tableau
-            // de bord général à sa disposition, on l'envoie directement sur les inscriptions.
-            'accountant' => 'app.enrollments.index',
-            // Rôles Extras à accès restreint (spec §30) : pas de tableau de bord général non
-            // plus, on envoie directement sur leur écran de travail principal.
-            'canteen_manager' => 'extras.attendances.index',
-            'transport_manager' => 'extras.transport.vehicles.index',
             default => 'app.dashboard',
         };
     }
@@ -137,7 +202,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function teacherAssignments()
     {
-        // ✅ Changement de 'teacher_id' en 'user_id'
+        // Changement de 'teacher_id' en 'user_id'
         return $this->hasMany(TeacherAssignment::class, 'user_id');
     }
 }

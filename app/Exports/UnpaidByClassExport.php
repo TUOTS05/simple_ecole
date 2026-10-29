@@ -8,18 +8,27 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithTitle;
 
+/**
+ * Export Excel des impayés de scolarité regroupés par classe.
+ */
 class UnpaidByClassExport implements FromCollection, WithHeadings, WithMapping, WithTitle
 {
     protected $schoolId;
 
     protected $schoolYearId;
 
+    /**
+     * École et année concernées.
+     */
     public function __construct($schoolId, $schoolYearId)
     {
         $this->schoolId = $schoolId;
         $this->schoolYearId = $schoolYearId;
     }
 
+    /**
+     * Par classe : nombre d'élèves et totaux attendus, payés et restants.
+     */
     public function collection()
     {
         return DB::table('school_classes')
@@ -48,6 +57,9 @@ class UnpaidByClassExport implements FromCollection, WithHeadings, WithMapping, 
             });
     }
 
+    /**
+     * En-têtes des colonnes.
+     */
     public function headings(): array
     {
         return [
@@ -60,6 +72,9 @@ class UnpaidByClassExport implements FromCollection, WithHeadings, WithMapping, 
         ];
     }
 
+    /**
+     * Une ligne par classe, avec ses totaux.
+     */
     public function map($row): array
     {
         return [

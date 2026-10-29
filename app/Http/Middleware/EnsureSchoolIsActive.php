@@ -7,10 +7,13 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Bloque l'accès quand l'école est suspendue ou que son abonnement et son essai ont expiré.
+ */
 class EnsureSchoolIsActive
 {
     /**
-     * Handle an incoming request.
+     * Traite la requête entrante.
      */
     public function handle(Request $request, Closure $next): Response
     {

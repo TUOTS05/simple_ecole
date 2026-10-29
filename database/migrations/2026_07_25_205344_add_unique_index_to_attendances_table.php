@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('attendances', function (Blueprint $table) {
-            // ✅ Création d'un index unique combiné pour permettre le "upsert"
+            // Création d'un index unique combiné pour permettre le "upsert"
             // Cela garantit qu'un élève ne peut avoir qu'un seul statut par classe, date et période
             $table->unique(
                 ['school_class_id', 'student_id', 'date', 'period'],

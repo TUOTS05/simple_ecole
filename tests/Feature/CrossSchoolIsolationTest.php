@@ -6,6 +6,7 @@ use App\Models\Enrollment;
 use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\SchoolYear;
+use App\Models\StaffFunction;
 use App\Models\Student;
 use App\Models\StudentInstallment;
 use App\Models\User;
@@ -42,8 +43,14 @@ class CrossSchoolIsolationTest extends TestCase
             'email' => 'compta-'.$school->slug.'@example.test',
             'password' => bcrypt('password'),
         ]);
-        $user->role = 'accountant';
+        // Le comptable est un membre du personnel dont la fonction ouvre inscriptions et paiements
+        $function = new StaffFunction(['name' => 'Comptable', 'permissions' => ['enrollments', 'payments', 'extras_billing']]);
+        $function->school_id = $school->id;
+        $function->save();
+
+        $user->role = 'staff';
         $user->school_id = $school->id;
+        $user->staff_function_id = $function->id;
         $user->save();
 
         return $user;
@@ -239,5 +246,121 @@ class CrossSchoolIsolationTest extends TestCase
         $this->actingAs($schoolAdminA)
             ->get(route('app.report-cards.create', ['class_id' => $victim['class']->id]))
             ->assertForbidden();
+    }
+
+    public function test_end_of_year_rejects_class_and_student_of_another_school(): void
+    {
+        $schoolA = $this->makeSchool('ecole-a');
+        $schoolB = $this->makeSchool('ecole-b');
+        $schoolAdminA = $this->makeSchoolAdmin($schoolA);
+        $own = $this->makeEnrollmentContext($schoolA);
+        $victim = $this->makeEnrollmentContext($schoolB);
+
+        $this->actingAs($schoolAdminA)->get(route('app.end-of-year.show', $victim['class']))->assertForbidden();
+        $this->actingAs($schoolAdminA)->post(route('app.end-of-year.migrate', $victim['class']))->assertForbidden();
+        // Student porte un scope global par école : l'élève d'une autre école est introuvable.
+        $this->actingAs($schoolAdminA)
+            ->post(route('app.end-of-year.update-decision', $victim['student']), ['decision' => 'admis'])
+            ->assertNotFound();
+
+        $this->actingAs($schoolAdminA)
+            ->post(route('app.end-of-year.update-decision', $own['student']), ['decision' => 'saut_classe', 'next_school_class_id' => $victim['class']->id])
+            ->assertSessionHasErrors('next_school_class_id');
+    }
+
+    public function test_end_of_year_uses_active_year_of_own_school(): void
+    {
+        $schoolA = $this->makeSchool('ecole-a');
+        $schoolB = $this->makeSchool('ecole-b');
+        // L'école B est créée en premier : avant le correctif, son année active était prise pour celle de A.
+        $this->makeEnrollmentContext($schoolB);
+        $own = $this->makeEnrollmentContext($schoolA);
+        $schoolAdminA = $this->makeSchoolAdmin($schoolA);
+
+        $this->actingAs($schoolAdminA)
+            ->get(route('app.end-of-year.show', $own['class']))
+            ->assertOk()
+            ->assertViewHas('currentYear', fn ($year) => $year->id === $own['year']->id);
+    }
+
+    public function test_broadcast_cannot_target_parent_or_class_of_another_school(): void
+    {
+        $schoolA = $this->makeSchool('ecole-a');
+        $schoolB = $this->makeSchool('ecole-b');
+        $schoolAdminA = $this->makeSchoolAdmin($schoolA);
+        $victim = $this->makeEnrollmentContext($schoolB);
+
+        $parentB = new User(['first_name' => 'Parent', 'last_name' => 'B', 'email' => 'parent-b@example.test', 'password' => bcrypt('password')]);
+        $parentB->role = 'parent';
+        $parentB->school_id = $schoolB->id;
+        $parentB->save();
+        $parentB->children()->attach($victim['student']->id, ['school_id' => $schoolB->id]);
+
+        $this->actingAs($schoolAdminA)
+            ->post(route('app.messages.broadcast.store'), ['target_type' => 'parent', 'receiver_id' => $parentB->id, 'subject' => 'S', 'message' => 'M'])
+            ->assertSessionHasErrors('receiver_id');
+        $this->actingAs($schoolAdminA)
+            ->post(route('app.messages.broadcast.store'), ['target_type' => 'class', 'target_id' => $victim['class']->id, 'subject' => 'S', 'message' => 'M'])
+            ->assertSessionHasErrors('target_id');
+
+        $this->assertDatabaseCount('messages', 0);
+    }
+
+    private function makeTeacher(School $school): User
+    {
+        $teacher = new User(['first_name' => 'Prof', 'last_name' => $school->slug, 'email' => 'prof-'.$school->slug.'@example.test', 'password' => bcrypt('password')]);
+        $teacher->role = 'teacher';
+        $teacher->school_id = $school->id;
+        $teacher->save();
+
+        return $teacher;
+    }
+
+    public function test_teacher_assignment_rejects_class_or_teacher_of_another_school(): void
+    {
+        $schoolA = $this->makeSchool('ecole-a');
+        $schoolB = $this->makeSchool('ecole-b');
+        $schoolAdminA = $this->makeSchoolAdmin($schoolA);
+        $own = $this->makeEnrollmentContext($schoolA);
+        $victim = $this->makeEnrollmentContext($schoolB);
+        $teacherA = $this->makeTeacher($schoolA);
+        $teacherB = $this->makeTeacher($schoolB);
+
+        // Son propre enseignant dans la classe d'une autre école : il en verrait les élèves.
+        $this->actingAs($schoolAdminA)
+            ->post(route('app.teacher-assignments.store'), ['school_class_id' => $victim['class']->id, 'user_id' => $teacherA->id])
+            ->assertSessionHasErrors('school_class_id');
+        // L'enseignant d'une autre école, ou un compte qui n'est pas enseignant.
+        $this->actingAs($schoolAdminA)
+            ->post(route('app.teacher-assignments.store'), ['school_class_id' => $own['class']->id, 'user_id' => $teacherB->id])
+            ->assertSessionHasErrors('user_id');
+        $this->actingAs($schoolAdminA)
+            ->post(route('app.teacher-assignments.store'), ['school_class_id' => $own['class']->id, 'user_id' => $schoolAdminA->id])
+            ->assertSessionHasErrors('user_id');
+        $this->assertDatabaseCount('teacher_assignments', 0);
+
+        $this->actingAs($schoolAdminA)
+            ->post(route('app.teacher-assignments.store'), ['school_class_id' => $own['class']->id, 'user_id' => $teacherA->id])
+            ->assertSessionHasNoErrors();
+        $this->assertDatabaseCount('teacher_assignments', 1);
+    }
+
+    public function test_canteen_rate_rejects_class_and_year_of_another_school(): void
+    {
+        $schoolA = $this->makeSchool('ecole-a');
+        $schoolB = $this->makeSchool('ecole-b');
+        $schoolAdminA = $this->makeSchoolAdmin($schoolA);
+        $victim = $this->makeEnrollmentContext($schoolB);
+
+        $this->actingAs($schoolAdminA)
+            ->post(route('canteen.rates.store'), [
+                'school_year_id' => $victim['year']->id,
+                'school_class_id' => $victim['class']->id,
+                'monthly_rate' => 10000,
+                'months_count' => 9,
+            ])
+            ->assertSessionHasErrors(['school_year_id', 'school_class_id']);
+
+        $this->assertDatabaseCount('canteen_rates', 0);
     }
 }
