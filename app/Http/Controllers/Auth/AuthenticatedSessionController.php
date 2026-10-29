@@ -37,19 +37,9 @@ class AuthenticatedSessionController extends Controller
             return redirect()->intended(route('teacher.dashboard'));
         }
 
-        // Le personnel comptable n'a pas accès au tableau de bord général (réservé à school_admin,
-        // teacher, parent) : il est envoyé directement sur les inscriptions.
-        if (method_exists($user, 'isAccountant') && $user->isAccountant()) {
-            return redirect()->intended(route('app.enrollments.index'));
-        }
-
-        // Rôles Extras à accès restreint (spec §30) : pas de tableau de bord général non plus.
-        if (method_exists($user, 'isCanteenManager') && $user->isCanteenManager()) {
-            return redirect()->intended(route('extras.attendances.index'));
-        }
-
-        if (method_exists($user, 'isTransportManager') && $user->isTransportManager()) {
-            return redirect()->intended(route('extras.transport.vehicles.index'));
+        // Personnel administratif : premier module accordé par sa fonction
+        if ($user->isStaff()) {
+            return redirect()->intended(route($user->dashboardRouteName()));
         }
 
         if (method_exists($user, 'isSchoolAdmin') && $user->isSchoolAdmin()) {

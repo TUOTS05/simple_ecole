@@ -29,7 +29,7 @@
                     {{ strtoupper(substr($user->first_name, 0, 1)) }}{{ strtoupper(substr($user->last_name, 0, 1)) }}
                 </div>
                 <h2 class="text-xl font-bold text-gray-800">{{ $user->first_name }} {{ $user->last_name }}</h2>
-                <p class="text-gray-500 text-sm mt-1">Personnel comptable</p>
+                <p class="text-gray-500 text-sm mt-1">{{ $user->staffFunction?->name ?? 'Personnel administratif' }}</p>
                 <div class="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-600 space-y-2">
                     <p>📧 {{ $user->email }}</p>
                     <p>📱 {{ $user->phone ?: 'Non renseigné' }}</p>
@@ -43,7 +43,7 @@
                 <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
                     <span class="mr-2">👤</span> Informations personnelles
                 </h3>
-                <form action="{{ route('app.accountant-profile.update') }}" method="POST">
+                <form action="{{ route('app.staff-profile.update') }}" method="POST">
                     @csrf
                     @method('PUT')
 
@@ -105,7 +105,7 @@
                 <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
                     <span class="mr-2">🔒</span> Changer le mot de passe
                 </h3>
-                <form action="{{ route('app.accountant-profile.password.update') }}" method="POST">
+                <form action="{{ route('app.staff-profile.password.update') }}" method="POST">
                     @csrf
                     @method('PUT')
 

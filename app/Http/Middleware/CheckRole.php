@@ -21,7 +21,17 @@ class CheckRole
             return redirect()->route('login');
         }
 
-        // 2. Vérifier si le rôle de l'utilisateur est dans la liste autorisée (insensible à la casse,
+        // 2. Personnel à fonction configurable : l'accès ne dépend pas de la liste de rôles de la
+        // route mais des modules accordés à sa fonction (refus par défaut, voir User::staffCanAccessRoute).
+        if ($request->user()->isStaff()) {
+            if (! $request->user()->staffCanAccessRoute($request->route()?->getName())) {
+                abort(403, 'Accès non autorisé. Votre fonction ne donne pas accès à cette page.');
+            }
+
+            return $next($request);
+        }
+
+        // 3. Vérifier si le rôle de l'utilisateur est dans la liste autorisée (insensible à la casse,
         // comme User::isParent(), pour éviter qu'un rôle saisi avec une casse différente en base
         // échoue silencieusement ici alors qu'il passerait les autres vérifications de rôle).
         $userRole = strtolower(trim($request->user()->role ?? ''));
@@ -31,7 +41,7 @@ class CheckRole
             abort(403, 'Accès non autorisé. Vous n\'avez pas les permissions requises.');
         }
 
-        // 3. Passer la requête au prochain middleware/controller
+        // 4. Passer la requête au prochain middleware/controller
         return $next($request);
     }
 }

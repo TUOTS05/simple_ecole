@@ -6,6 +6,7 @@ use App\Models\Enrollment;
 use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\SchoolYear;
+use App\Models\StaffFunction;
 use App\Models\Student;
 use App\Models\StudentInstallment;
 use App\Models\User;
@@ -42,8 +43,14 @@ class CrossSchoolIsolationTest extends TestCase
             'email' => 'compta-'.$school->slug.'@example.test',
             'password' => bcrypt('password'),
         ]);
-        $user->role = 'accountant';
+        // Le comptable est un membre du personnel dont la fonction ouvre inscriptions et paiements
+        $function = new StaffFunction(['name' => 'Comptable', 'permissions' => ['enrollments', 'payments', 'extras_billing']]);
+        $function->school_id = $school->id;
+        $function->save();
+
+        $user->role = 'staff';
         $user->school_id = $school->id;
+        $user->staff_function_id = $function->id;
         $user->save();
 
         return $user;

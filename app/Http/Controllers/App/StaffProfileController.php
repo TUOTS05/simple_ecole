@@ -8,15 +8,15 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
-class AccountantProfileController extends Controller
+class StaffProfileController extends Controller
 {
     /**
-     * Profil personnel du personnel comptable : uniquement ses propres informations
+     * Profil personnel des membres du personnel administratif : uniquement ses propres informations
      * (pas les données de l'école, réservées à ProfileController/school_admin).
      */
     public function edit()
     {
-        return view('app.accountant-profile.edit', ['user' => auth()->user()]);
+        return view('app.staff-profile.edit', ['user' => auth()->user()]);
     }
 
     public function update(Request $request)
