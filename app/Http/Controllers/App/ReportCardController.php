@@ -10,6 +10,7 @@ use App\Models\SchoolClass;
 use App\Models\SchoolYear;
 use App\Models\Student;
 use App\Models\Subject;
+use App\Support\SchoolRules;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -131,7 +132,7 @@ class ReportCardController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'class_id' => 'required|exists:school_classes,id',
+            'class_id' => ['required', SchoolRules::exists('school_classes')],
             // Tolérance sur la casse (Mensuel ou mensuel)
             'period' => 'required|in:Mensuel,mensuel,Trimestriel,trimestriel',
             'month' => 'nullable|string',

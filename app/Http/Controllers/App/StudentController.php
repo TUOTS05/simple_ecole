@@ -14,6 +14,7 @@ use App\Models\Student;
 use App\Models\StudentInstallment;
 use App\Models\User;
 use App\Services\StudentCardService;
+use App\Support\SchoolRules;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -106,7 +107,7 @@ class StudentController extends Controller
             'last_name' => 'required|string|max:100',
             'gender' => 'required|in:M,F',
             'birth_date' => 'required|date|before_or_equal:today',
-            'class_id' => 'required|exists:school_classes,id',
+            'class_id' => ['required', SchoolRules::exists('school_classes')],
             'section' => 'required|string|max:10',
             'status' => 'required|in:active,inactive,suspended',
             'large_family' => 'required|boolean',
@@ -495,7 +496,7 @@ class StudentController extends Controller
             'last_name' => 'required|string|max:100',
             'gender' => 'required|in:M,F',
             'birth_date' => 'required|date|before_or_equal:today',
-            'class_id' => 'required|exists:school_classes,id',
+            'class_id' => ['required', SchoolRules::exists('school_classes')],
             'section' => 'nullable|string|max:10',
             'status' => 'required|in:active,inactive,suspended',
             'large_family' => 'required|boolean',

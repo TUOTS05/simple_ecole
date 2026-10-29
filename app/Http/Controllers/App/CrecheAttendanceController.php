@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CrecheAttendance;
 use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Support\SchoolRules;
 use Illuminate\Http\Request;
 
 /**
@@ -50,7 +51,7 @@ class CrecheAttendanceController extends Controller
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'class_id' => 'required|exists:school_classes,id',
+            'class_id' => ['required', SchoolRules::exists('school_classes')],
             'date' => 'required|date',
             'records' => 'required|array',
             'records.*.status' => 'required|in:present,absent',

@@ -305,4 +305,62 @@ class CrossSchoolIsolationTest extends TestCase
 
         $this->assertDatabaseCount('messages', 0);
     }
+
+    private function makeTeacher(School $school): User
+    {
+        $teacher = new User(['first_name' => 'Prof', 'last_name' => $school->slug, 'email' => 'prof-'.$school->slug.'@example.test', 'password' => bcrypt('password')]);
+        $teacher->role = 'teacher';
+        $teacher->school_id = $school->id;
+        $teacher->save();
+
+        return $teacher;
+    }
+
+    public function test_teacher_assignment_rejects_class_or_teacher_of_another_school(): void
+    {
+        $schoolA = $this->makeSchool('ecole-a');
+        $schoolB = $this->makeSchool('ecole-b');
+        $schoolAdminA = $this->makeSchoolAdmin($schoolA);
+        $own = $this->makeEnrollmentContext($schoolA);
+        $victim = $this->makeEnrollmentContext($schoolB);
+        $teacherA = $this->makeTeacher($schoolA);
+        $teacherB = $this->makeTeacher($schoolB);
+
+        // Son propre enseignant dans la classe d'une autre école : il en verrait les élèves.
+        $this->actingAs($schoolAdminA)
+            ->post(route('app.teacher-assignments.store'), ['school_class_id' => $victim['class']->id, 'user_id' => $teacherA->id])
+            ->assertSessionHasErrors('school_class_id');
+        // L'enseignant d'une autre école, ou un compte qui n'est pas enseignant.
+        $this->actingAs($schoolAdminA)
+            ->post(route('app.teacher-assignments.store'), ['school_class_id' => $own['class']->id, 'user_id' => $teacherB->id])
+            ->assertSessionHasErrors('user_id');
+        $this->actingAs($schoolAdminA)
+            ->post(route('app.teacher-assignments.store'), ['school_class_id' => $own['class']->id, 'user_id' => $schoolAdminA->id])
+            ->assertSessionHasErrors('user_id');
+        $this->assertDatabaseCount('teacher_assignments', 0);
+
+        $this->actingAs($schoolAdminA)
+            ->post(route('app.teacher-assignments.store'), ['school_class_id' => $own['class']->id, 'user_id' => $teacherA->id])
+            ->assertSessionHasNoErrors();
+        $this->assertDatabaseCount('teacher_assignments', 1);
+    }
+
+    public function test_canteen_rate_rejects_class_and_year_of_another_school(): void
+    {
+        $schoolA = $this->makeSchool('ecole-a');
+        $schoolB = $this->makeSchool('ecole-b');
+        $schoolAdminA = $this->makeSchoolAdmin($schoolA);
+        $victim = $this->makeEnrollmentContext($schoolB);
+
+        $this->actingAs($schoolAdminA)
+            ->post(route('canteen.rates.store'), [
+                'school_year_id' => $victim['year']->id,
+                'school_class_id' => $victim['class']->id,
+                'monthly_rate' => 10000,
+                'months_count' => 9,
+            ])
+            ->assertSessionHasErrors(['school_year_id', 'school_class_id']);
+
+        $this->assertDatabaseCount('canteen_rates', 0);
+    }
 }

@@ -7,6 +7,7 @@ use App\Models\SchoolClass;
 use App\Models\SchoolYear;
 use App\Models\TeacherAssignment;
 use App\Models\User;
+use App\Support\SchoolRules;
 use Illuminate\Http\Request;
 
 /**
@@ -74,8 +75,8 @@ class TeacherAssignmentController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'school_class_id' => 'required|exists:school_classes,id',
-            'user_id' => 'required|exists:users,id',
+            'school_class_id' => ['required', SchoolRules::exists('school_classes')],
+            'user_id' => ['required', SchoolRules::exists('users')->where('role', 'teacher')],
             'is_main_teacher' => 'boolean',
         ]);
 

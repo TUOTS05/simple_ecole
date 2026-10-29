@@ -7,6 +7,7 @@ use App\Exports\AttendanceExport;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\SchoolClass;
+use App\Support\SchoolRules;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -159,7 +160,7 @@ class AttendanceController extends Controller
     {
         $validated = $request->validate([
             'code' => 'required|string',
-            'class_id' => 'required|exists:school_classes,id',
+            'class_id' => ['required', SchoolRules::exists('school_classes')],
         ]);
 
         $teacher = auth()->user();
@@ -239,7 +240,7 @@ class AttendanceController extends Controller
         $teacher = auth()->user();
 
         $validated = $request->validate([
-            'class_id' => 'required|exists:school_classes,id',
+            'class_id' => ['required', SchoolRules::exists('school_classes')],
             'date' => 'required|date',
             'period' => 'required|in:matin,apres_midi,apres-midi',
             'attendances' => 'required|array',

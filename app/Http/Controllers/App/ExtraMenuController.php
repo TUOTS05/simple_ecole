@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Extra;
 use App\Models\ExtraMenu;
 use App\Models\ExtraSubscription;
+use App\Support\SchoolRules;
 use Illuminate\Http\Request;
 
 /**
@@ -54,7 +55,7 @@ class ExtraMenuController extends Controller
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'extra_id' => 'required|exists:extras,id',
+            'extra_id' => ['required', SchoolRules::exists('extras')],
             'date' => 'required|date',
             'entree' => 'nullable|string|max:150',
             'plat' => 'nullable|string|max:150',

@@ -11,6 +11,7 @@ use App\Models\Enrollment;
 use App\Models\SchoolClass;
 use App\Models\SchoolYear;
 use App\Models\Student;
+use App\Support\SchoolRules;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -111,8 +112,8 @@ class CanteenController extends Controller
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'school_year_id' => 'required|exists:school_years,id',
-            'school_class_id' => 'required|exists:school_classes,id',
+            'school_year_id' => ['required', SchoolRules::exists('school_years')],
+            'school_class_id' => ['required', SchoolRules::exists('school_classes')],
             'monthly_rate' => 'required|numeric|min:0',
             'months_count' => 'required|integer|min:1|max:12',
             'start_month' => 'required|date_format:Y-m',
@@ -158,7 +159,7 @@ class CanteenController extends Controller
         $rate = CanteenRate::where('school_id', session('current_school_id'))->findOrFail($id);
 
         $validated = $request->validate([
-            'school_class_id' => 'required|exists:school_classes,id',
+            'school_class_id' => ['required', SchoolRules::exists('school_classes')],
             'monthly_rate' => 'required|numeric|min:0',
             'months_count' => 'required|integer|min:1|max:12',
             'start_month' => 'required|date_format:Y-m',
@@ -295,7 +296,7 @@ class CanteenController extends Controller
         $userId = auth()->id();
 
         $validated = $request->validate([
-            'canteen_subscription_id' => 'required|exists:canteen_subscriptions,id',
+            'canteen_subscription_id' => ['required', SchoolRules::exists('canteen_subscriptions')],
             'amount' => 'required|numeric|min:1',
             'payment_date' => 'required|date',
             'payment_method' => 'required|in:cash,mobile_money,transfer,check',
@@ -591,7 +592,7 @@ class CanteenController extends Controller
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'school_year_id' => 'required|exists:school_years,id',
+            'school_year_id' => ['required', SchoolRules::exists('school_years')],
             'enrollments' => 'required|array|min:1',
             'enrollments.*.selected' => 'required|boolean',
             'enrollments.*.months' => 'required|array|min:1',

@@ -7,6 +7,7 @@ use App\Models\Extra;
 use App\Models\ExtraAttendance;
 use App\Models\ExtraInstallment;
 use App\Models\ExtraSubscription;
+use App\Support\SchoolRules;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
@@ -48,7 +49,7 @@ class ExtraAttendanceController extends Controller
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'extra_id' => 'required|exists:extras,id',
+            'extra_id' => ['required', SchoolRules::exists('extras')],
             'date' => 'required|date',
             'records' => 'required|array',
             'records.*.status' => 'required|in:present,absent',

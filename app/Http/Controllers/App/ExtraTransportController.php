@@ -9,6 +9,7 @@ use App\Models\ExtraRouteStop;
 use App\Models\ExtraSubscription;
 use App\Models\ExtraTransportAssignment;
 use App\Models\ExtraVehicle;
+use App\Support\SchoolRules;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -124,7 +125,7 @@ class ExtraTransportController extends Controller
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'extra_id' => 'required|exists:extras,id',
+            'extra_id' => ['required', SchoolRules::exists('extras')],
             'name' => 'required|string|max:150',
             'extra_vehicle_id' => ['nullable', Rule::exists('extra_vehicles', 'id')->where('school_id', $schoolId)],
         ]);
@@ -221,7 +222,7 @@ class ExtraTransportController extends Controller
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'extra_subscription_id' => 'required|exists:extra_subscriptions,id',
+            'extra_subscription_id' => ['required', SchoolRules::exists('extra_subscriptions')],
             'extra_route_id' => 'required|exists:extra_routes,id',
             'extra_route_stop_id' => 'nullable|exists:extra_route_stops,id',
         ]);

@@ -18,6 +18,7 @@ use App\Models\SchoolYear;
 use App\Models\Student;
 use App\Models\StudentInstallment;
 use App\Services\ExtraPaymentNotifier;
+use App\Support\SchoolRules;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -155,7 +156,7 @@ class ExtraController extends Controller
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'extra_category_id' => 'required|exists:extra_categories,id',
+            'extra_category_id' => ['required', SchoolRules::exists('extra_categories')],
             'code' => 'required|string|max:30',
             'name' => 'required|string|max:150',
             'description' => 'nullable|string|max:1000',
@@ -208,7 +209,7 @@ class ExtraController extends Controller
         $extra = Extra::where('school_id', session('current_school_id'))->findOrFail($id);
 
         $validated = $request->validate([
-            'extra_category_id' => 'required|exists:extra_categories,id',
+            'extra_category_id' => ['required', SchoolRules::exists('extra_categories')],
             'code' => 'required|string|max:30',
             'name' => 'required|string|max:150',
             'description' => 'nullable|string|max:1000',
@@ -274,8 +275,8 @@ class ExtraController extends Controller
         $extra = Extra::where('school_id', session('current_school_id'))->findOrFail($extraId);
 
         $validated = $request->validate([
-            'school_year_id' => 'required|exists:school_years,id',
-            'school_class_id' => 'nullable|exists:school_classes,id',
+            'school_year_id' => ['required', SchoolRules::exists('school_years')],
+            'school_class_id' => ['nullable', SchoolRules::exists('school_classes')],
             'amount' => 'required|numeric|min:0',
             'periods_count' => 'nullable|integer|min:1|max:12',
             'is_open_ended' => 'nullable|boolean',
@@ -521,8 +522,8 @@ class ExtraController extends Controller
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'extra_id' => 'required|exists:extras,id',
-            'school_year_id' => 'required|exists:school_years,id',
+            'extra_id' => ['required', SchoolRules::exists('extras')],
+            'school_year_id' => ['required', SchoolRules::exists('school_years')],
             'enrollments' => 'required|array|min:1',
             'enrollments.*.selected' => 'required|boolean',
             'enrollments.*.periods' => 'nullable|array',
@@ -876,7 +877,7 @@ class ExtraController extends Controller
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'extra_subscription_id' => 'required|exists:extra_subscriptions,id',
+            'extra_subscription_id' => ['required', SchoolRules::exists('extra_subscriptions')],
             'amount' => 'required|numeric|min:1',
             'payment_date' => 'required|date',
             'payment_method' => 'required|in:cash,mobile_money,transfer,check',

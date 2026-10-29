@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\ExtraStockItem;
 use App\Models\ExtraStockMovement;
 use App\Models\Student;
+use App\Support\SchoolRules;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -116,10 +117,10 @@ class ExtraStockController extends Controller
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'extra_stock_item_id' => 'required|exists:extra_stock_items,id',
+            'extra_stock_item_id' => ['required', SchoolRules::exists('extra_stock_items')],
             'type' => 'required|in:in,out,sale,return',
             'quantity' => 'required|integer|min:1',
-            'student_id' => 'nullable|exists:students,id',
+            'student_id' => ['nullable', SchoolRules::exists('students')],
             'unit_price' => 'nullable|numeric|min:0',
             'reason' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:500',

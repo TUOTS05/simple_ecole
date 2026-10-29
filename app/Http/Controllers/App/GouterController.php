@@ -11,6 +11,7 @@ use App\Models\GouterSubscription;
 use App\Models\SchoolClass;
 use App\Models\SchoolYear;
 use App\Models\Student;
+use App\Support\SchoolRules;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -153,8 +154,8 @@ class GouterController extends Controller
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'school_year_id' => 'required|exists:school_years,id',
-            'school_class_id' => 'required|exists:school_classes,id',
+            'school_year_id' => ['required', SchoolRules::exists('school_years')],
+            'school_class_id' => ['required', SchoolRules::exists('school_classes')],
             'total_amount' => 'required|numeric|min:0',
             'payment_modality' => 'required|in:unique,mensuel,trimestriel,semestriel',
             'description' => 'nullable|string|max:500',
@@ -218,7 +219,7 @@ class GouterController extends Controller
         $rate = GouterRate::where('school_id', session('current_school_id'))->findOrFail($id);
 
         $validated = $request->validate([
-            'school_class_id' => 'required|exists:school_classes,id',
+            'school_class_id' => ['required', SchoolRules::exists('school_classes')],
             'total_amount' => 'required|numeric|min:0',
             'payment_modality' => 'required|in:unique,mensuel,trimestriel,semestriel',
             'description' => 'nullable|string|max:500',
@@ -312,7 +313,7 @@ class GouterController extends Controller
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'school_year_id' => 'required|exists:school_years,id',
+            'school_year_id' => ['required', SchoolRules::exists('school_years')],
             'students' => 'required|array|min:1',
             'students.*.selected' => 'required|boolean',
             'students.*.amount' => 'required|numeric|min:0',
@@ -483,7 +484,7 @@ class GouterController extends Controller
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'gouter_subscription_id' => 'required|exists:gouter_subscriptions,id',
+            'gouter_subscription_id' => ['required', SchoolRules::exists('gouter_subscriptions')],
             'amount' => 'required|numeric|min:1',
             'payment_date' => 'required|date',
             'payment_method' => 'required|in:cash,mobile_money,transfer,check',

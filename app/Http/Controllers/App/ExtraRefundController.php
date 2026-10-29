@@ -8,6 +8,7 @@ use App\Models\Extra;
 use App\Models\ExtraRefund;
 use App\Models\ExtraSubscription;
 use App\Models\SchoolYear;
+use App\Support\SchoolRules;
 use Illuminate\Http\Request;
 
 /**
@@ -69,7 +70,7 @@ class ExtraRefundController extends Controller
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'extra_subscription_id' => 'required|exists:extra_subscriptions,id',
+            'extra_subscription_id' => ['required', SchoolRules::exists('extra_subscriptions')],
             'amount' => 'required|numeric|min:1',
             'refund_method' => 'required|in:cash,mobile_money,transfer,check,credit_note',
             'reason' => 'nullable|string|max:255',
