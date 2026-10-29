@@ -124,7 +124,7 @@ class ParentExtraController extends Controller
 
     /**
      * Dernière position connue du bus de l'élève. Même règle que côté
-     * web : abonnement actif uniquement, et position marquée obsolète
+     * web : abonnement en service uniquement (payé ou non), et position marquée obsolète
      * au-delà de 10 minutes.
      */
     public function busPosition(Request $request, $studentId, $subscriptionId)
@@ -174,7 +174,7 @@ class ParentExtraController extends Controller
         $student = $this->childOrFail($request, $studentId);
 
         return ExtraSubscription::where('student_id', $student->id)
-            ->when($activeOnly, fn ($q) => $q->where('status', 'active'))
+            ->when($activeOnly, fn ($q) => $q->whereIn('status', ExtraSubscription::RUNNING_STATUSES))
             ->findOrFail($subscriptionId);
     }
 }

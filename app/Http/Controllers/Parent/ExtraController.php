@@ -36,7 +36,7 @@ class ExtraController extends Controller
             ->with(['extra.category', 'extraTarif', 'payments' => fn ($q) => $q->orderByDesc('payment_date'), 'transportAssignment.vehicle'])
             ->get();
 
-        $monthlyTotal = $subscriptions->where('status', 'active')->sum(fn ($s) => $s->extraTarif->amount ?? 0);
+        $monthlyTotal = $subscriptions->whereIn('status', ExtraSubscription::RUNNING_STATUSES)->sum(fn ($s) => $s->extraTarif->amount ?? 0);
 
         return view('parent.extras.index', compact('student', 'siblings', 'subscriptions', 'monthlyTotal'));
     }
@@ -182,7 +182,7 @@ class ExtraController extends Controller
         $student = $parent->children()->where('students.id', $studentId)->firstOrFail();
 
         $subscription = ExtraSubscription::where('student_id', $student->id)
-            ->where('status', 'active')
+            ->whereIn('status', ExtraSubscription::RUNNING_STATUSES)
             ->findOrFail($subscriptionId);
 
         $subscription->update(['status' => 'suspended']);
@@ -369,10 +369,10 @@ class ExtraController extends Controller
         $parent = auth()->user();
         $student = $parent->children()->where('students.id', $studentId)->firstOrFail();
 
-        // Seul un abonnement actif donne accès à la position du bus : un abonnement
+        // Seul un abonnement en service (payé ou non) donne accès à la position du bus : un abonnement
         // suspendu ou résilié ne doit plus permettre de suivre le véhicule.
         $subscription = ExtraSubscription::where('student_id', $studentId)
-            ->where('status', 'active')
+            ->whereIn('status', ExtraSubscription::RUNNING_STATUSES)
             ->with('extra', 'transportAssignment.vehicle', 'transportAssignment.route', 'transportAssignment.stop')
             ->findOrFail($subscriptionId);
 
@@ -392,7 +392,7 @@ class ExtraController extends Controller
         $parent->children()->where('students.id', $studentId)->firstOrFail();
 
         $subscription = ExtraSubscription::where('student_id', $studentId)
-            ->where('status', 'active')
+            ->whereIn('status', ExtraSubscription::RUNNING_STATUSES)
             ->with('transportAssignment.vehicle')
             ->findOrFail($subscriptionId);
 

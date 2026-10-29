@@ -12,7 +12,7 @@ $statusLabels = [
     'waitlisted' => "Sur liste d'attente",
     'suspended' => 'Suspendu',
     'terminated' => 'Refusé / Résilié',
-    'completed' => 'Terminé',
+    'completed' => 'Payé',
 ];
 $statusColors = [
     'requested' => 'yellow',
@@ -22,7 +22,7 @@ $statusColors = [
     'waitlisted' => 'purple',
     'suspended' => 'orange',
     'terminated' => 'red',
-    'completed' => 'gray',
+    'completed' => 'green',
 ];
 @endphp
 
@@ -106,7 +106,7 @@ $statusColors = [
         </div>
         @endif
 
-        @if($sub->status === 'active')
+        @if(in_array($sub->status, \App\Models\ExtraSubscription::RUNNING_STATUSES))
         <div class="flex flex-wrap items-center gap-4 mt-3">
             @if($sub->remaining_amount > 0)
             <form action="{{ route('parent.extras.pay-online', ['student' => $student->id, 'subscriptionId' => $sub->id]) }}" method="POST" onsubmit="return confirm('Payer {{ number_format($sub->remaining_amount, 0, ',', ' ') }} FCFA en ligne pour « {{ $sub->extra->name }} » ?')">
@@ -117,7 +117,7 @@ $statusColors = [
                 </button>
             </form>
             @endif
-            @if($sub->status === 'active' && $sub->transportAssignment && $sub->transportAssignment->vehicle)
+            @if($sub->transportAssignment && $sub->transportAssignment->vehicle)
             <a href="{{ route('parent.extras.track-bus', ['student' => $student->id, 'subscriptionId' => $sub->id]) }}" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-full font-semibold transition">
                 📍 Suivre le bus
             </a>

@@ -25,7 +25,8 @@ class GenerateRecurringExtraInstallments extends Command
 
         $this->info("🔍 Génération des échéances de {$currentPeriod} pour les abonnements à facturation continue...");
 
-        $subscriptions = ExtraSubscription::where('status', 'active')
+        // Un abonnement à jour de ses paiements (« completed ») reste en service et doit être facturé.
+        $subscriptions = ExtraSubscription::whereIn('status', ExtraSubscription::RUNNING_STATUSES)
             ->whereHas('extraTarif', fn ($q) => $q->where('is_open_ended', true))
             ->with('extraTarif', 'extra', 'student')
             ->get();
@@ -57,6 +58,7 @@ class GenerateRecurringExtraInstallments extends Command
 
             $subscription->total_amount += $tarif->amount;
             $subscription->remaining_amount += $tarif->amount;
+            $subscription->status = 'active'; // de nouveau un reste à payer
             $subscription->save();
 
             $this->line("✅ {$subscription->extra->name} — {$subscription->student->first_name} {$subscription->student->last_name}");

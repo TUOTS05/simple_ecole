@@ -254,7 +254,7 @@ class ExtraController extends Controller
     {
         $extra = Extra::where('school_id', session('current_school_id'))->findOrFail($id);
 
-        if ($extra->subscriptions()->whereIn('status', ['active', 'validated', 'requested', 'pending'])->exists()) {
+        if ($extra->subscriptions()->whereIn('status', ['active', 'completed', 'validated', 'requested', 'pending'])->exists()) {
             return back()->withErrors(['error' => 'Impossible de supprimer un extra qui a des inscriptions en cours.']);
         }
 

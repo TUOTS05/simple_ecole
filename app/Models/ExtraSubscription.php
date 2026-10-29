@@ -12,6 +12,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class ExtraSubscription extends Model
 {
+    /**
+     * Statuts d'un service en cours : « completed » signifie seulement « entièrement payé »
+     * (voir recalculateAmounts), le service continue jusqu'à sa résiliation.
+     */
+    public const RUNNING_STATUSES = ['active', 'completed'];
+
     protected $fillable = [
         'school_id', 'student_id', 'extra_id', 'extra_tarif_id', 'school_year_id',
         'total_amount', 'paid_amount', 'remaining_amount', 'status',

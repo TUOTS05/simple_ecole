@@ -85,7 +85,7 @@ class Extra extends Model
     public function occupiedSeatsCount(): int
     {
         return $this->subscriptions()
-            ->whereIn('status', ['requested', 'pending', 'validated', 'active'])
+            ->whereIn('status', ['requested', 'pending', 'validated', 'active', 'completed'])
             ->count();
     }
 
