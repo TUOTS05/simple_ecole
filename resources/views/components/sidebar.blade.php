@@ -132,6 +132,17 @@
             @endif
         </a>
 
+        @php $pendingRegulation = \App\Models\SchoolRegulation::pendingFor(auth()->user()); @endphp
+        <a href="{{ route('parent.regulation.show') }}" class="flex items-center justify-between px-3 py-3 rounded-lg transition {{ request()->routeIs('parent.regulation.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+            <div class="flex items-center">
+                <span class="text-xl min-w-[24px] text-center">📜</span>
+                <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Règlement intérieur</span>
+            </div>
+            @if($pendingRegulation)
+            <span x-show="sidebarOpen" class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">!</span>
+            @endif
+        </a>
+
         @elseif(method_exists(auth()->user(), 'isAccountant') && auth()->user()->isAccountant())
         <!-- ========================================== -->
         <!-- MENU PERSONNEL COMPTABLE (accès restreint)  -->
@@ -392,7 +403,7 @@
         </div>
 
         <!-- Groupe : Paramètres de l'école -->
-        <div x-data="{ open: {{ request()->routeIs('app.classes.*') || request()->routeIs('app.subjects.*') || request()->routeIs('app.school-years.*') || request()->routeIs('app.class-fees.*') || request()->routeIs('app.settings.*') ? 'true' : 'false' }} }" class="space-y-1">
+        <div x-data="{ open: {{ request()->routeIs('app.classes.*') || request()->routeIs('app.subjects.*') || request()->routeIs('app.school-years.*') || request()->routeIs('app.class-fees.*') || request()->routeIs('app.settings.*') || request()->routeIs('app.regulations.*') ? 'true' : 'false' }} }" class="space-y-1">
             <button @click="if(!sidebarOpen) sidebarOpen = true; open = !open" title="Paramètres"
                 class="w-full flex items-center justify-between px-3 py-3 rounded-lg transition text-gray-700 hover:bg-gray-100 focus:outline-none">
                 <div class="flex items-center">
@@ -413,6 +424,7 @@
                 <a href="{{ route('app.settings.sms') }}" title="Configuration SMS" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.settings.sms*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Configuration SMS</a>
                 @if(auth()->user()->isSchoolAdmin())
                 <a href="{{ route('app.settings.documents') }}" title="Documents" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.settings.documents*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Documents</a>
+                <a href="{{ route('app.regulations.index') }}" title="Règlement intérieur" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.regulations.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Règlement intérieur</a>
                 @endif
             </div>
         </div>

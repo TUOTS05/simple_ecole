@@ -25,6 +25,7 @@ use App\Http\Controllers\App\MessageController;
 use App\Http\Controllers\App\NotificationLogController;
 use App\Http\Controllers\App\ParentController;
 use App\Http\Controllers\App\PaymentController;
+use App\Http\Controllers\App\RegulationController;
 use App\Http\Controllers\App\ReportCardController;
 use App\Http\Controllers\App\SchoolClassController;
 use App\Http\Controllers\App\SchoolYearController;
@@ -215,6 +216,12 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent,ac
             Route::get('/settings/documents/preview/{type}', [DocumentSettingsController::class, 'preview'])
                 ->where('type', 'report_card|student_card|receipt')
                 ->name('settings.documents.preview');
+
+            // Règlement intérieur (versions + suivi des acceptations parents)
+            Route::get('/regulations', [RegulationController::class, 'index'])->name('regulations.index');
+            Route::post('/regulations', [RegulationController::class, 'store'])->name('regulations.store');
+            Route::get('/regulations/{regulation}', [RegulationController::class, 'show'])->name('regulations.show');
+            Route::get('/regulations/{regulation}/download', [RegulationController::class, 'download'])->name('regulations.download');
         });
 
         // Présences (lecture seule : l'appel se fait côté enseignant, par QR code ou manuellement)
@@ -350,6 +357,11 @@ Route::middleware(['auth', 'parent', 'school.active', 'tenant'])->prefix('parent
     Route::get('/messages/create', [App\Http\Controllers\Parent\MessageController::class, 'create'])->name('messages.create');
     Route::post('/messages', [App\Http\Controllers\Parent\MessageController::class, 'store'])->name('messages.store');
     Route::get('/messages/{message}', [App\Http\Controllers\Parent\MessageController::class, 'show'])->name('messages.show');
+
+    // Règlement intérieur (déclaré avant /{student} pour ne pas être capturé par ce paramètre)
+    Route::get('/reglement', [App\Http\Controllers\Parent\RegulationController::class, 'show'])->name('regulation.show');
+    Route::post('/reglement/accepter', [App\Http\Controllers\Parent\RegulationController::class, 'accept'])->name('regulation.accept');
+    Route::get('/reglement/telecharger', [App\Http\Controllers\Parent\RegulationController::class, 'download'])->name('regulation.download');
 
     Route::get('/{student}', [App\Http\Controllers\Parent\DashboardController::class, 'childDetails'])->name('child.details');
     Route::get('/{student}/grades', [App\Http\Controllers\Parent\GradeController::class, 'index'])->name('grades.index');
