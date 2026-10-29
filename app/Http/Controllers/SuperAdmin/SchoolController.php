@@ -215,7 +215,7 @@ class SchoolController extends Controller
             'name' => 'required|string|max:255',
             'school_type' => 'required|in:maternelle,primaire,both,creche',
             'address' => 'nullable|string|max:255',
-            'phone' => 'nullable|number|max:10',
+            'phone' => 'nullable|string|max:20',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
 
             // Infos du directeur (Admin de l'école)
@@ -277,10 +277,7 @@ class SchoolController extends Controller
             "A créé l'école '{$school->name}' avec l'admin {$validated['admin_email']}"
         );
 
-        return redirect()->route('superadmin.schools.index')
-            ->with('success', $successMessage);
-
-        // 5. Redirection avec message de succès
+        // 6. Redirection avec message de succès
         $successMessage = "✅ École '{$school->name}' créée avec succès !\n\n"
             ."⏳ Statut : En attente d'abonnement.\n"
             ."👤 Le directeur peut désormais se connecter avec l'email : {$validated['admin_email']}\n"
