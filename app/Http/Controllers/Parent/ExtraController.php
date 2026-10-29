@@ -307,8 +307,11 @@ class ExtraController extends Controller
      * (aucune clé API configurée) : remplace la page hébergée CinetPay pour
      * pouvoir tester tout le flux sans compte marchand ni argent réel.
      */
-    public function payOnlineSimulate($studentId, $transaction)
+    public function payOnlineSimulate(CinetPayService $cinetPay, $studentId, $transaction)
     {
+        // Hors mode démo, cette page validerait un paiement jamais encaissé.
+        abort_unless($cinetPay->isDevMode(), 404);
+
         $parent = auth()->user();
         $student = $parent->children()->where('students.id', $studentId)->firstOrFail();
 
@@ -324,8 +327,10 @@ class ExtraController extends Controller
         return view('parent.extras.pay-online-simulate', compact('student', 'onlinePayment'));
     }
 
-    public function payOnlineSimulateConfirm(Request $request, ExtraOnlinePaymentService $service, $studentId, $transaction)
+    public function payOnlineSimulateConfirm(Request $request, ExtraOnlinePaymentService $service, CinetPayService $cinetPay, $studentId, $transaction)
     {
+        abort_unless($cinetPay->isDevMode(), 404);
+
         $parent = auth()->user();
         $parent->children()->where('students.id', $studentId)->firstOrFail();
 

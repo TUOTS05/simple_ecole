@@ -67,7 +67,8 @@ return [
         'site_id' => env('CINETPAY_SITE_ID'),
         // Tant qu'aucune clé API n'est configurée, le service simule le paiement
         // (page de simulation locale) au lieu d'appeler la vraie API CinetPay.
-        'dev_mode' => env('CINETPAY_DEV_MODE', true),
+        // Jamais par défaut en production : la simulation y validerait des paiements fictifs.
+        'dev_mode' => env('CINETPAY_DEV_MODE', env('APP_ENV') !== 'production'),
     ],
 
 ];
