@@ -431,6 +431,7 @@
         @endif
 
         <!-- ✅ Menu déroulant Communication (Admin) -->
+        @if(auth()->user()->isSchoolAdmin())
         <div x-data="{ open: {{ request()->routeIs('app.messages.*') ? 'true' : 'false' }} }" class="space-y-1">
             <button @click="if(!sidebarOpen) sidebarOpen = true; open = !open" title="Communication"
                 class="w-full flex items-center justify-between px-3 py-3 rounded-lg transition text-gray-700 hover:bg-gray-100 focus:outline-none {{ request()->routeIs('app.messages.*') ? 'bg-primary/10 text-primary font-semibold' : '' }}">
@@ -470,6 +471,7 @@
                 </a>
             </div>
         </div>
+        @endif
 
     </nav>
     @endif

@@ -100,7 +100,8 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
 // Routes Admin École
 // --------------------------------------------------------------------------
 
-Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent,accountant', 'tenant'])->prefix('app')->name('app.')->group(function () {
+// Enseignants et parents ont leurs propres espaces (/teacher, /parent) : ils n'ont rien à faire ici.
+Route::middleware(['auth', 'school.active', 'role:school_admin,accountant', 'tenant'])->prefix('app')->name('app.')->group(function () {
 
     // ==========================================================================
     // Ouvert au personnel comptable (rôle "accountant") : uniquement inscriptions
@@ -138,10 +139,12 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent,ac
         ->name('accountant-profile.password.update');
 
     // ==========================================================================
-    // Tout le reste : réservé à school_admin, teacher, parent (le personnel
-    // comptable n'y a PAS accès, conformément à son rôle restreint).
+    // Tout le reste : réservé à school_admin (le personnel comptable n'y a PAS
+    // accès, conformément à son rôle restreint). Avant le 29/10/2026 ce groupe
+    // était aussi ouvert aux rôles teacher et parent, ce qui leur donnait accès
+    // aux paramètres SMS, au profil de l'école et aux listes d'élèves.
     // ==========================================================================
-    Route::middleware('role:school_admin,teacher,parent')->group(function () {
+    Route::middleware('role:school_admin')->group(function () {
 
         Route::get('/dashboard', [AppDashboardController::class, 'index'])->name('dashboard');
 
@@ -296,7 +299,7 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent,ac
         Route::put('/profile', [App\Http\Controllers\App\ProfileController::class, 'update'])->name('profile.update');
         Route::put('/profile/password', [App\Http\Controllers\App\ProfileController::class, 'updatePassword'])->name('profile.password.update');
 
-    }); // fin du sous-groupe role:school_admin,teacher,parent
+    }); // fin du sous-groupe role:school_admin
 
 });
 
