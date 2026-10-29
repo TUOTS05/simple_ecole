@@ -116,6 +116,7 @@ class EndOfYearController extends Controller
                 'next_school_class_id' => $request->decision === 'redouble' ? $currentClassId : ($request->next_school_class_id ?? null),
                 'director_comment' => $request->comment,
                 'director_signed' => true,
+                'created_by' => auth()->id(),
             ]);
         }
 

@@ -168,14 +168,14 @@ class GradeController extends Controller
                             'school_class_id' => $classId,
                             'school_year_id' => $schoolYearId,
                             'period' => $validated['period'],
-                            'quarter' => $validated['quarter'],
-                            'month' => $validated['month'],
+                            'quarter' => $validated['quarter'] ?? null,
+                            'month' => $validated['month'] ?? null,
                         ],
                         [
                             'school_id' => $teacher->school_id,
                             'score' => $score,
                             'max_score' => $validated['max_score'],
-                            'remarks' => $gradeData['remarks'],
+                            'remarks' => $gradeData['remarks'] ?? null,
                             'marked_by' => $teacher->id,
                         ]
                     );

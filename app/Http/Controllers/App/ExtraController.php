@@ -1154,8 +1154,12 @@ class ExtraController extends Controller
     public function consolidatedInvoicePdf(Request $request)
     {
         $schoolId = session('current_school_id');
-        $studentId = $request->get('student_id');
-        $month = $request->get('month', now()->format('Y-m'));
+        $validated = $request->validate([
+            'student_id' => ['required', SchoolRules::exists('students')],
+            'month' => 'nullable|date_format:Y-m',
+        ]);
+        $studentId = (int) $validated['student_id'];
+        $month = $validated['month'] ?? now()->format('Y-m');
 
         $data = $this->buildConsolidatedInvoiceData($schoolId, $studentId, $month);
         $school = School::find($schoolId);

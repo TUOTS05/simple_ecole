@@ -9,6 +9,7 @@ use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\SchoolYear;
 use App\Models\Student;
+use App\Models\StudentInstallment;
 use App\Models\User;
 use App\Support\SchoolRules;
 use Carbon\Carbon;
@@ -298,8 +299,8 @@ class EnrollmentController extends Controller
 
             $student->classes()->attach($validated['class_id']);
 
-            // 6. GÉNÉRATION AUTOMATIQUE DES ÉCHÉANCES
-            $this->generateFeeSchedule($enrollment, $validated['class_id'], $validated['admission_date']);
+            // 6. Génération automatique des échéances (même générateur que StudentController)
+            StudentInstallment::generateScheduleFor($enrollment, SchoolClass::findOrFail($validated['class_id']), $enrollment->enrollment_date);
 
             DB::commit();
 
