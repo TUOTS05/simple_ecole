@@ -8,6 +8,7 @@ use App\Models\SchoolClass;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class BroadcastMessageController extends Controller
 {
@@ -42,16 +43,22 @@ class BroadcastMessageController extends Controller
 
     public function store(Request $request)
     {
-        // Validation conditionnelle : target_id requis si classe, receiver_id requis si parent
+        $schoolId = auth()->user()->school_id;
+
+        // Validation conditionnelle : target_id requis si classe, receiver_id requis si parent.
+        // Classe et parent doivent appartenir à l'école, sinon on écrirait aux familles d'une autre école.
         $validated = $request->validate([
             'target_type' => 'required|in:all,class,parent',
-            'target_id' => 'nullable|required_if:target_type,class|exists:school_classes,id',
-            'receiver_id' => 'nullable|required_if:target_type,parent|exists:users,id',
+            'target_id' => ['nullable', 'required_if:target_type,class', Rule::exists('school_classes', 'id')->where('school_id', $schoolId)],
+            'receiver_id' => [
+                'nullable',
+                'required_if:target_type,parent',
+                Rule::exists('users', 'id')->where(fn ($q) => $q->whereIn('id', User::whereHas('children', fn ($c) => $c->where('students.school_id', $schoolId))->select('users.id'))),
+            ],
             'subject' => 'required|string|max:255',
             'message' => 'required|string',
         ]);
 
-        $schoolId = auth()->user()->school_id;
         $senderId = auth()->id();
         $targetInfo = 'Tous les parents de l\'école'; // Valeur par défaut
 

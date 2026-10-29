@@ -98,7 +98,7 @@ class GouterController extends Controller
     public function ratesIndex(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
 
         $rates = GouterRate::where('gouter_rates.school_id', $schoolId)
             ->where('gouter_rates.school_year_id', $schoolYearId)
@@ -108,7 +108,7 @@ class GouterController extends Controller
             ->with('schoolClass')
             ->get();
 
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.gouter.rates.index', compact('rates', 'schoolYears', 'schoolYearId'));
     }
@@ -116,13 +116,13 @@ class GouterController extends Controller
     public function ratesCreate(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
 
         $classes = SchoolClass::where('school_id', $schoolId)
             ->whereRaw('LOWER(cycle) = ?', ['maternelle'])
             ->orderBy('name')
             ->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.gouter.rates.create', compact('classes', 'schoolYears', 'schoolYearId'));
     }
@@ -181,7 +181,7 @@ class GouterController extends Controller
             ->whereRaw('LOWER(cycle) = ?', ['maternelle'])
             ->orderBy('name')
             ->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.gouter.rates.edit', compact('rate', 'classes', 'schoolYears'));
     }
@@ -243,7 +243,7 @@ class GouterController extends Controller
     public function subscriptionsIndex(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $classId = $request->get('class_id');
 
         $query = GouterSubscription::where('school_id', $schoolId)
@@ -259,7 +259,7 @@ class GouterController extends Controller
             ->whereRaw('LOWER(cycle) = ?', ['maternelle'])
             ->orderBy('name')
             ->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         $rates = GouterRate::where('school_id', $schoolId)
             ->where('school_year_id', $schoolYearId)
@@ -404,10 +404,10 @@ class GouterController extends Controller
     public function paymentsIndex(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $classId = $request->get('class_id', '');
 
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
         $classes = SchoolClass::where('school_id', $schoolId)
             ->whereRaw('LOWER(cycle) = ?', ['maternelle'])
             ->orderBy('name')
@@ -562,7 +562,7 @@ class GouterController extends Controller
     public function unpaidByClass(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $filterClassId = $request->get('class_id', '');
 
         $query = DB::table('school_classes')
@@ -603,7 +603,7 @@ class GouterController extends Controller
                 : 0,
         ];
 
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
         $allClasses = SchoolClass::where('school_id', $schoolId)
             ->whereRaw('LOWER(cycle) = ?', ['maternelle'])
             ->orderBy('name')

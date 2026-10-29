@@ -9,13 +9,14 @@ use App\Models\SchoolYear;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class EndOfYearController extends Controller
 {
     // 1. Liste des classes pour l'année en cours
     public function index()
     {
-        $currentYear = SchoolYear::where('is_active', true)->first();
+        $currentYear = $this->activeYear();
 
         $classes = SchoolClass::where('school_id', auth()->user()->school_id)
             ->withCount(['students' => function ($q) use ($currentYear) {
@@ -32,7 +33,8 @@ class EndOfYearController extends Controller
     // 2. Détail d'une classe avec suggestions
     public function show(SchoolClass $class)
     {
-        $currentYear = SchoolYear::where('is_active', true)->first();
+        $this->ensureBelongsToSchool($class->school_id);
+        $currentYear = $this->activeYear();
         $nextClass = $class->getNextClassForSchoolYear($currentYear->id);
 
         $students = $class->students()
@@ -58,13 +60,15 @@ class EndOfYearController extends Controller
     // 3. Sauvegarder la décision pour un élève
     public function updateDecision(Request $request, Student $student)
     {
+        $this->ensureBelongsToSchool($student->school_id);
+
         $request->validate([
             'decision' => 'required|in:admis,redouble,saut_classe',
-            'next_school_class_id' => 'nullable|exists:school_classes,id',
+            'next_school_class_id' => ['nullable', Rule::exists('school_classes', 'id')->where('school_id', auth()->user()->school_id)],
             'comment' => 'nullable|string|max:500',
         ]);
 
-        $currentYear = SchoolYear::where('is_active', true)->first();
+        $currentYear = $this->activeYear();
 
         $currentClassId = DB::table('student_school_class')
             ->where('student_id', $student->id)
@@ -119,7 +123,8 @@ class EndOfYearController extends Controller
     // 4. Migration en masse vers l'année supérieure
     public function migrateClass(SchoolClass $class)
     {
-        $currentYear = SchoolYear::where('is_active', true)->first();
+        $this->ensureBelongsToSchool($class->school_id);
+        $currentYear = $this->activeYear();
 
         $parts = explode('-', $currentYear->name);
         if (count($parts) === 2 && is_numeric($parts[0]) && is_numeric($parts[1])) {
@@ -202,5 +207,18 @@ class EndOfYearController extends Controller
 
             return redirect()->back()->with('error', 'Erreur lors de la migration : '.$e->getMessage());
         }
+    }
+
+    private function activeYear(): SchoolYear
+    {
+        $year = SchoolYear::where('school_id', auth()->user()->school_id)->where('is_active', true)->first();
+        abort_unless($year, 404, 'Aucune année scolaire active pour votre école.');
+
+        return $year;
+    }
+
+    private function ensureBelongsToSchool(?int $schoolId): void
+    {
+        abort_unless($schoolId !== null && $schoolId === (int) auth()->user()->school_id, 403);
     }
 }

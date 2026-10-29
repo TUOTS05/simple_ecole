@@ -11,6 +11,7 @@ use App\Models\ExtraTransportAssignment;
 use App\Models\ExtraVehicle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ExtraTransportController extends Controller
@@ -91,7 +92,7 @@ class ExtraTransportController extends Controller
 
         $routes = collect();
         if ($extraId) {
-            $routes = ExtraRoute::where('extra_id', $extraId)->with('vehicle', 'stops')->orderBy('name')->get();
+            $routes = ExtraRoute::where('extra_id', $extraId)->whereHas('extra', fn ($q) => $q->where('school_id', $schoolId))->with('vehicle', 'stops')->orderBy('name')->get();
         }
 
         return view('app.extras.transport.routes', compact('extras', 'extraId', 'vehicles', 'routes'));
@@ -104,7 +105,7 @@ class ExtraTransportController extends Controller
         $validated = $request->validate([
             'extra_id' => 'required|exists:extras,id',
             'name' => 'required|string|max:150',
-            'extra_vehicle_id' => 'nullable|exists:extra_vehicles,id',
+            'extra_vehicle_id' => ['nullable', Rule::exists('extra_vehicles', 'id')->where('school_id', $schoolId)],
         ]);
 
         Extra::where('school_id', $schoolId)->findOrFail($validated['extra_id']);
@@ -167,7 +168,7 @@ class ExtraTransportController extends Controller
         $subscriptions = collect();
         $routes = collect();
         if ($extraId) {
-            $routes = ExtraRoute::where('extra_id', $extraId)->with('stops', 'vehicle')->orderBy('name')->get();
+            $routes = ExtraRoute::where('extra_id', $extraId)->whereHas('extra', fn ($q) => $q->where('school_id', $schoolId))->with('stops', 'vehicle')->orderBy('name')->get();
             $subscriptions = ExtraSubscription::where('school_id', $schoolId)
                 ->where('extra_id', $extraId)
                 ->where('status', 'active')
@@ -190,7 +191,7 @@ class ExtraTransportController extends Controller
         ]);
 
         $subscription = ExtraSubscription::where('school_id', $schoolId)->findOrFail($validated['extra_subscription_id']);
-        $route = ExtraRoute::findOrFail($validated['extra_route_id']);
+        $route = ExtraRoute::whereHas('extra', fn ($q) => $q->where('school_id', $schoolId))->findOrFail($validated['extra_route_id']);
 
         if (! empty($validated['extra_route_stop_id'])) {
             $stopBelongsToRoute = $route->stops()->where('id', $validated['extra_route_stop_id'])->exists();

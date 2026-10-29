@@ -15,7 +15,7 @@ class ExtraRefundController extends Controller
     public function index(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $extraId = $request->get('extra_id', '');
 
         $refundableSubscriptions = ExtraSubscription::where('school_id', $schoolId)
@@ -37,7 +37,7 @@ class ExtraRefundController extends Controller
         $refunds = $refundsQuery->paginate(20)->withQueryString();
 
         $extras = Extra::where('school_id', $schoolId)->orderBy('name')->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.extras.refunds.index', compact(
             'refundableSubscriptions', 'refunds', 'extras', 'schoolYears', 'schoolYearId', 'extraId'

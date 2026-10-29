@@ -165,7 +165,7 @@ class ExtraController extends Controller
         $extra = Extra::where('school_id', session('current_school_id'))->findOrFail($id);
         $categories = ExtraCategory::where('school_id', $extra->school_id)->orderBy('name')->get();
         $classes = SchoolClass::where('school_id', $extra->school_id)->orderBy('name')->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
         $tarifs = $extra->tarifs()->with('schoolYear', 'schoolClass')->orderByDesc('school_year_id')->get();
         $schedules = $extra->schedules()->orderBy('day_of_week')->orderBy('start_time')->get();
 
@@ -411,7 +411,7 @@ class ExtraController extends Controller
     public function subscriptionsIndex(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $extraId = $request->get('extra_id', '');
         $status = $request->get('status', '');
 
@@ -430,7 +430,7 @@ class ExtraController extends Controller
         $subscriptions = $query->orderByDesc('created_at')->get();
 
         $extras = Extra::where('school_id', $schoolId)->orderBy('name')->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.extras.subscriptions.index', compact(
             'subscriptions', 'extras', 'schoolYears', 'schoolYearId', 'extraId', 'status'
@@ -440,10 +440,10 @@ class ExtraController extends Controller
     public function subscriptionsCreate(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
 
         $extras = Extra::where('school_id', $schoolId)->where('status', 'active')->orderBy('name')->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.extras.subscriptions.create', compact('extras', 'schoolYears', 'schoolYearId'));
     }
@@ -764,7 +764,7 @@ class ExtraController extends Controller
     public function paymentsIndex(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $extraId = $request->get('extra_id', '');
 
         $query = ExtraPayment::where('school_id', $schoolId)
@@ -779,7 +779,7 @@ class ExtraController extends Controller
         $payments = $query->paginate(20)->withQueryString();
 
         $extras = Extra::where('school_id', $schoolId)->orderBy('name')->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         // Abonnements avec un reste à payer, pour le formulaire d'enregistrement de paiement.
         $unpaidSubscriptions = ExtraSubscription::where('school_id', $schoolId)
@@ -903,7 +903,7 @@ class ExtraController extends Controller
     public function reportsUnpaid(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $extraId = $request->get('extra_id', '');
 
         $unpaid = $this->unpaidSubscriptionsQuery($schoolId, $schoolYearId, $extraId);
@@ -914,7 +914,7 @@ class ExtraController extends Controller
         ];
 
         $extras = Extra::where('school_id', $schoolId)->orderBy('name')->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.extras.reports.unpaid', compact('unpaid', 'globalStats', 'extras', 'schoolYears', 'schoolYearId', 'extraId'));
     }
@@ -922,7 +922,7 @@ class ExtraController extends Controller
     public function reportsUnpaidPdf(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $extraId = $request->get('extra_id', '');
 
         $unpaid = $this->unpaidSubscriptionsQuery($schoolId, $schoolYearId, $extraId);
@@ -944,7 +944,7 @@ class ExtraController extends Controller
     public function subscriptionsPdf(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $extraId = $request->get('extra_id', '');
         $status = $request->get('status', '');
 
@@ -977,7 +977,7 @@ class ExtraController extends Controller
     public function dashboard(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
 
         $subscriptions = ExtraSubscription::where('school_id', $schoolId)
             ->where('school_year_id', $schoolYearId)
@@ -1027,7 +1027,7 @@ class ExtraController extends Controller
             ];
         });
 
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.extras.dashboard', compact('kpis', 'byExtra', 'monthlyRevenue', 'schoolYears', 'schoolYearId'));
     }

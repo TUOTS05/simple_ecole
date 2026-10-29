@@ -152,7 +152,8 @@ class Student extends Model
     public function currentCanteenSubscription()
     {
         return $this->hasOne(CanteenSubscription::class)
-            ->where('school_year_id', SchoolYear::where('is_active', true)->value('id'))
+            // L'année de l'abonnement appartient à l'école de l'élève : pas besoin de chercher l'année active globalement.
+            ->whereHas('schoolYear', fn ($q) => $q->where('is_active', true))
             ->where('status', 'active');
     }
 
@@ -164,7 +165,8 @@ class Student extends Model
     public function currentGouterSubscription()
     {
         return $this->hasOne(GouterSubscription::class)
-            ->where('school_year_id', SchoolYear::where('is_active', true)->value('id'))
+            // L'année de l'abonnement appartient à l'école de l'élève : pas besoin de chercher l'année active globalement.
+            ->whereHas('schoolYear', fn ($q) => $q->where('is_active', true))
             ->where('status', 'active');
     }
 

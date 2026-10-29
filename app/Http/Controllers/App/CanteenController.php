@@ -104,7 +104,7 @@ class CanteenController extends Controller
     public function ratesIndex(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
 
         $rates = CanteenRate::where('canteen_rates.school_id', $schoolId)
             ->where('canteen_rates.school_year_id', $schoolYearId)
@@ -114,7 +114,7 @@ class CanteenController extends Controller
             ->with('schoolClass')
             ->get();
 
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.canteen.rates.index', compact('rates', 'schoolYears', 'schoolYearId'));
     }
@@ -122,10 +122,10 @@ class CanteenController extends Controller
     public function ratesCreate(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
 
         $classes = SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.canteen.rates.create', compact('classes', 'schoolYears', 'schoolYearId'));
     }
@@ -166,7 +166,7 @@ class CanteenController extends Controller
     {
         $rate = CanteenRate::where('school_id', session('current_school_id'))->findOrFail($id);
         $classes = SchoolClass::where('school_id', $rate->school_id)->orderBy('name')->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.canteen.rates.edit', compact('rate', 'classes', 'schoolYears'));
     }
@@ -207,7 +207,7 @@ class CanteenController extends Controller
     public function subscriptionsIndex(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $classId = $request->get('class_id');
 
         $query = CanteenSubscription::where('school_id', $schoolId)
@@ -220,7 +220,7 @@ class CanteenController extends Controller
 
         $subscriptions = $query->get();
         $classes = SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         $rates = CanteenRate::where('school_id', $schoolId)
             ->where('school_year_id', $schoolYearId)
@@ -356,11 +356,11 @@ class CanteenController extends Controller
     public function paymentsIndex(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $classId = $request->get('class_id', '');
         $month = $request->get('month', '');
 
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
         $classes = SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
 
         $availableMonths = [
@@ -473,7 +473,7 @@ class CanteenController extends Controller
     public function classDetail(Request $request, $classId)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $selectedMonth = $request->get('month', '');
 
         $class = SchoolClass::where('school_id', $schoolId)->findOrFail($classId);
@@ -512,7 +512,7 @@ class CanteenController extends Controller
             return $student;
         })->sortBy('last_name')->sortBy('first_name');
 
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         $availableMonths = [
             '' => 'Tous les mois (Vue Globale)',
@@ -526,7 +526,7 @@ class CanteenController extends Controller
 
     public function studentDetail(Request $request, $studentId)
     {
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $student = Student::where('school_id', session('current_school_id'))->findOrFail($studentId);
 
         $subscription = CanteenSubscription::where('student_id', $studentId)
@@ -560,7 +560,7 @@ class CanteenController extends Controller
             $inst->save();
         }
 
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.canteen.reports.student_detail', compact('student', 'subscription', 'installments', 'payments', 'schoolYears', 'schoolYearId'));
     }
@@ -568,7 +568,7 @@ class CanteenController extends Controller
     public function unpaidByClass(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $filterClassId = $request->get('class_id', '');
         $filterMonth = $request->get('month', '');
 
@@ -619,7 +619,7 @@ class CanteenController extends Controller
                 : 0,
         ];
 
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
         $allClasses = SchoolClass::where('school_id', $schoolId)->orderBy('name')->get();
 
         $availableMonths = [
