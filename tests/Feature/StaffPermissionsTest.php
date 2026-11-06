@@ -221,4 +221,33 @@ class StaffPermissionsTest extends TestCase
         $this->actingAs($admin)->delete(route('app.staff-functions.destroy', $function))->assertSessionHasErrors('function');
         $this->assertModelExists($function);
     }
+
+    // Retour du cahier de test : un seul formulaire pour tout le personnel, avec profil, fonction et droits d'accès.
+    public function test_single_form_creates_a_teacher_or_staff_with_a_new_function(): void
+    {
+        $school = School::create(['name' => 'École U', 'slug' => 'u', 'status' => 'active']);
+        $admin = new User(['first_name' => 'Admin', 'last_name' => 'U', 'email' => 'admin-u@example.test', 'password' => bcrypt('password')]);
+        $admin->role = 'school_admin';
+        $admin->school_id = $school->id;
+        $admin->save();
+        $base = ['last_name' => 'Koné', 'password' => 'secret12', 'password_confirmation' => 'secret12', 'gender' => 'F'];
+
+        $this->actingAs($admin)->post(route('app.staff.store'), $base + ['profile' => 'teacher', 'first_name' => 'Awa', 'email' => 'awa@example.test'])
+            ->assertSessionHasNoErrors();
+        $teacher = User::where('email', 'awa@example.test')->firstOrFail();
+        $this->assertSame('teacher', $teacher->role);
+        $this->assertNull($teacher->staff_function_id);
+
+        $this->actingAs($admin)->post(route('app.staff.store'), $base + [
+            'profile' => 'staff', 'first_name' => 'Ina', 'email' => 'ina@example.test',
+            'new_function' => 1, 'new_function_name' => 'Caissière', 'permissions' => ['payments', 'canteen'],
+        ])->assertSessionHasNoErrors();
+        $staff = User::where('email', 'ina@example.test')->firstOrFail();
+        $this->assertSame('staff', $staff->role);
+        $this->assertSame('Caissière', $staff->staffFunction->name);
+        $this->assertEqualsCanonicalizing(['payments', 'canteen'], $staff->staffFunction->permissions);
+
+        // Les deux apparaissent dans la liste du personnel
+        $this->actingAs($admin)->get(route('app.staff.index'))->assertSee('Awa')->assertSee('Ina')->assertSee('Enseignant');
+    }
 }

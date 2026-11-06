@@ -18,7 +18,7 @@
             <h1 class="text-3xl font-bold text-gray-800">Gestion des Enseignants</h1>
             <p class="text-gray-600 mt-1">Gérez le personnel enseignant de votre école</p>
         </div>
-        <a href="{{ route('app.teachers.create') }}" class="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg font-semibold transition">
+        <a href="{{ route('app.staff.create', ['profile' => 'teacher']) }}" class="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg font-semibold transition">
             + Nouvel Enseignant
         </a>
     </div>

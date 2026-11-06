@@ -228,6 +228,8 @@ return [
         'payment_modality' => 'modalité de paiement',
         'staff_function_id' => 'fonction',
         'permissions' => 'accès',
+        'profile' => 'profil',
+        'new_function_name' => 'nom de la nouvelle fonction',
         'file' => 'fichier',
         'logo' => 'logo',
         'photo' => 'photo',

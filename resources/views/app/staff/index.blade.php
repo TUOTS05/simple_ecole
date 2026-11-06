@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Personnel administratif')
+@section('title', 'Personnel')
 @section('page_title', 'Personnel')
 
 @section('content')
@@ -10,8 +10,8 @@
 
     <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
         <div>
-            <h1 class="text-3xl font-bold text-gray-800">Personnel administratif</h1>
-            <p class="text-gray-600 mt-1">Chaque compte accède aux modules de sa fonction.</p>
+            <h1 class="text-3xl font-bold text-gray-800">Personnel</h1>
+            <p class="text-gray-600 mt-1">Personnel administratif (accès selon sa fonction) et enseignants (accès à leurs classes).</p>
         </div>
         <div class="flex gap-2">
             <a href="{{ route('app.staff-functions.index') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg font-semibold transition">🗂️ Fonctions & accès</a>
@@ -24,7 +24,7 @@
             <thead class="bg-gray-50">
                 <tr>
                     <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Nom complet</th>
-                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Fonction</th>
+                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Profil / fonction</th>
                     <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Email</th>
                     <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Téléphone</th>
                     <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Actions</th>
@@ -34,21 +34,30 @@
                 @forelse($staff as $member)
                     <tr class="border-b border-gray-100 hover:bg-gray-50">
                         <td class="py-3 px-4 font-semibold">{{ $member->last_name }} {{ $member->first_name }}</td>
-                        <td class="py-3 px-4"><span class="px-3 py-1 rounded-full text-xs font-semibold bg-primary/15 text-gray-700">{{ $member->staffFunction?->name ?? 'Sans fonction' }}</span></td>
+                        <td class="py-3 px-4">
+                            @if($member->isTeacher())
+                                <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">Enseignant</span>
+                            @else
+                                <span class="px-3 py-1 rounded-full text-xs font-semibold bg-primary/15 text-gray-700">{{ $member->staffFunction?->name ?? 'Sans fonction' }}</span>
+                            @endif
+                        </td>
                         <td class="py-3 px-4 text-sm text-gray-600">{{ $member->email }}</td>
                         <td class="py-3 px-4 text-sm text-gray-600">{{ $member->phone ?? '—' }}</td>
                         <td class="py-3 px-4">
                             <div class="flex space-x-2">
-                                <a href="{{ route('app.staff.edit', $member) }}" class="text-yellow-600 hover:text-yellow-800">✏️ Modifier</a>
+                                {{-- Un enseignant se modifie et se supprime depuis la liste des enseignants (contrôles de ses affectations) --}}
+                                <a href="{{ $member->isTeacher() ? route('app.teachers.edit', $member) : route('app.staff.edit', $member) }}" class="text-yellow-600 hover:text-yellow-800">✏️ Modifier</a>
+                                @unless($member->isTeacher())
                                 <form action="{{ route('app.staff.destroy', $member) }}" method="POST" class="inline" onsubmit="return confirm('Êtes-vous sûr ?')">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="text-red-600 hover:text-red-800">🗑️ Supprimer</button>
                                 </form>
+                                @endunless
                             </div>
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="5" class="py-8 text-center text-gray-500">Aucun membre du personnel administratif</td></tr>
+                    <tr><td colspan="5" class="py-8 text-center text-gray-500">Aucun membre du personnel</td></tr>
                 @endforelse
             </tbody>
         </table>

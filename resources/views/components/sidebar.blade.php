@@ -256,7 +256,7 @@
             <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
                 <a href="{{ route('app.teachers.index') }}" title="Liste des Enseignants" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.teachers.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Enseignants</a>
                 <a href="{{ route('app.teacher-assignments.index') }}" title="Assignations" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.teacher-assignments.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Assignations</a>
-                <a href="{{ route('app.staff.index') }}" title="Personnel administratif" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.staff.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Personnel administratif</a>
+                <a href="{{ route('app.staff.index') }}" title="Membres du personnel" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.staff.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Membres du personnel</a>
                 <a href="{{ route('app.staff-functions.index') }}" title="Fonctions & accès" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.staff-functions.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Fonctions & accès</a>
             </div>
         </div>
