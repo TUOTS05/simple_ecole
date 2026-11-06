@@ -4,7 +4,7 @@
     <!-- Titre de la page (une seule ligne, tronquée sur petit écran) -->
     <div class="min-w-0">
         <h2 class="text-lg md:text-xl font-semibold text-gray-800 truncate">
-            @yield('page_title', 'Dashboard')
+            @yield('page_title', 'Tableau de bord')
         </h2>
     </div>
 

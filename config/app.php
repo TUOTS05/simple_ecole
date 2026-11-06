@@ -74,9 +74,11 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'fr'),
+    // L'interface n'existe qu'en français (lang/fr) : la langue n'est pas lue depuis le .env, où un
+    // APP_LOCALE=en hérité du modèle Laravel affichait les messages et les dates en anglais.
+    'locale' => 'fr',
 
-    'fallback_locale' => env('APP_FALLBACK_LOCALE', 'fr'),
+    'fallback_locale' => 'fr',
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'fr_FR'),
 

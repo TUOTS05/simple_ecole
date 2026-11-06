@@ -102,7 +102,7 @@
                             @case('enrolled') Inscrit @break
                             @case('reserved') Réservé @break
                             @case('withdrawn') Retiré @break
-                            @default {{ $enrollment->status }}
+                            @default {{ \App\Support\Labels::of($enrollment->status) }}
                         @endswitch
                     </p>
                 </div>

@@ -108,7 +108,7 @@
                         <td class="py-3 px-4">
                             <span class="px-3 py-1 rounded-full text-xs font-semibold 
                                 {{ $school->status === 'active' ? 'bg-accent text-white' : ($school->status === 'trial' ? 'bg-secondary text-gray-800' : 'bg-danger text-white') }}">
-                                {{ $school->status }}
+                                {{ \App\Support\Labels::of($school->status) }}
                             </span>
                         </td>
                         <td class="py-3 px-4 text-sm text-gray-600">

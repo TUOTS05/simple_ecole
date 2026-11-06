@@ -77,7 +77,7 @@
                     @forelse($installments as $index => $installment)
                     <tr class="hover:bg-gray-50 transition">
                         <td class="py-3 px-4 text-sm text-gray-600">{{ $index + 1 }}</td>
-                        <td class="py-3 px-4 text-sm font-medium text-gray-800 capitalize">{{ $installment->type }}</td>
+                        <td class="py-3 px-4 text-sm font-medium text-gray-800 ">{{ \App\Support\Labels::of($installment->type) }}</td>
                         <td class="py-3 px-4 text-sm text-gray-600">{{ $installment->description ?? '-' }}</td>
                         <td class="py-3 px-4 text-right text-sm font-semibold text-gray-800">{{ number_format($installment->amount, 0, ',', ' ') }} FCFA</td>
                         <td class="py-3 px-4 text-right text-sm font-semibold text-green-700">{{ number_format($installment->paid_amount, 0, ',', ' ') }} FCFA</td>

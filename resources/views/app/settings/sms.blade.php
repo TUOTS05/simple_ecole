@@ -117,7 +117,7 @@
                             @elseif($sms->status === 'failed')
                                 <span class="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs" title="{{ $sms->error_message }}">✗ Échec</span>
                             @else
-                                <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">{{ $sms->status }}</span>
+                                <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">{{ \App\Support\Labels::of($sms->status) }}</span>
                             @endif
                         </td>
                     </tr>
