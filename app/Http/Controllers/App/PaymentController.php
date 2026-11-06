@@ -10,8 +10,9 @@ use App\Models\SchoolYear;
 use App\Models\Student;
 use App\Models\StudentInstallment; // AJOUTÉ
 use App\Services\StudentCardService;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon; // AJOUTÉ
+use App\Support\SchoolRules;
+use Barryvdh\DomPDF\Facade\Pdf; // AJOUTÉ
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -245,32 +246,14 @@ class PaymentController extends Controller
         // Sauvegarder le chemin du reçu dans la table payments (UNE SEULE FOIS)
         $payment->update(['receipt_path' => $receiptPath]);
 
-        // 8. REDIRECTION AVEC LES LIENS DE TÉLÉCHARGEMENT (Reçu + Carte)
-        $receiptUrl = asset('storage/'.$receiptPath);
-
-        $successMessage = '
-            <div class="font-semibold mb-2">✅ Paiement enregistré avec succès !</div>
-            <div class="flex flex-col gap-2 text-sm">
-                <a href="'.$receiptUrl.'" target="_blank" class="flex items-center text-blue-700 hover:text-blue-900 font-bold underline">
-                    📥 Télécharger le Reçu de Paiement
-                </a>';
-
-        // Si une carte a été générée (paiement d'inscription), on ajoute le lien
-        if ($cardPath) {
-            $cardUrl = asset('storage/'.$cardPath);
-            $successMessage .= '
-                <a href="'.$cardUrl.'" target="_blank" class="flex items-center text-green-700 hover:text-green-900 font-bold underline">
-                    🪪 Télécharger la Carte Scolaire (avec QR Code)
-                </a>';
-        }
-
-        $successMessage .= '</div>';
-
+        // 8. Liens servis par l'application (et non par /storage, absent sans « storage:link ») :
+        // la liste des paiements affiche aussitôt le reçu pour l'imprimer.
         return redirect()->route('app.payments.index')
             ->with('payment_success', [
-                'receipt_url' => $receiptUrl,
-                'card_url' => $cardPath ? asset('storage/'.$cardPath) : null,
+                'receipt_url' => route('app.payments.receipt', $payment),
+                'card_url' => $cardPath ? route('app.students.card', $student) : null,
             ]);
+
     }
 
     /**
@@ -342,13 +325,6 @@ class PaymentController extends Controller
             ->orderBy('due_date', 'asc')
             ->get();
 
-        // DÉBOGAGE : Vérifier ce qui est récupéré
-        \Log::info('Pending Installments for Payment #'.$payment->id, [
-            'enrollment_id' => $payment->enrollment_id,
-            'count' => $pendingInstallments->count(),
-            'installments' => $pendingInstallments->toArray(),
-        ]);
-
         $student = $payment->enrollment->student;
         $schoolClass = $payment->enrollment->schoolClass;
         $schoolYear = $payment->enrollment->schoolYear;
@@ -360,7 +336,8 @@ class PaymentController extends Controller
 
         $filename = 'Recu_Paiement_'.str_pad($payment->id, 6, '0', STR_PAD_LEFT).'.pdf';
 
-        return $pdf->download($filename);
+        // Affiché dans le navigateur (impression ou enregistrement depuis la visionneuse PDF)
+        return $pdf->stream($filename);
     }
 
     /**
@@ -387,54 +364,9 @@ class PaymentController extends Controller
             $formattedStudents = collect();
 
             foreach ($enrollments as $enrollment) {
-                $student = $enrollment->student;
-                if (! $student) {
-                    continue;
+                if ($enrollment->student) {
+                    $formattedStudents->push($this->paymentCandidate($enrollment));
                 }
-
-                // 2. Vérifier si des échéances existent déjà
-                $installments = StudentInstallment::where('enrollment_id', $enrollment->id)
-                    ->whereIn('status', ['pending', 'partial', 'overdue'])
-                    ->orderBy('due_date', 'asc')
-                    ->get();
-
-                // 3. AUTO-GÉNÉRATION : Si aucune échéance n'existe, on les crée maintenant à la volée
-                if ($installments->isEmpty()) {
-                    $schoolClass = SchoolClass::find($enrollment->school_class_id);
-
-                    if ($schoolClass && $schoolClass->total_tuition > 0) {
-                        // Même générateur que StudentController::generateFeeSchedule() — voir
-                        // StudentInstallment::generateScheduleFor() pour ne jamais faire diverger
-                        // ancrage de date et calcul des échéances entre les deux appelants.
-                        StudentInstallment::generateScheduleFor($enrollment, $schoolClass, $enrollment->enrollment_date);
-
-                        // Recharger les échéances fraîchement générées
-                        $installments = StudentInstallment::where('enrollment_id', $enrollment->id)
-                            ->whereIn('status', ['pending', 'partial', 'overdue'])
-                            ->orderBy('due_date', 'asc')
-                            ->get();
-                    }
-                }
-
-                // 4. Formater les données pour le frontend
-                $formattedStudents->push([
-                    'id' => $student->id,
-                    'matricule' => $student->matricule,
-                    'name' => trim($student->last_name.' '.$student->first_name),
-                    'enrollment_id' => $enrollment->id,
-                    'installments' => $installments->map(function ($inst) {
-                        return [
-                            'id' => $inst->id,
-                            'description' => $inst->description,
-                            'due_date' => Carbon::parse($inst->due_date)->format('d/m/Y'),
-                            'amount' => (float) $inst->amount,
-                            'paid_amount' => (float) $inst->paid_amount,
-                            'remaining' => (float) ($inst->amount - $inst->paid_amount),
-                            'status' => $inst->status,
-                            'type' => $inst->type, // Nécessaire au formulaire pour distinguer inscription et scolarité
-                        ];
-                    }),
-                ]);
             }
 
             return response()->json($formattedStudents);
@@ -447,6 +379,74 @@ class PaymentController extends Controller
                 'line' => $e->getLine(),
             ], 500);
         }
+    }
+
+    /**
+     * AJAX : élèves inscrits pour l'année dont le matricule ou le nom contient la recherche (10 au plus).
+     */
+    public function searchStudents(Request $request)
+    {
+        $validated = $request->validate([
+            'q' => 'required|string|min:2|max:50',
+            'year_id' => ['required', SchoolRules::exists('school_years')],
+        ]);
+        // Chaque mot saisi doit apparaître dans le matricule, le nom ou le prénom (« koné awa » trouve Awa Koné).
+        $words = preg_split('/\s+/', trim($validated['q']));
+
+        $enrollments = Enrollment::where('school_id', session('current_school_id'))
+            ->where('school_year_id', $validated['year_id'])
+            ->whereHas('student', function ($query) use ($words) {
+                foreach ($words as $word) {
+                    $query->where(fn ($q) => $q->where('matricule', 'like', "%{$word}%")
+                        ->orWhere('last_name', 'like', "%{$word}%")
+                        ->orWhere('first_name', 'like', "%{$word}%"));
+                }
+            })
+            ->with('student', 'schoolClass')
+            ->limit(10)
+            ->get();
+
+        return response()->json($enrollments->map(fn ($enrollment) => $this->paymentCandidate($enrollment)));
+    }
+
+    /**
+     * Élève et échéances restant à payer pour une inscription, au format attendu par le formulaire de
+     * paiement. Génère l'échéancier s'il n'existe pas encore.
+     */
+    private function paymentCandidate(Enrollment $enrollment): array
+    {
+        $student = $enrollment->student;
+        $openInstallments = fn () => StudentInstallment::where('enrollment_id', $enrollment->id)
+            ->whereIn('status', ['pending', 'partial', 'overdue'])
+            ->orderBy('due_date', 'asc')
+            ->get();
+
+        $installments = $openInstallments();
+        if ($installments->isEmpty() && ! StudentInstallment::where('enrollment_id', $enrollment->id)->exists()) {
+            $schoolClass = SchoolClass::find($enrollment->school_class_id);
+            if ($schoolClass && $schoolClass->total_tuition > 0) {
+                StudentInstallment::generateScheduleFor($enrollment, $schoolClass, $enrollment->enrollment_date);
+                $installments = $openInstallments();
+            }
+        }
+
+        return [
+            'id' => $student->id,
+            'matricule' => $student->matricule,
+            'name' => trim($student->last_name.' '.$student->first_name),
+            'class_name' => $enrollment->schoolClass->name ?? null,
+            'enrollment_id' => $enrollment->id,
+            'installments' => $installments->map(fn ($inst) => [
+                'id' => $inst->id,
+                'description' => $inst->description,
+                'due_date' => Carbon::parse($inst->due_date)->format('d/m/Y'),
+                'amount' => (float) $inst->amount,
+                'paid_amount' => (float) $inst->paid_amount,
+                'remaining' => (float) ($inst->amount - $inst->paid_amount),
+                'status' => $inst->status,
+                'type' => $inst->type, // distingue frais d'inscription et scolarité dans le formulaire
+            ])->values(),
+        ];
     }
 
     /**

@@ -108,6 +108,9 @@ Route::middleware(['auth', 'school.active', 'role:school_admin', 'tenant'])->pre
     // Route AJAX pour récupérer les élèves par classe (utilisée par le formulaire de paiement)
     Route::get('/students/by-class', [PaymentController::class, 'getStudentsByClass'])
         ->name('students.by-class');
+    // Recherche d'un élève par matricule ou par nom, pour encaisser sans passer par la liste de classe
+    Route::get('/payments/search-students', [PaymentController::class, 'searchStudents'])
+        ->name('payments.search-students');
 
     // Inscriptions
     Route::get('/enrollments/export', [EnrollmentController::class, 'export'])->name('enrollments.export');
@@ -157,6 +160,7 @@ Route::middleware(['auth', 'school.active', 'role:school_admin', 'tenant'])->pre
             ->name('students.by-matricule');
         Route::get('/students/{student}/dossier', [StudentController::class, 'dossier'])
             ->name('students.dossier');
+        Route::get('/students/{student}/card', [StudentController::class, 'card'])->name('students.card');
         Route::post('/students/{student}/card/reprint', [StudentController::class, 'reprintCard'])
             ->name('students.card.reprint');
 

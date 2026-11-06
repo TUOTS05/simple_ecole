@@ -44,7 +44,7 @@ return [
             'description' => 'Encaissement des paiements et reçus.',
             'icon' => '💳',
             'home' => 'app.payments.index',
-            'routes' => ['app.payments.*', 'app.installments.*', 'app.students.by-class'],
+            'routes' => ['app.payments.*', 'app.installments.*', 'app.students.by-class', 'app.students.card'],
         ],
         'financial' => [
             'label' => 'États financiers',

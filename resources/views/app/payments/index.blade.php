@@ -8,16 +8,22 @@
     @if(session('payment_success'))
         <div class="bg-accent text-white px-6 py-4 rounded-lg mb-6">
             <div class="font-semibold mb-2">✅ Paiement enregistré avec succès !</div>
-            <div class="flex flex-col gap-2 text-sm">
-                <a href="{{ session('payment_success.receipt_url') }}" target="_blank" rel="noopener noreferrer" class="flex items-center text-blue-100 hover:text-white font-bold underline">
-                    📥 Télécharger le Reçu de Paiement
+            <div class="flex flex-wrap gap-3 text-sm">
+                <a href="{{ session('payment_success.receipt_url') }}" target="_blank" rel="noopener noreferrer" class="bg-white text-primary px-4 py-2 rounded-lg font-bold hover:bg-gray-100">
+                    🧾 Ouvrir le reçu
                 </a>
+                <button type="button" onclick="document.getElementById('receipt-preview').contentWindow.print()" class="bg-white/20 px-4 py-2 rounded-lg font-bold hover:bg-white/30">
+                    🖨️ Imprimer le reçu
+                </button>
                 @if(session('payment_success.card_url'))
-                    <a href="{{ session('payment_success.card_url') }}" target="_blank" rel="noopener noreferrer" class="flex items-center text-green-100 hover:text-white font-bold underline">
-                        🪪 Télécharger la Carte Scolaire (avec QR Code)
+                    <a href="{{ session('payment_success.card_url') }}" target="_blank" rel="noopener noreferrer" class="bg-white/20 px-4 py-2 rounded-lg font-bold hover:bg-white/30">
+                        🪪 Carte scolaire (avec QR code)
                     </a>
                 @endif
             </div>
+            {{-- Le reçu est affiché tout de suite : le paiement n'est jamais validé sans reçu visible --}}
+            <iframe id="receipt-preview" src="{{ session('payment_success.receipt_url') }}" title="Reçu de paiement"
+                    class="w-full h-96 mt-4 bg-white rounded-lg"></iframe>
         </div>
     @elseif(session('success'))
         <div class="bg-accent text-white px-6 py-4 rounded-lg mb-6">

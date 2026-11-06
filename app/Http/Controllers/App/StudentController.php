@@ -18,6 +18,7 @@ use App\Support\SchoolRules;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
 /**
@@ -342,6 +343,22 @@ class StudentController extends Controller
         ]);
 
         return view('app.students.show', compact('student'));
+    }
+
+    /**
+     * Carte scolaire PDF de l'élève, générée si elle n'existe pas encore.
+     */
+    public function card(Student $student)
+    {
+        abort_unless($student->school_id === (int) session('current_school_id'), 403);
+
+        if (! $student->id_card_path || ! Storage::disk('public')->exists($student->id_card_path)) {
+            $student->load('classes');
+            app(StudentCardService::class)->generate($student, School::find($student->school_id), $student->classes->first()->name ?? 'Non assignée');
+            $student->refresh();
+        }
+
+        return Storage::disk('public')->response($student->id_card_path, 'carte_'.($student->matricule ?? $student->id).'.pdf');
     }
 
     /**
