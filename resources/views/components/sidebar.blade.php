@@ -31,7 +31,7 @@
         <!-- ========================================== -->
         <a href="{{ route('superadmin.dashboard') }}" title="Dashboard" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('superadmin.dashboard') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
             <span class="text-xl min-w-[24px] text-center">📊</span>
-            <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Dashboard</span>
+            <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Tableau de bord</span>
         </a>
         <a href="{{ route('superadmin.schools.index') }}" title="Écoles" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('superadmin.schools.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
             <span class="text-xl min-w-[24px] text-center">🏫</span>
@@ -262,7 +262,9 @@
         </div>
 
         <!-- GROUPE : RAPPORTS -->
-        <div x-data="{ open: {{ request()->routeIs('app.report-cards.*') || request()->routeIs('app.financial.*') || (request()->routeIs('app.students.index') && request()->has('export')) ? 'true' : 'false' }} }" class="space-y-1">
+        {{-- Bulletins, élèves et présences appartiennent au groupe « Vie scolaire » : ici ce ne sont que des
+             raccourcis, jamais surlignés, pour qu'une page n'active pas deux menus à la fois. --}}
+        <div x-data="{ open: {{ request()->routeIs('app.financial.*') || request()->routeIs('app.notifications.*') ? 'true' : 'false' }} }" class="space-y-1">
             <button @click="if(!sidebarOpen) sidebarOpen = true; open = !open" title="Rapports"
                 class="w-full flex items-center justify-between px-3 py-3 rounded-lg transition text-gray-700 hover:bg-gray-100 focus:outline-none">
                 <div class="flex items-center">
@@ -275,14 +277,12 @@
             </button>
             <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
                 @unless(session('current_school')?->school_type === 'creche')
-                <a href="{{ route('app.report-cards.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.report-cards.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Bulletins de notes</a>
+                <a href="{{ route('app.report-cards.index') }}" class="block px-4 py-2 text-sm rounded-md transition text-gray-600 hover:text-primary hover:bg-gray-50">Bulletins de notes</a>
                 @endunless
                 <a href="{{ route('app.financial.unpaid_by_class') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.financial.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">États de scolarité</a>
-                <a href="{{ route('app.students.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.students.index') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Listes de classe & Exports</a>
-                <a href="{{ route('app.attendances.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.attendances.index') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Rapport Présences/Absences</a>
-                <a href="{{ route('app.notifications.index') }}" class="flex items-center px-3 py-3 rounded-lg transition {{ request()->routeIs('app.notifications.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}">
-                    <span x-show="sidebarOpen" class="ml-3 font-medium whitespace-nowrap">Notifications SMS</span>
-                </a>
+                <a href="{{ route('app.students.index') }}" class="block px-4 py-2 text-sm rounded-md transition text-gray-600 hover:text-primary hover:bg-gray-50">Listes de classe & Exports</a>
+                <a href="{{ route('app.attendances.index') }}" class="block px-4 py-2 text-sm rounded-md transition text-gray-600 hover:text-primary hover:bg-gray-50">Rapport Présences/Absences</a>
+                <a href="{{ route('app.notifications.index') }}" class="block px-4 py-2 text-sm rounded-md transition {{ request()->routeIs('app.notifications.*') ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">Notifications SMS</a>
             </div>
         </div>
 
