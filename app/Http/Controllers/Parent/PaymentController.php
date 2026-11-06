@@ -64,12 +64,16 @@ class PaymentController extends Controller
                 ->get();
         }
 
+        // Paiements de chaque échéance, affichés en détail sous sa ligne
+        $paymentsByInstallment = $payments->groupBy('student_installment_id');
+
         return view('parent.payments.index', compact(
             'student',
-            'siblings',         // AJOUTÉ ICI POUR CORRIGER L'ERREUR
+            'siblings',
             'enrollment',
             'installments',
             'payments',
+            'paymentsByInstallment',
             'totalPaid',
             'totalExpected',
             'remaining'
@@ -113,6 +117,7 @@ class PaymentController extends Controller
 
         $filename = 'Recu_Paiement_'.str_pad($payment->id, 6, '0', STR_PAD_LEFT).'.pdf';
 
-        return $pdf->download($filename);
+        // Ouvert dans le navigateur, pour l'imprimer ou l'enregistrer
+        return $pdf->stream($filename);
     }
 }

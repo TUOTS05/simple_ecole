@@ -75,9 +75,9 @@
                     <!-- Cycle -->
                     <div class="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
                         <label class="flex items-center text-sm font-semibold text-purple-900 mb-2">
-                            <span class="mr-2">🎓</span> Cycle *
+                            <span class="mr-2">🎓</span> Cycle
                         </label>
-                        <select name="cycle" id="cycle" required onchange="filterClasses()"
+                        <select name="cycle" id="cycle" onchange="filterClasses()"
                                 class="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white">
                             <option value="">-- Sélectionner --</option>
                             @foreach($cycles as $value => $label)
@@ -91,9 +91,9 @@
                     <!-- Classe -->
                     <div class="bg-green-50 p-4 rounded-lg border-2 border-green-200">
                         <label class="flex items-center text-sm font-semibold text-green-900 mb-2">
-                            <span class="mr-2">🏫</span> Classe *
+                            <span class="mr-2">🏫</span> Classe
                         </label>
-                        <select name="class_id" id="class_id" required onchange="loadStudentsByClass()"
+                        <select name="class_id" id="class_id" onchange="loadStudentsByClass()"
                                 class="w-full px-4 py-3 border-2 border-green-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white">
                             <option value="">-- D'abord, sélectionner un cycle --</option>
                             @foreach($classes as $class)
