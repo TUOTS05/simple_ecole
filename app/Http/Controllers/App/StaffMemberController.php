@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\School;
 use App\Models\StaffFunction;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
@@ -64,12 +64,12 @@ class StaffMemberController extends Controller
         // l'élévation de privilèges) : affectation explicite.
         $member = DB::transaction(function () use ($validated) {
             $member = User::create([
-            'first_name' => $validated['first_name'],
-            'last_name' => $validated['last_name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'phone' => $validated['phone'] ?? null,
-            'gender' => $validated['gender'],
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'phone' => $validated['phone'] ?? null,
+                'gender' => $validated['gender'],
             ]);
             $member->school_id = session('current_school_id');
             $member->role = $validated['profile'] ?? 'staff';

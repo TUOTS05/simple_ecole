@@ -70,7 +70,7 @@ class SchoolSetupChecklist
             ],
             [
                 'title' => 'Affecter les enseignants aux classes',
-                'help' => "Un enseignant ne voit que les classes qui lui sont affectées.",
+                'help' => 'Un enseignant ne voit que les classes qui lui sont affectées.',
                 'done' => $year && TeacherAssignment::where('school_id', $school->id)->where('school_year_id', $year->id)->exists(),
                 'required' => true,
                 'route' => 'app.teacher-assignments.index',

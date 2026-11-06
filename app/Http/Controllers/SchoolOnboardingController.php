@@ -152,8 +152,10 @@ class SchoolOnboardingController extends Controller
                 Log::error('Erreur envoi notification nouvelle demande: '.$e->getMessage());
             }
 
-            return redirect()->route('landing')
-                ->with('success', '✅ Votre demande a été envoyée avec succès ! Nous vous contacterons sous 24h.');
+            // Page de confirmation dédiée : l'accueil n'affichait pas ce message, le demandeur ne savait
+            // pas si sa demande était partie.
+            return redirect()->route('request-account.sent')
+                ->with('request_email', $validated['director_email']);
 
         } catch (\Exception $e) {
             // En cas d'erreur, on loggue et on renvoie l'utilisateur avec le message d'erreur exact

@@ -607,6 +607,8 @@ Route::get('/demande-compte', [SchoolOnboardingController::class, 'showRequestFo
 Route::post('/demande-compte', [SchoolOnboardingController::class, 'storeRequest'])
     ->name('request-account.store');
 
+Route::view('/demande-compte/envoyee', 'auth.request-sent')->name('request-account.sent');
+
 // Route pour la connexion en un clic à la démo
 Route::get('/demo-login', [DemoController::class, 'login'])->name('demo.login');
 

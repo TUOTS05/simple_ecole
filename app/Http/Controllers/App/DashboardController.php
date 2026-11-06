@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers\App;
 
-use App\Models\School;
-use App\Services\SchoolSetupChecklist;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Enrollment;
 use App\Models\Payment;
+use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentInstallment;
 use App\Models\User;
+use App\Services\SchoolSetupChecklist;
 
 /**
  * Tableau de bord de l'administration de l'école.
