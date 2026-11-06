@@ -173,18 +173,11 @@ class SchoolController extends Controller
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:schools,slug,'.$school->id,
             'school_type' => 'required|in:maternelle,primaire,both,creche',
-            'status' => 'required|in:active,suspended,expired', // UNIFORMISÉ (suppression de 'trial')
-            'subscription_plan' => 'required|in:basic,premium,enterprise', // AJOUTÉ POUR SAAS
-            'subscription_start_date' => 'required|date', // AJOUTÉ POUR SAAS
-            'subscription_end_date' => 'required|date', // AJOUTÉ POUR SAAS
-            'max_students' => 'required|integer|min:1', // AJOUTÉ POUR SAAS
+            'status' => 'required|in:active,suspended,expired',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
-
-        // LOGIQUE MÉTIER : Si la date de fin est dans le passé, forcer le statut à 'expired'
-        if (Carbon::parse($validated['subscription_end_date'])->isPast()) {
-            $validated['status'] = 'expired';
-        }
+        // L'offre, ses limites et ses dates viennent du contrat (ContractService) : elles ne se
+        // modifient pas depuis cette fiche, mais par un nouveau contrat, un renouvellement ou un avenant.
 
         // Gérer l'upload du nouveau logo
         if ($request->hasFile('logo')) {
@@ -202,7 +195,7 @@ class SchoolController extends Controller
         );
 
         return redirect()->route('superadmin.schools.index')
-            ->with('success', '✅ École et abonnement mis à jour avec succès !');
+            ->with('success', '✅ École mise à jour avec succès !');
     }
 
     /**

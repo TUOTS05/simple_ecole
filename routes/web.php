@@ -85,6 +85,10 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
     Route::post('/subscriptions', [SubscriptionController::class, 'store'])->name('subscriptions.store');
     Route::get('/subscriptions/{id}/renew', [SubscriptionController::class, 'renew'])->name('subscriptions.renew');
     Route::post('/subscriptions/{id}/renew', [SubscriptionController::class, 'storeRenewal'])->name('subscriptions.store-renewal');
+    // Un contrat signé ne se modifie pas : un changement en cours de période passe par un avenant.
+    Route::get('/contracts/{contract}/amend', [SubscriptionController::class, 'amend'])->name('subscriptions.amend');
+    Route::post('/contracts/{contract}/amend', [SubscriptionController::class, 'storeAmendment'])->name('subscriptions.store-amendment');
+    Route::get('/contracts/{contract}/pdf', [SubscriptionController::class, 'download'])->name('subscriptions.contract-pdf');
 
     Route::get('/subscriptions/pending', [SubscriptionController::class, 'pendingRequests'])->name('subscriptions.pending');
     Route::post('/subscriptions/requests/{subRequest}/approve', [SubscriptionController::class, 'approveRequest'])->name('subscriptions.requests.approve');

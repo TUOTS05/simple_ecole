@@ -61,11 +61,29 @@ class School extends Model
     }
 
     // ==========================================
-    // HELPERS POUR L'ESSAI GRATUIT (CEUX QUI MANQUAIENT)
+    // ESSAI GRATUIT ET ABONNEMENT
     // ==========================================
 
+    /**
+     * Abonnement payant en cours de validité.
+     */
+    public function hasActivePaidSubscription(): bool
+    {
+        return $this->status === 'active'
+            && $this->subscription_end_date
+            && Carbon::today()->lessThanOrEqualTo($this->subscription_end_date);
+    }
+
+    /**
+     * L'école est en essai gratuit. Un abonnement payant en cours l'emporte toujours, même si une
+     * ancienne date de fin d'essai est restée enregistrée (l'école restait sinon « en essai » après validation).
+     */
     public function isTrialActive(): bool
     {
+        if ($this->hasActivePaidSubscription()) {
+            return false;
+        }
+
         return $this->trial_ends_at && $this->trial_ends_at->isFuture();
     }
 

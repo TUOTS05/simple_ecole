@@ -12,6 +12,11 @@
             {{ session('success') }}
         </div>
     @endif
+    @if(session('error'))
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded mb-6">
+            {{ session('error') }}
+        </div>
+    @endif
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- SECTION 1 : FORMULAIRE DE CRÉATION DE CONTRAT -->
@@ -83,12 +88,12 @@
                         @error('start_date') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
                     </div>
 
-                    <!-- Fin du contrat -->
+                    <!-- Fin du contrat : calculée (abonnement annuel), non modifiable -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Fin du contrat *</label>
-                        <input type="date" name="end_date" id="endDate" value="{{ old('end_date', date('Y-m-d', strtotime('+1 year'))) }}" required 
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent @error('end_date') border-red-500 @enderror">
-                        @error('end_date') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Fin du contrat</label>
+                        <input type="text" id="endDate" readonly tabindex="-1"
+                            class="w-full px-4 py-2 border border-gray-200 bg-gray-100 text-gray-600 rounded-lg cursor-not-allowed">
+                        <p class="text-xs text-gray-500 mt-1">Calculée automatiquement : un an d'abonnement à partir du début.</p>
                     </div>
 
                     <!-- Montant facturé -->
@@ -124,6 +129,7 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">École</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Période</th>
@@ -135,6 +141,13 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     @forelse($contracts as $contract)
                         <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ $contract->typeLabel() }}</div>
+                                <div class="text-xs text-gray-500">{{ $contract->contract_number }}</div>
+                                @if($contract->parent)
+                                    <div class="text-xs text-gray-400">sur {{ $contract->parent->contract_number }}</div>
+                                @endif
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900">{{ $contract->school->name }}</div>
                             </td>
@@ -160,44 +173,36 @@
                                         'active' => 'bg-green-100 text-green-800',
                                         'expired' => 'bg-red-100 text-red-800',
                                         'renewed' => 'bg-blue-100 text-blue-800',
+                                        'amended' => 'bg-yellow-100 text-yellow-800',
                                     ][$contract->status] ?? 'bg-gray-100 text-gray-800';
 
                                     $statusLabel = [
                                         'active' => 'Actif',
                                         'expired' => 'Expiré',
                                         'renewed' => 'Renouvelé',
+                                        'amended' => 'Remplacé par avenant',
                                     ][$contract->status] ?? $contract->status;
                                 @endphp
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusClass }}">
                                     {{ $statusLabel }}
                                 </span>
                             </td>
-                           <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-    @if($contract->pdf_path)
-        <a href="{{ asset('storage/' . $contract->pdf_path) }}" target="_blank" 
-            class="text-blue-600 hover:text-blue-900 mr-3" title="Télécharger le PDF">
-            📥
-        </a>
-    @endif
-    
-    {{-- Bouton de renouvellement (visible si le contrat est expiré ou expire dans moins de 30 jours) --}}
-    @php
-        $isExpiringSoon = \Carbon\Carbon::parse($contract->end_date)->diffInDays(now()) <= 30 
-                          && \Carbon\Carbon::parse($contract->end_date)->isFuture();
-        $isExpired = \Carbon\Carbon::parse($contract->end_date)->isPast();
-    @endphp
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
+                                <a href="{{ route('superadmin.subscriptions.contract-pdf', $contract) }}" target="_blank"
+                                    class="text-blue-600 hover:text-blue-900" title="Voir le PDF">📄 PDF</a>
 
-    @if($isExpiringSoon || $isExpired || $contract->status === 'active')
-        <a href="{{ route('superadmin.subscriptions.renew', $contract) }}" 
-           class="text-green-600 hover:text-green-900 font-semibold" title="Renouveler l'abonnement">
-            🔄 Renouveler
-        </a>
-    @endif
-</td>
+                                {{-- Un contrat en cours ne se modifie pas : renouvellement ou avenant uniquement --}}
+                                @if($contract->status === 'active' && $contract->end_date->gte(today()))
+                                    <a href="{{ route('superadmin.subscriptions.renew', $contract) }}"
+                                        class="text-green-600 hover:text-green-900 font-semibold" title="Renouveler pour la période suivante">🔄 Renouveler</a>
+                                    <a href="{{ route('superadmin.subscriptions.amend', $contract) }}"
+                                        class="text-yellow-700 hover:text-yellow-900 font-semibold" title="Modifier par avenant">✍️ Avenant</a>
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">
                                 Aucun contrat enregistré
                             </td>
                         </tr>
@@ -215,6 +220,19 @@
         const planSelect = document.getElementById('planSelect');
         const amountField = document.getElementById('amountField');
         
+        // Date de fin affichée : un an moins un jour après le début (calcul identique côté serveur)
+        const startDate = document.getElementById('startDate');
+        const endDate = document.getElementById('endDate');
+        const refreshEnd = () => {
+            if (!startDate.value) { endDate.value = ''; return; }
+            const d = new Date(startDate.value + 'T00:00:00');
+            d.setFullYear(d.getFullYear() + 1);
+            d.setDate(d.getDate() - 1);
+            endDate.value = d.toLocaleDateString('fr-FR');
+        };
+        startDate.addEventListener('change', refreshEnd);
+        refreshEnd();
+
         planSelect.addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
             const price = selectedOption.getAttribute('data-price');
