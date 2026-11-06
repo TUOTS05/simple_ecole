@@ -4,7 +4,8 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "build:css": "tailwindcss -c tailwind.app.config.js -i resources/css/app-static.css -o public/css/app.css --minify"
     },
     "devDependencies": {
         "@tailwindcss/forms": "^0.5.2",
