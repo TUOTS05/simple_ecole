@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Parent;
 
 use App\Http\Controllers\Controller;
+use App\Models\SchoolYear;
 use App\Models\Grade;
 use App\Models\ReportCard;
 use App\Models\Subject;
@@ -44,7 +45,39 @@ class GradeController extends Controller
         // 4. Historique complet de la moyenne, toutes années confondues, pour le graphique de progression
         $progression = app(StudentProgressionService::class)->forStudent($student);
 
-        return view('parent.grades.index', compact('student', 'siblings', 'reportCards', 'progression'));
+        $schedule = $this->reportCardSchedule($student, $reportCards);
+
+        return view('parent.grades.index', compact('student', 'siblings', 'reportCards', 'progression', 'schedule'));
+    }
+
+    /**
+     * Calendrier des bulletins trimestriels de l'année active : l'année de l'école est découpée en trois
+     * trimestres égaux ; chacun est « disponible », « en préparation » (terminé, bulletin pas encore publié)
+     * ou « prévu ».
+     *
+     * @return list<array{label: string, until: \Carbon\Carbon, status: string}>
+     */
+    private function reportCardSchedule($student, $reportCards): array
+    {
+        $year = SchoolYear::where('school_id', $student->school_id)->where('is_active', true)->first();
+        if (! $year || ! $year->start_date || ! $year->end_date) {
+            return [];
+        }
+
+        $published = $reportCards->where('school_year_id', $year->id)
+            ->filter(fn ($card) => strtolower($card->period) === 'trimestriel')
+            ->pluck('quarter')->map(fn ($q) => (int) $q)->all();
+        $length = $year->start_date->diffInDays($year->end_date) / 3;
+
+        return collect([1, 2, 3])->map(function ($quarter) use ($year, $length, $published) {
+            $until = $year->start_date->copy()->addDays((int) round($length * $quarter));
+
+            return [
+                'label' => $quarter === 1 ? '1er trimestre' : "{$quarter}e trimestre",
+                'until' => $until,
+                'status' => in_array($quarter, $published, true) ? 'disponible' : ($until->isPast() ? 'en préparation' : 'prévu'),
+            ];
+        })->all();
     }
 
     /**

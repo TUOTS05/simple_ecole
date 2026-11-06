@@ -83,6 +83,25 @@ class Enrollment extends Model
         return $this->registration_fee_paid && $this->tuition_fee_remaining == 0;
     }
 
+    /**
+     * Situation des frais de l'inscription (frais d'inscription et scolarité), calculée sur les
+     * échéances : la même source pour le tableau de bord, la fiche de l'élève et la page Paiements.
+     *
+     * @return array{expected: float, paid: float, remaining: float, rate: float}
+     */
+    public function feeSummary(): array
+    {
+        $expected = (float) $this->studentInstallments()->sum('amount');
+        $paid = (float) $this->studentInstallments()->sum('paid_amount');
+
+        return [
+            'expected' => $expected,
+            'paid' => $paid,
+            'remaining' => max(0, $expected - $paid),
+            'rate' => $expected > 0 ? round($paid / $expected * 100, 1) : 0,
+        ];
+    }
+
     // Recalculer les montants après un paiement
     public function recalculateFees(): void
     {

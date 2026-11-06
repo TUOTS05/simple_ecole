@@ -51,7 +51,7 @@
                 </p>
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Frais de scolarité totaux</p>
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Frais scolaires totaux</p>
                 <p class="text-2xl font-bold text-gray-800">{{ number_format($globalStats['totalFees'], 0, ',', ' ') }} <span class="text-sm font-normal text-gray-500">FCFA</span></p>
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">

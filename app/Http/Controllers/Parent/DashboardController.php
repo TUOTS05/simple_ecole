@@ -55,12 +55,9 @@ class DashboardController extends Controller
         // Statistiques globales
         $globalStats = [
             'totalChildren' => $childrenData->count(),
-            'totalFees' => $childrenData->sum(function ($data) {
-                return $data['enrollment']->tuition_fee_total ?? 0;
-            }),
-            'totalPaid' => $childrenData->sum(function ($data) {
-                return $data['enrollment']->tuition_fee_paid ?? 0;
-            }),
+            // Mêmes montants que la page Paiements : toutes les échéances (inscription et scolarité)
+            'totalFees' => $childrenData->sum(fn ($data) => $data['fees']['expected'] ?? 0),
+            'totalPaid' => $childrenData->sum(fn ($data) => $data['fees']['paid'] ?? 0),
             'averageAttendance' => $childrenData->avg('attendanceRate'),
         ];
 
@@ -150,13 +147,9 @@ class DashboardController extends Controller
         $data['enrollment'] = $enrollment;
         $data['schoolClass'] = $enrollment->schoolClass;
 
-        // Calculer le taux de paiement
-        if ($enrollment->tuition_fee_total > 0) {
-            $data['paymentRate'] = round(
-                ($enrollment->tuition_fee_paid / $enrollment->tuition_fee_total) * 100,
-                1
-            );
-        }
+        // Situation des frais et taux de paiement, calculés sur les échéances
+        $data['fees'] = $enrollment->feeSummary();
+        $data['paymentRate'] = $data['fees']['rate'];
 
         // Calculer la moyenne générale (bulletin le plus récent de l'année :
         // un élève a un bulletin par période, donc on trie par updated_at)
