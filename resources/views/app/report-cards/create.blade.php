@@ -34,7 +34,7 @@
                 </select>
             </div>
 
-            <!-- ✅ Champ Mois (Affiché par défaut si mensuel, sinon hidden) -->
+            <!-- Champ Mois (Affiché par défaut si mensuel, sinon hidden) -->
             <div id="admin_monthField" class="{{ (old('period', $period) === 'trimestriel') ? 'hidden' : '' }}">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Mois *</label>
                 <select name="month" id="admin_monthSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary bg-white">
@@ -48,7 +48,7 @@
                 </select>
             </div>
 
-            <!-- ✅ Champ Trimestre (Caché par défaut si mensuel) -->
+            <!-- Champ Trimestre (Caché par défaut si mensuel) -->
             <div id="admin_quarterField" class="{{ (old('period', $period) === 'mensuel') ? 'hidden' : '' }}">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Trimestre *</label>
                 <select name="quarter" id="admin_quarterSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary bg-white">
@@ -186,7 +186,7 @@
 
 </div>
 
-<!-- ✅ SCRIPT INFAILLIBLE POUR LE BASCULEMENT PÉRIODE -->
+<!-- SCRIPT INFAILLIBLE POUR LE BASCULEMENT PÉRIODE -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const periodSelect = document.getElementById('admin_periodSelect');

@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Tarif mensuel de la cantine pour une classe et une année scolaire.
+ */
 class CanteenRate extends Model
 {
     protected $fillable = [

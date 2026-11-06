@@ -9,6 +9,9 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
+/**
+ * Export Excel des présences, limité aux classes de l'enseignant quand c'est lui qui exporte.
+ */
 class AttendanceExport implements FromCollection, WithHeadings, WithMapping
 {
     protected $classId;
@@ -21,6 +24,9 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping
 
     protected $assignedClassIds;
 
+    /**
+     * Filtres de l'export : classe, période et, pour un enseignant, ses classes autorisées.
+     */
     public function __construct($classId, $startDate, $endDate, $isTeacher = false, $assignedClassIds = [])
     {
         $this->classId = $classId;
@@ -30,6 +36,9 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping
         $this->assignedClassIds = $assignedClassIds;
     }
 
+    /**
+     * Présences de la période, avec la classe et le nom de l'élève.
+     */
     public function collection()
     {
         $query = Attendance::query()
@@ -65,6 +74,9 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping
         return ['Date', 'Période', 'Classe', 'Matricule', 'Élève', 'Statut', 'Observation'];
     }
 
+    /**
+     * Une ligne par présence, avec le statut en français.
+     */
     public function map($row): array
     {
         $statusLabels = [

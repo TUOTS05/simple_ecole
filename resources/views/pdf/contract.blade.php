@@ -119,9 +119,16 @@
 
     <!-- EN-TÊTE -->
     <div class="header">
-        <h1>Contrat d'Abonnement SaaS</h1>
+        @if(($contract->type ?? 'contrat') === 'avenant')
+            <h1>Avenant au contrat d'abonnement SaaS</h1>
+        @else
+            <h1>Contrat d'Abonnement SaaS</h1>
+        @endif
         <div class="meta">
-            <p>Contrat N° : <strong>{{ $contract->contract_number }}</strong></p>
+            <p>{{ $contract->typeLabel() }} N° : <strong>{{ $contract->contract_number }}</strong></p>
+            @if($contract->parent)
+                <p>{{ $contract->type === 'avenant' ? 'Modifie' : 'Renouvelle' }} le contrat N° : <strong>{{ $contract->parent->contract_number }}</strong></p>
+            @endif
             <p>Date de signature : <strong>{{ $contract->signed_at->format('d/m/Y à H:i') }}</strong></p>
         </div>
     </div>

@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Créneau hebdomadaire d'un extra (jour, heure de début et de fin).
+ */
 class ExtraSchedule extends Model
 {
     protected $fillable = [
@@ -20,6 +23,9 @@ class ExtraSchedule extends Model
         return $this->belongsTo(Extra::class);
     }
 
+    /**
+     * Nom du jour en français (0 = dimanche).
+     */
     public function getDayLabelAttribute(): string
     {
         $days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];

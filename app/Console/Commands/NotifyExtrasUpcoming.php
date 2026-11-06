@@ -10,12 +10,18 @@ use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 
+/**
+ * Rappelle aux parents les échéances d'extras à venir.
+ */
 class NotifyExtrasUpcoming extends Command
 {
     protected $signature = 'notify:extras-upcoming {--days=3 : Nombre de jours avant échéance pour déclencher le rappel}';
 
     protected $description = "Envoie un rappel aux parents dont une échéance d'extra arrive bientôt à échéance.";
 
+    /**
+     * Envoie un rappel pour les échéances dues dans le nombre de jours indiqué (option --days).
+     */
     public function handle(ExtraWhatsAppNotifier $whatsapp)
     {
         $days = (int) $this->option('days');

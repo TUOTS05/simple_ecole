@@ -30,10 +30,10 @@
                     <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3 text-sm font-bold">1</span>
                     Informations d'admission
                 </h2>
-                <button type="button" class="text-sm text-primary hover:text-primary-dark font-medium flex items-center">
+                <a href="{{ route('app.students.import') }}" class="text-sm text-primary hover:text-primary-dark font-medium flex items-center">
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                    Importer un élève
-                </button>
+                    Importer une liste d'élèves
+                </a>
             </div>
 
             <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -129,21 +129,6 @@
 
 <!-- JavaScript pour les fonctionnalités dynamiques -->
 <script>
-// 1. Logique pour pré-remplir les champs du gardien si père ou mère est sélectionné
-// function toggleGuardianFields() {
-//     const guardianType = document.querySelector('input[name="guardian_type"]:checked');
-//     if (!guardianType) return;
-
-//     const guardianName = document.querySelector('input[name="guardian_name"]');
-
-//     if (guardianType.value === 'father') {
-//         const fatherName = document.querySelector('input[name="father_name"]').value;
-//         if (fatherName) guardianName.value = fatherName;
-//     } else if (guardianType.value === 'mother') {
-//         const motherName = document.querySelector('input[name="mother_name"]').value;
-//         if (motherName) guardianName.value = motherName;
-//     }
-// }
 
 function toggleGuardianFields() {
     const guardianType = document.querySelector('input[name="guardian_type"]:checked').value;

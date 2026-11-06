@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
+/**
+ * Véhicule de transport scolaire, avec son lien de suivi GPS pour le chauffeur.
+ */
 class ExtraVehicle extends Model
 {
     protected $fillable = [

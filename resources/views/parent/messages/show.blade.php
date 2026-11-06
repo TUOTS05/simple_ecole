@@ -31,7 +31,7 @@
                     <p class="text-xs text-gray-500 flex items-center gap-2 flex-wrap mt-1">
                         <span>{{ \Carbon\Carbon::parse($message->created_at)->isoFormat('DD MMM YYYY à HH:mm') }}</span>
                         
-                        {{-- ✅ AJOUT CRUCIAL : Badge de contexte pour savoir de quelle classe il s'agit --}}
+                        {{-- Badge indiquant la classe concernée par le message --}}
                         @if($message->target_info)
                             <span class="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wide border border-indigo-200">
                                 🏫 {{ $message->target_info }}

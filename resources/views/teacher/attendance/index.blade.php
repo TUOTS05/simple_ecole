@@ -148,7 +148,7 @@
 </div>
 
 <!-- ========================================== -->
-<!-- NOUVEAU TABLEAU : Détail des heures d'absence par élève -->
+<!-- Heures d'absence par élève -->
 <!-- ========================================== -->
 <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden mt-8">
     <div class="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">

@@ -32,6 +32,9 @@ class GdPngImageBackEnd implements ImageBackEndInterface
     /** @var array{0:float,1:float,2:float,3:float,4:float,5:float} */
     private array $transform = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0];
 
+    /**
+     * Crée une image carrée de la taille demandée, remplie de la couleur de fond.
+     */
     public function new(int $size, ColorInterface $backgroundColor): void
     {
         $this->image = imagecreatetruecolor($size, $size);
@@ -50,6 +53,9 @@ class GdPngImageBackEnd implements ImageBackEndInterface
         $this->transform = $this->compose($this->transform, [1.0, 0.0, 0.0, 1.0, $x, $y]);
     }
 
+    /**
+     * Ajoute une rotation (en degrés) à la transformation courante.
+     */
     public function rotate(int $degrees): void
     {
         $rad = deg2rad($degrees);
@@ -68,6 +74,9 @@ class GdPngImageBackEnd implements ImageBackEndInterface
         $this->transform = array_pop($this->stack) ?? $this->transform;
     }
 
+    /**
+     * Dessine un chemin en une couleur, en respectant la règle de remplissage « evenodd ».
+     */
     public function drawPathWithColor(Path $path, ColorInterface $color): void
     {
         // BaconQrCode compresse le QR en UN seul chemin composé de plusieurs sous-contours
@@ -80,7 +89,7 @@ class GdPngImageBackEnd implements ImageBackEndInterface
     }
 
     /**
-     * @param array<int, array<int, array{0: float, 1: float}>> $polygons
+     * @param  array<int, array<int, array{0: float, 1: float}>>  $polygons
      */
     private function fillEvenOdd(array $polygons, int $color): void
     {
@@ -138,6 +147,9 @@ class GdPngImageBackEnd implements ImageBackEndInterface
         }
     }
 
+    /**
+     * Dégradés non pris en charge : le chemin est dessiné avec la première couleur.
+     */
     public function drawPathWithGradient(
         Path $path,
         Gradient $gradient,
@@ -150,6 +162,9 @@ class GdPngImageBackEnd implements ImageBackEndInterface
         $this->drawPathWithColor($path, $gradient->getStartColor());
     }
 
+    /**
+     * Renvoie l'image au format PNG et libère la mémoire.
+     */
     public function done(): string
     {
         ob_start();
@@ -209,8 +224,8 @@ class GdPngImageBackEnd implements ImageBackEndInterface
      * m1(m2(point)) — c'est-à-dire que m2 est appliquée dans le repère local introduit par m1,
      * comme des <g transform="m1"><g transform="m2"> imbriqués.
      *
-     * @param array{0:float,1:float,2:float,3:float,4:float,5:float} $m1
-     * @param array{0:float,1:float,2:float,3:float,4:float,5:float} $m2
+     * @param  array{0:float,1:float,2:float,3:float,4:float,5:float}  $m1
+     * @param  array{0:float,1:float,2:float,3:float,4:float,5:float}  $m2
      * @return array{0:float,1:float,2:float,3:float,4:float,5:float}
      */
     private function compose(array $m1, array $m2): array
@@ -228,6 +243,9 @@ class GdPngImageBackEnd implements ImageBackEndInterface
         ];
     }
 
+    /**
+     * Réserve une couleur dans la palette de l'image GD.
+     */
     private function allocateColor(ColorInterface $color): int
     {
         $rgb = $color->toRgb();

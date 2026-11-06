@@ -58,6 +58,9 @@
                             <option :value="cls.id" x-text="cls.name"></option>
                         </template>
                     </select>
+                    <p x-show="selectedClassId && !ratesByClass[selectedClassId]" class="text-sm text-amber-700 mt-2">
+                        Aucun tarif de cantine pour cette classe cette année : créez-le d'abord.
+                    </p>
                 </div>
             </div>
 
@@ -104,7 +107,8 @@
             <div x-show="Object.values(selectedStudents).some(v => v)" class="space-y-4 mb-6">
                 <h4 class="text-lg font-bold text-gray-800">⚙️ Configuration des inscriptions</h4>
 
-                <template x-for="student in students.filter(s => selectedStudents[s.id])" :key="student.id">
+                {{-- Bloc affiché une fois la configuration de l'élève créée (@change), pas dès la case cochée (x-model) --}}
+                <template x-for="student in students.filter(s => selectedStudents[s.id] && studentConfig[s.id])" :key="student.id">
                     <div class="border border-gray-300 rounded-lg p-4 bg-blue-50">
                         <h5 class="font-semibold text-gray-800 mb-3">
                             <span x-text="student.last_name"></span> <span x-text="student.first_name"></span>
@@ -257,18 +261,14 @@
             selectedStudents: {},
             studentConfig: {},
             loading: false,
-            monthlyRate: {{ $rates->isNotEmpty() ? $rates->first()->monthly_rate : 0 }},
-            availableMonths: [
-                { value: '2026-09', label: 'Septembre 2026' }, { value: '2026-10', label: 'Octobre 2026' },
-                { value: '2026-11', label: 'Novembre 2026' }, { value: '2026-12', label: 'Décembre 2026' },
-                { value: '2027-01', label: 'Janvier 2027' }, { value: '2027-02', label: 'Février 2027' },
-                { value: '2027-03', label: 'Mars 2027' }, { value: '2027-04', label: 'Avril 2027' },
-                { value: '2027-05', label: 'Mai 2027' }, { value: '2027-06', label: 'Juin 2027' }
-            ],
+            // Tarif et mois facturables propres à chaque classe (période du tarif de l'année affichée).
+            ratesByClass: @json($ratesByClass),
+            monthlyRate: 0,
+            availableMonths: [],
 
+            // Les tarifs et le champ caché school_year_id dépendent de l'année : on recharge la page sur la nouvelle année.
             resetSelections() {
-                this.selectedCycle = ''; this.selectedClassId = ''; this.classes = []; this.students = [];
-                this.selectedStudents = {}; this.studentConfig = {};
+                window.location = `{{ route('canteen.subscriptions.index') }}?school_year_id=${this.selectedSchoolYearId}`;
             },
 
             async fetchClasses() {
@@ -283,6 +283,9 @@
 
             async fetchStudents() {
                 this.students = []; this.selectedStudents = {}; this.studentConfig = {};
+                const rate = this.ratesByClass[this.selectedClassId];
+                this.monthlyRate = rate ? rate.monthly_rate : 0;
+                this.availableMonths = rate ? rate.months : [];
                 if (!this.selectedClassId) return;
                 this.loading = true;
                 try {
@@ -294,7 +297,7 @@
             toggleStudentSelection(student) {
                 if (this.selectedStudents[student.id]) {
                     this.studentConfig[student.id] = {
-                        months: [this.availableMonths[0].value],
+                        months: this.availableMonths.length ? [this.availableMonths[0].value] : [],
                         amount: this.monthlyRate, // Par défaut, on propose d'encaisser 1 mois
                         payment_method: ''
                     };

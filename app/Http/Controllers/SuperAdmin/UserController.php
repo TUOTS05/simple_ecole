@@ -10,10 +10,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
+/**
+ * Super-administration : comptes utilisateurs de toute la plateforme.
+ */
 class UserController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Affiche la liste.
      */
     public function index(Request $request)
     {
@@ -49,7 +52,7 @@ class UserController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Affiche le formulaire de création.
      */
     public function create()
     {
@@ -59,7 +62,7 @@ class UserController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Enregistre un nouvel élément.
      */
     public function store(Request $request)
     {
@@ -122,7 +125,7 @@ class UserController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Affiche le détail d'un élément.
      */
     public function show(User $user)
     {
@@ -132,7 +135,7 @@ class UserController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Affiche le formulaire de modification.
      */
     public function edit(User $user)
     {
@@ -142,7 +145,7 @@ class UserController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Met à jour un élément.
      */
     public function update(Request $request, User $user)
     {
@@ -198,7 +201,7 @@ class UserController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Supprime un élément.
      */
     public function destroy(User $user)
     {

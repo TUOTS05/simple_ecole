@@ -118,12 +118,12 @@ class DemoSchoolSeeder extends Seeder
                 ]
             );
 
-            // ✅ CORRECTION ICI : 'type' => 'installment' (et non 'tuition')
+            // Les échéances de scolarité sont de type 'installment' (et non 'tuition')
             StudentInstallment::updateOrCreate(
                 ['enrollment_id' => $enrollment->id, 'description' => 'Frais de scolarité 2025-2026'],
                 [
                     'school_id' => $school->id,
-                    'type' => 'installment', // <-- CORRECTION APPLIQUÉE
+                    'type' => 'installment',
                     'amount' => 300000,
                     'paid_amount' => 150000,
                     'due_date' => '2025-12-31',

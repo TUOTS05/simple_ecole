@@ -49,7 +49,7 @@
     </div>
 </div>
 
-<!-- NOUVEAU : Prénom et Nom séparés pour le compte utilisateur -->
+<!-- Prénom et nom séparés : ils servent à créer le compte du parent -->
 <div>
     <label class="block text-sm font-semibold text-gray-700 mb-1.5">
         Prénom du tuteur <span class="text-red-500">*</span>

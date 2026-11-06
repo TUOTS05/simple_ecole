@@ -17,7 +17,7 @@
         </div>
     </div>
 
-    <!-- ✅ SÉLECTEUR D'ENFANT (visible seulement s'il y a plus d'un enfant) -->
+    <!-- SÉLECTEUR D'ENFANT (visible seulement s'il y a plus d'un enfant) -->
     @if($siblings->count() > 1)
     <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <span class="font-semibold text-blue-800 text-sm">Vous avez plusieurs enfants. Sélectionnez celui dont vous voulez voir les bulletins :</span>
@@ -29,6 +29,32 @@
             @endforeach
         </select>
     </div>
+    @endif
+
+    {{-- Calendrier de publication des bulletins de l'année en cours --}}
+    @if($schedule)
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+            <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Calendrier des bulletins</h2>
+            <ul class="divide-y divide-gray-100">
+                @foreach($schedule as $period)
+                    @php
+                        [$badge, $text] = match ($period['status']) {
+                            'disponible' => ['bg-green-100 text-green-700', 'Disponible'],
+                            'en préparation' => ['bg-yellow-100 text-yellow-800', 'En préparation'],
+                            default => ['bg-gray-100 text-gray-600', 'Prévu'],
+                        };
+                    @endphp
+                    <li class="flex items-center justify-between py-3 text-sm">
+                        <div>
+                            <p class="font-semibold text-gray-800">{{ $period['label'] }}</p>
+                            <p class="text-xs text-gray-500">Fin de période vers le {{ $period['until']->translatedFormat('d F Y') }}</p>
+                        </div>
+                        <span class="text-xs font-semibold px-3 py-1 rounded-full {{ $badge }}">{{ $text }}</span>
+                    </li>
+                @endforeach
+            </ul>
+            <p class="text-xs text-gray-500 mt-3">Chaque bulletin est mis en ligne par l'école après le conseil de classe de fin de période. Les dates sont indicatives.</p>
+        </div>
     @endif
 
     <!-- Progression de la moyenne, toutes compositions et années confondues -->
@@ -103,7 +129,8 @@
             @empty
                 <div class="text-center py-12 text-gray-500">
                     <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <p>Aucun bulletin disponible pour le moment.</p>
+                    <p class="font-semibold text-gray-600">Aucun bulletin n'a encore été publié pour {{ $student->first_name }}.</p>
+                    <p class="text-sm mt-1">Les bulletins apparaissent ici dès leur publication par l'école{{ $schedule ? ' : consultez le calendrier ci-dessus.' : '.' }}</p>
                 </div>
             @endforelse
         </div>

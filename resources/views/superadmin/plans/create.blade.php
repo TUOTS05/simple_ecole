@@ -8,7 +8,7 @@
         <div class="bg-white rounded-lg shadow-lg p-6">
                         @csrf
             
-            <!-- ✅ AJOUTEZ CE BLOC POUR VOIR LES ERREURS CACHÉES -->
+            <!-- Erreurs de validation -->
             @if ($errors->any())
                 <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded">
                     <p class="font-bold">Oups ! Quelques erreurs ont été rencontrées :</p>
@@ -38,7 +38,7 @@
                                 @error('name') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
                             </div>
 
-                            <!-- Slug -->
+                            <!-- Identifiant d'URL (slug) -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Slug (identifiant unique) *</label>
                                 <input type="text" name="slug" value="{{ old('slug') }}" placeholder="Généré automatiquement si vide"

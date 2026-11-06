@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Échéance mensuelle d'une inscription à la cantine.
+ */
 class CanteenInstallment extends Model
 {
     protected $fillable = [

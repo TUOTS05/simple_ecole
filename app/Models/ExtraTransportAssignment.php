@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Affectation d'un élève inscrit au transport à un circuit, un arrêt et un véhicule.
+ */
 class ExtraTransportAssignment extends Model
 {
     protected $fillable = [

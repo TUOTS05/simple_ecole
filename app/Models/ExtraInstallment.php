@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Échéance d'une inscription à un extra (unique ou mensuelle).
+ */
 class ExtraInstallment extends Model
 {
     protected $fillable = [
@@ -39,6 +42,9 @@ class ExtraInstallment extends Model
         return $this->amount - $this->paid_amount;
     }
 
+    /**
+     * Libellé de la période : « Paiement unique » ou le mois en toutes lettres.
+     */
     public function getPeriodLabelAttribute()
     {
         if ($this->period === 'unique') {

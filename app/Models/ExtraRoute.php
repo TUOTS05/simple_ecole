@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Circuit de ramassage d'un extra de transport, avec ses arrêts et son véhicule.
+ */
 class ExtraRoute extends Model
 {
     protected $fillable = [

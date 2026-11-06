@@ -9,41 +9,49 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithTitle;
 
- // Optionnel : pour nommer l'onglet Excel
+// Optionnel : pour nommer l'onglet Excel
 
+/**
+ * Export Excel de la liste des élèves d'une école, éventuellement d'une seule classe.
+ */
 class StudentsExport implements FromCollection, WithHeadings, WithMapping, WithTitle
 {
     protected $schoolId;
 
     protected $classId;
 
+    /**
+     * École et classe (facultative) à exporter.
+     */
     public function __construct($schoolId, $classId = null)
     {
         $this->schoolId = $schoolId;
         $this->classId = $classId;
     }
 
+    /**
+     * Élèves de l'école, filtrés par classe si demandé.
+     */
     public function collection()
     {
-        // ✅ CORRECTION : Ajout de 'mother_phone' dans le select pour qu'il soit disponible dans map()
+        // 'mother_phone' est sélectionné pour être disponible dans map()
         $query = Student::where('school_id', $this->schoolId)
             ->select('id', 'matricule', 'first_name', 'last_name', 'gender', 'birth_date', 'guardian_phone', 'father_phone', 'mother_phone', 'mother_name');
 
-        // ✅ FILTRE PAR CLASSE : On joint la table enrollments si une classe est spécifiée
+        // FILTRE PAR CLASSE : On joint la table enrollments si une classe est spécifiée
         if ($this->classId) {
             $query->whereHas('enrollments', function ($q) {
                 $q->where('school_class_id', $this->classId);
             });
 
-            // 💡 OPTIONNEL : Si vous voulez aussi exporter le nom de la classe dans une colonne, décommentez les lignes ci-dessous :
-            // $query->with(['enrollments' => function($q) {
-            //     $q->where('school_class_id', $this->classId)->with('schoolClass');
-            // }]);
         }
 
         return $query->orderBy('last_name')->orderBy('first_name')->get();
     }
 
+    /**
+     * En-têtes des colonnes.
+     */
     public function headings(): array
     {
         return [
@@ -57,6 +65,9 @@ class StudentsExport implements FromCollection, WithHeadings, WithMapping, WithT
         ];
     }
 
+    /**
+     * Une ligne par élève ; le téléphone est celui du tuteur, à défaut du père, puis de la mère.
+     */
     public function map($student): array
     {
         // On prend le téléphone du tuteur, sinon celui du père, sinon celui de la mère

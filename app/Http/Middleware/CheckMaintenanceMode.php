@@ -7,6 +7,10 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Affiche la page de maintenance quand la plateforme est en maintenance (sauf pour le super-
+ * administrateur).
+ */
 class CheckMaintenanceMode
 {
     /**

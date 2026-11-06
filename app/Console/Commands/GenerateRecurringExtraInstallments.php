@@ -7,19 +7,26 @@ use App\Models\ExtraSubscription;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
+/**
+ * Génère chaque mois les échéances des extras facturés sans date de fin.
+ */
 class GenerateRecurringExtraInstallments extends Command
 {
     protected $signature = 'extras:generate-monthly-installments';
 
     protected $description = "Génère l'échéance du mois pour les abonnements extras à facturation mensuelle continue (tarif « is_open_ended »).";
 
+    /**
+     * Crée l'échéance du mois en cours pour chaque abonnement concerné qui ne l'a pas encore.
+     */
     public function handle()
     {
         $currentPeriod = now()->format('Y-m');
 
         $this->info("🔍 Génération des échéances de {$currentPeriod} pour les abonnements à facturation continue...");
 
-        $subscriptions = ExtraSubscription::where('status', 'active')
+        // Un abonnement à jour de ses paiements (« completed ») reste en service et doit être facturé.
+        $subscriptions = ExtraSubscription::whereIn('status', ExtraSubscription::RUNNING_STATUSES)
             ->whereHas('extraTarif', fn ($q) => $q->where('is_open_ended', true))
             ->with('extraTarif', 'extra', 'student')
             ->get();
@@ -51,6 +58,7 @@ class GenerateRecurringExtraInstallments extends Command
 
             $subscription->total_amount += $tarif->amount;
             $subscription->remaining_amount += $tarif->amount;
+            $subscription->status = 'active'; // de nouveau un reste à payer
             $subscription->save();
 
             $this->line("✅ {$subscription->extra->name} — {$subscription->student->first_name} {$subscription->student->last_name}");

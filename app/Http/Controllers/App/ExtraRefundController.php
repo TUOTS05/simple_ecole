@@ -8,14 +8,21 @@ use App\Models\Extra;
 use App\Models\ExtraRefund;
 use App\Models\ExtraSubscription;
 use App\Models\SchoolYear;
+use App\Support\SchoolRules;
 use Illuminate\Http\Request;
 
+/**
+ * Remboursements d'extras (activité annulée, désinscription…).
+ */
 class ExtraRefundController extends Controller
 {
+    /**
+     * Inscriptions remboursables (déjà payées) et historique des remboursements.
+     */
     public function index(Request $request)
     {
         $schoolId = session('current_school_id');
-        $schoolYearId = $request->get('school_year_id', SchoolYear::where('is_active', true)->value('id'));
+        $schoolYearId = $request->get('school_year_id', SchoolYear::activeIdFor(session('current_school_id')));
         $extraId = $request->get('extra_id', '');
 
         $refundableSubscriptions = ExtraSubscription::where('school_id', $schoolId)
@@ -37,7 +44,7 @@ class ExtraRefundController extends Controller
         $refunds = $refundsQuery->paginate(20)->withQueryString();
 
         $extras = Extra::where('school_id', $schoolId)->orderBy('name')->get();
-        $schoolYears = SchoolYear::orderBy('start_date', 'desc')->get();
+        $schoolYears = SchoolYear::where('school_id', session('current_school_id'))->orderBy('start_date', 'desc')->get();
 
         return view('app.extras.refunds.index', compact(
             'refundableSubscriptions', 'refunds', 'extras', 'schoolYears', 'schoolYearId', 'extraId'
@@ -54,12 +61,16 @@ class ExtraRefundController extends Controller
         return response()->json(['suggested_amount' => $subscription->suggestedRefundAmount()]);
     }
 
+    /**
+     * Enregistre un remboursement, plafonné au montant déjà payé ; l'inscription peut être résiliée
+     * en même temps.
+     */
     public function store(Request $request)
     {
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'extra_subscription_id' => 'required|exists:extra_subscriptions,id',
+            'extra_subscription_id' => ['required', SchoolRules::exists('extra_subscriptions')],
             'amount' => 'required|numeric|min:1',
             'refund_method' => 'required|in:cash,mobile_money,transfer,check,credit_note',
             'reason' => 'nullable|string|max:255',

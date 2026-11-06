@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\SchoolClass;
 use Illuminate\Http\Request;
 
+/**
+ * Frais de scolarité définis au niveau de chaque classe.
+ */
 class ClassFeeController extends Controller
 {
     /**

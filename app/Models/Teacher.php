@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Enseignant : vue sur la table des utilisateurs limitée au rôle « teacher ».
+ */
 class Teacher extends User
 {
     use HasFactory;

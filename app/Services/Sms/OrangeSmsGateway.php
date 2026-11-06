@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Envoi de SMS via l'API Orange avec les identifiants propres à une école.
+ */
 class OrangeSmsGateway implements SmsGatewayInterface
 {
     protected string $apiUrl;
@@ -19,6 +22,9 @@ class OrangeSmsGateway implements SmsGatewayInterface
 
     protected int $schoolId;
 
+    /**
+     * Charge et déchiffre les paramètres SMS de l'école.
+     */
     public function __construct(int $schoolId)
     {
         $this->schoolId = $schoolId;
@@ -30,6 +36,9 @@ class OrangeSmsGateway implements SmsGatewayInterface
         $this->senderName = $settings['sender_name'] ?? 'ECOLE';
     }
 
+    /**
+     * Envoie un SMS et renvoie le résultat (succès, identifiant chez Orange, erreur éventuelle).
+     */
     public function send(string $to, string $message, ?string $senderName = null): array
     {
         try {
@@ -71,7 +80,7 @@ class OrangeSmsGateway implements SmsGatewayInterface
                     'address' => 'tel:+'.ltrim($to, '+'),
                     'senderAddress' => 'tel:'.$sender,
                     'outboundSMSTextMessage' => [
-                        'message' => mb_substr($message, 0, 480), // Max 3 SMS
+                        'message' => mb_substr($message, 0, 480), // 3 SMS au maximum
                     ],
                 ],
             ]);
@@ -108,7 +117,7 @@ class OrangeSmsGateway implements SmsGatewayInterface
         return ! empty($this->clientId) && ! empty($this->clientSecret);
     }
 
-    // ✅ MODIFICATION ICI : On lit les paramètres depuis la table schools
+    // MODIFICATION ICI : On lit les paramètres depuis la table schools
     private function getSettings(): array
     {
         $school = School::find($this->schoolId);

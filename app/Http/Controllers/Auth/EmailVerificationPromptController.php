@@ -7,10 +7,13 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
+/**
+ * Invitation à vérifier son adresse e-mail.
+ */
 class EmailVerificationPromptController extends Controller
 {
     /**
-     * Display the email verification prompt.
+     * Affiche l'invitation à vérifier l'adresse e-mail.
      */
     public function __invoke(Request $request): RedirectResponse|View
     {

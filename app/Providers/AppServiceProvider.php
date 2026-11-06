@@ -9,10 +9,13 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
+/**
+ * Configuration de l'application au démarrage.
+ */
 class AppServiceProvider extends ServiceProvider
 {
     /**
-     * Register any application services.
+     * Déclare les services de l'application.
      */
     public function register(): void
     {
@@ -20,7 +23,7 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Bootstrap any application services.
+     * Initialise les services de l'application au démarrage.
      */
     public function boot(): void
     {

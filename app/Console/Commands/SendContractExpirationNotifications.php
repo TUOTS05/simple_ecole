@@ -8,12 +8,18 @@ use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 
+/**
+ * Prévient les écoles dont le contrat expire dans 30 jours.
+ */
 class SendContractExpirationNotifications extends Command
 {
     protected $signature = 'contracts:notify-expiration';
 
     protected $description = 'Envoie un email de rappel 30 jours avant l\'expiration des contrats actifs';
 
+    /**
+     * Envoie l'e-mail de rappel pour chaque contrat actif qui expire dans exactement 30 jours.
+     */
     public function handle()
     {
         // On cherche les contrats qui expirent dans exactement 30 jours
@@ -29,9 +35,6 @@ class SendContractExpirationNotifications extends Command
             if ($contract->school && $contract->school->email) {
                 // Envoyer l'email à l'école
                 Mail::to($contract->school->email)->send(new ContractExpiringSoon($contract));
-
-                // Optionnel : Envoyer une copie au Super Admin pour suivi
-                // Mail::to('superadmin@votre-domaine.com')->send(new ContractExpiringSoon($contract));
 
                 $count++;
             }

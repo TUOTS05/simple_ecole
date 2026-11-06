@@ -26,8 +26,51 @@
         </p>
     </div>
 
+    {{-- Mise en route : les étapes du paramétrage dans l'ordre, affichées tant qu'une étape obligatoire reste à faire --}}
+    @php
+        $requiredSteps = collect($setupSteps)->where('required', true);
+        $doneCount = collect($setupSteps)->where('done', true)->count();
+        $nextStep = collect($setupSteps)->firstWhere('done', false);
+    @endphp
+    @if($requiredSteps->contains('done', false))
+        <div x-data="{ open: true }" class="bg-white rounded-xl shadow border-l-4 border-primary-dark p-6 mb-6">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">🚀 Mise en route de votre école</h2>
+                    <p class="text-sm text-gray-600">{{ $doneCount }} étape(s) sur {{ count($setupSteps) }} terminée(s). Suivez-les dans l'ordre : chacune prépare la suivante.</p>
+                </div>
+                <button type="button" @click="open = !open" class="text-sm text-primary-dark font-semibold" x-text="open ? 'Masquer' : 'Afficher les étapes'"></button>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-2 mt-4">
+                <div class="bg-primary-dark h-2 rounded-full" style="width: {{ round($doneCount / count($setupSteps) * 100) }}%"></div>
+            </div>
+            <ol x-show="open" class="mt-5 space-y-2">
+                @foreach($setupSteps as $index => $step)
+                    <li>
+                        <a href="{{ route($step['route']) }}"
+                           class="flex items-start gap-3 p-3 rounded-lg transition {{ $step === $nextStep ? 'bg-primary/10 ring-1 ring-primary' : 'hover:bg-gray-50' }}">
+                            <span class="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold {{ $step['done'] ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600' }}">
+                                {{ $step['done'] ? '✓' : $index + 1 }}
+                            </span>
+                            <span class="flex-1">
+                                <span class="block font-semibold {{ $step['done'] ? 'text-gray-500 line-through' : 'text-gray-800' }}">
+                                    {{ $step['title'] }}
+                                    @unless($step['required'])<span class="text-xs font-normal text-gray-500">(facultatif)</span>@endunless
+                                </span>
+                                <span class="block text-xs text-gray-500">{{ $step['help'] }}</span>
+                            </span>
+                            @if($step === $nextStep)
+                                <span class="text-xs font-semibold text-primary-dark self-center whitespace-nowrap">Étape suivante →</span>
+                            @endif
+                        </a>
+                    </li>
+                @endforeach
+            </ol>
+        </div>
+    @endif
+
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- KPIs PRINCIPAUX -->
+    <!-- INDICATEURS PRINCIPAUX -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

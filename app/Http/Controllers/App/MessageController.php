@@ -6,8 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Message;
 use Illuminate\Http\Request;
 
+/**
+ * Messages reçus des parents par l'administration, et réponses.
+ */
 class MessageController extends Controller
 {
+    /**
+     * Boîte de réception : messages des parents, non lus en premier.
+     */
     public function index(Request $request)
     {
         $schoolId = session('current_school_id') ?? auth()->user()->school_id;
@@ -27,6 +33,9 @@ class MessageController extends Controller
         return view('app.messages.index', compact('messages', 'unreadCount'));
     }
 
+    /**
+     * Affiche un message et le marque comme lu.
+     */
     public function show(Message $message)
     {
         $schoolId = session('current_school_id') ?? auth()->user()->school_id;
@@ -45,6 +54,9 @@ class MessageController extends Controller
         return view('app.messages.show', compact('message'));
     }
 
+    /**
+     * Répond au parent par un nouveau message.
+     */
     public function reply(Request $request, Message $message)
     {
         $schoolId = session('current_school_id') ?? auth()->user()->school_id;

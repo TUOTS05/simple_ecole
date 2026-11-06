@@ -8,6 +8,9 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
+/**
+ * E-mail au parent : une échéance de scolarité est en retard.
+ */
 class ParentLatePaymentMail extends Mailable
 {
     use Queueable, SerializesModels;

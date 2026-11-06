@@ -111,7 +111,7 @@
         .text-center { text-align: center; }
         .text-right { text-align: right; }
         
-        /* FOOTER FIXE (Comme Word) */
+        /* PIED DE PAGE FIXE (comme dans Word) */
         .footer { 
             position: fixed; 
             bottom: 0; 

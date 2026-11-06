@@ -30,6 +30,9 @@ class WhatsAppService
 
     private bool $devMode;
 
+    /**
+     * Lit la configuration de l'API WhatsApp Cloud.
+     */
     public function __construct()
     {
         $this->phoneNumberId = config('services.whatsapp.phone_number_id');
@@ -116,6 +119,10 @@ class WhatsAppService
         ], $to, $message);
     }
 
+    /**
+     * Envoie la requête à l'API WhatsApp et renvoie le résultat ; les erreurs sont journalisées sans
+     * être levées.
+     */
     private function post(array $payload, string $to, string $preview): array
     {
         try {

@@ -7,6 +7,9 @@ use App\Models\SchoolClass;
 use App\Models\User;
 use Illuminate\Http\Request;
 
+/**
+ * Comptes des parents de l'école.
+ */
 class ParentController extends Controller
 {
     /**

@@ -24,7 +24,7 @@
                         <h2 class="text-xl font-bold text-gray-800 mb-1">{{ $message->subject }}</h2>
 
                         @if(is_null($message->receiver_id))
-                        {{-- ✅ CAS 1 : Message REÇU d'un parent --}}
+                        {{-- CAS 1 : Message REÇU d'un parent --}}
                         <p class="text-sm text-gray-600">
                             <span class="font-semibold">De : {{ $message->sender->first_name }} {{ $message->sender->last_name }}</span>
                             <span class="text-gray-400 mx-2">•</span>
@@ -34,7 +34,7 @@
                             Reçu le {{ $message->created_at->format('d/m/Y à H:i') }}
                         </p>
                         @else
-                        {{-- ✅ CAS 2 : Message ENVOYÉ par l'école -> Une seule info simple --}}
+                        {{-- CAS 2 : Message ENVOYÉ par l'école -> Une seule info simple --}}
                         <div class="border-t border-gray-200 pt-6 mt-6">
                             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
                                 <svg class="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,7 +89,7 @@
             {{-- ========================================== --}}
 
             @if(is_null($message->receiver_id))
-            {{-- ✅ CAS 1 : Message REÇU -> On affiche la réponse ou le formulaire --}}
+            {{-- CAS 1 : Message REÇU -> On affiche la réponse ou le formulaire --}}
             @if($message->reply)
             <div class="bg-green-50 border-l-4 border-green-500 rounded-r-lg p-4 mb-6">
                 <div class="flex justify-between items-center mb-2">
@@ -134,7 +134,7 @@
             @endif
 
             @else
-            {{-- ✅ CAS 2 : Message ENVOYÉ -> Pas de formulaire, juste une information --}}
+            {{-- CAS 2 : Message ENVOYÉ -> Pas de formulaire, juste une information --}}
             <div class="border-t border-gray-200 pt-6">
                 <div class="bg-blue-50 border-l-4 border-blue-500 rounded-r-lg p-4">
                     <div class="flex items-start">

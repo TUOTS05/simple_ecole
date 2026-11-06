@@ -92,7 +92,7 @@
                 <dl class="space-y-3">
                     <div>
                         <dt class="text-sm text-gray-600">Rôle</dt>
-                        <dd class="text-lg font-semibold text-gray-800">{{ $user->role }}</dd>
+                        <dd class="text-lg font-semibold text-gray-800">{{ $user->roleLabel() }}</dd>
                     </div>
                     
                     <div>

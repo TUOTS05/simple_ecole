@@ -10,10 +10,13 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Validation et tentative de connexion, avec blocage temporaire après trop d'échecs.
+ */
 class LoginRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Indique si l'utilisateur a le droit d'envoyer cette requête.
      */
     public function authorize(): bool
     {
@@ -21,7 +24,7 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Règles de validation de la requête.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
@@ -34,7 +37,7 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Attempt to authenticate the request's credentials.
+     * Tente de connecter l'utilisateur avec les identifiants fournis.
      *
      * @throws ValidationException
      */
@@ -54,7 +57,7 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Ensure the login request is not rate limited.
+     * Bloque temporairement après trop de tentatives de connexion.
      *
      * @throws ValidationException
      */
@@ -77,7 +80,7 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Get the rate limiting throttle key for the request.
+     * Clé de limitation des tentatives (e-mail + adresse IP).
      */
     public function throttleKey(): string
     {

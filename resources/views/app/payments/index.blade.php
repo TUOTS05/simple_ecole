@@ -8,16 +8,22 @@
     @if(session('payment_success'))
         <div class="bg-accent text-white px-6 py-4 rounded-lg mb-6">
             <div class="font-semibold mb-2">✅ Paiement enregistré avec succès !</div>
-            <div class="flex flex-col gap-2 text-sm">
-                <a href="{{ session('payment_success.receipt_url') }}" target="_blank" rel="noopener noreferrer" class="flex items-center text-blue-100 hover:text-white font-bold underline">
-                    📥 Télécharger le Reçu de Paiement
+            <div class="flex flex-wrap gap-3 text-sm">
+                <a href="{{ session('payment_success.receipt_url') }}" target="_blank" rel="noopener noreferrer" class="bg-white text-primary px-4 py-2 rounded-lg font-bold hover:bg-gray-100">
+                    🧾 Ouvrir le reçu
                 </a>
+                <button type="button" onclick="document.getElementById('receipt-preview').contentWindow.print()" class="bg-white/20 px-4 py-2 rounded-lg font-bold hover:bg-white/30">
+                    🖨️ Imprimer le reçu
+                </button>
                 @if(session('payment_success.card_url'))
-                    <a href="{{ session('payment_success.card_url') }}" target="_blank" rel="noopener noreferrer" class="flex items-center text-green-100 hover:text-white font-bold underline">
-                        🪪 Télécharger la Carte Scolaire (avec QR Code)
+                    <a href="{{ session('payment_success.card_url') }}" target="_blank" rel="noopener noreferrer" class="bg-white/20 px-4 py-2 rounded-lg font-bold hover:bg-white/30">
+                        🪪 Carte scolaire (avec QR code)
                     </a>
                 @endif
             </div>
+            {{-- Le reçu est affiché tout de suite : le paiement n'est jamais validé sans reçu visible --}}
+            <iframe id="receipt-preview" src="{{ session('payment_success.receipt_url') }}" title="Reçu de paiement"
+                    class="w-full h-96 mt-4 bg-white rounded-lg"></iframe>
         </div>
     @elseif(session('success'))
         <div class="bg-accent text-white px-6 py-4 rounded-lg mb-6">
@@ -45,56 +51,9 @@
                 + Nouveau Paiement
             </a>
         </div>
-    </div>    <!-- Filtres -->
-    <!-- <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <form method="GET" action="{{ route('app.payments.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
-                <select name="payment_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
-                    <option value="">Tous les types</option>
-                    <option value="registration" {{ request('payment_type') === 'registration' ? 'selected' : '' }}>Inscription</option>
-                    <option value="tuition" {{ request('payment_type') === 'tuition' ? 'selected' : '' }}>Scolarité</option>
-                </select>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Méthode</label>
-                <select name="payment_method" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
-                    <option value="">Toutes les méthodes</option>
-                    <option value="cash" {{ request('payment_method') === 'cash' ? 'selected' : '' }}>Espèces</option>
-                    <option value="check" {{ request('payment_method') === 'check' ? 'selected' : '' }}>Chèque</option>
-                    <option value="transfer" {{ request('payment_method') === 'transfer' ? 'selected' : '' }}>Virement</option>
-                    <option value="mobile_money" {{ request('payment_method') === 'mobile_money' ? 'selected' : '' }}>Mobile Money</option>
-                </select>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Du</label>
-                <input type="date" name="date_from" value="{{ request('date_from') }}"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Au</label>
-                <input type="date" name="date_to" value="{{ request('date_to') }}"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
-            </div>
-            
-            <div class="flex items-end space-x-2 md:col-span-4">
-                <button type="submit" class="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg font-semibold transition">
-                    Filtrer
-                </button>
-                <a href="{{ route('app.payments.index') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-lg font-semibold transition">
-                    Réinitialiser
-                </a>
-            </div>
-            
-        </form>
-    </div> -->
-    
+    </div>
 
-        <!-- Filtres -->
+    <!-- Filtres -->
     <div class="bg-white rounded-lg shadow p-6 mb-6">
         <form method="GET" action="{{ route('app.payments.index') }}" class="grid grid-cols-1 md:grid-cols-6 gap-4">
 
@@ -110,7 +69,7 @@
                 </select>
             </div>
 
-            <!-- ✅ NOUVEAU : Filtre par Classe -->
+            <!-- Filtre par classe -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Classe</label>
                 <select name="class_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">

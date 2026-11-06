@@ -27,7 +27,7 @@
                                 @error('name') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
                             </div>
 
-                            <!-- Slug -->
+                            <!-- Identifiant d'URL (slug) -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Slug (identifiant unique) *</label>
                                 <input type="text" name="slug" value="{{ old('slug', $plan->slug) }}" required

@@ -5,6 +5,9 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Envoi de SMS via l'API Orange avec les identifiants globaux de la plateforme (simulé en mode démo).
+ */
 class OrangeSmsService
 {
     private $clientId;
@@ -17,6 +20,9 @@ class OrangeSmsService
 
     private $devMode;
 
+    /**
+     * Lit la configuration Orange SMS.
+     */
     public function __construct()
     {
         $this->clientId = config('services.orange_sms.client_id');

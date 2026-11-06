@@ -16,6 +16,9 @@ use Illuminate\Support\Facades\DB;
  */
 class ExtraOnlinePaymentService
 {
+    /**
+     * Reçoit le service CinetPay.
+     */
     public function __construct(private CinetPayService $cinetPay) {}
 
     /**
@@ -56,6 +59,10 @@ class ExtraOnlinePaymentService
         return $this->finalize($onlinePayment, $accepted, ['dev_mode' => true, 'simulated' => true]);
     }
 
+    /**
+     * Clôt la tentative : en cas de succès, crée le paiement d'extra et l'impute ; sinon la marque
+     * échouée.
+     */
     private function finalize(ExtraOnlinePayment $onlinePayment, bool $accepted, $rawResponse): ExtraOnlinePayment
     {
         if ($accepted) {

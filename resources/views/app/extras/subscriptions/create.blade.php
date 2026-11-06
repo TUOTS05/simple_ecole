@@ -105,7 +105,8 @@
             <div x-show="Object.values(selectedStudents).some(v => v)" class="space-y-4 mb-6">
                 <h4 class="text-lg font-bold text-gray-800">⚙️ Configuration des inscriptions</h4>
 
-                <template x-for="student in students.filter(s => selectedStudents[s.id])" :key="student.id">
+                {{-- Bloc affiché une fois la configuration de l'élève créée (@change), pas dès la case cochée (x-model) --}}
+                <template x-for="student in students.filter(s => selectedStudents[s.id] && studentConfig[s.id])" :key="student.id">
                     <div class="border border-gray-300 rounded-lg p-4 bg-blue-50">
                         <h5 class="font-semibold text-gray-800 mb-3">
                             <span x-text="student.last_name"></span> <span x-text="student.first_name"></span>

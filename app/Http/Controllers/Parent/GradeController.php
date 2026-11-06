@@ -3,37 +3,21 @@
 namespace App\Http\Controllers\Parent;
 
 use App\Http\Controllers\Controller;
+use App\Models\SchoolYear;
 use App\Models\Grade;
 use App\Models\ReportCard;
-use App\Models\Student;
 use App\Models\Subject;
-use App\Models\User;
 use App\Services\StudentProgressionService;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+/**
+ * Espace parent : notes et bulletins de ses enfants.
+ */
 class GradeController extends Controller
 {
     /**
      * Liste des bulletins d'un élève
      */
-    // public function index($studentId)
-    // {
-    //     $parent = auth()->user();
-
-    //     // Vérifier l'accès
-    //     $student = $parent->children()
-    //         ->where('students.id', $studentId)
-    //         ->with('school')
-    //         ->firstOrFail();
-
-    //     // Récupérer tous les bulletins de cet élève
-    //     $reportCards = ReportCard::where('student_id', $studentId)
-    //         ->with(['schoolYear', 'schoolClass'])
-    //         ->orderBy('school_year_id', 'desc')
-    //         ->get();
-
-    //     return view('parent.grades.index', compact('student', 'reportCards'));
-    // }
 
     /**
      * Liste des bulletins d'un élève
@@ -48,7 +32,7 @@ class GradeController extends Controller
             ->with('school')
             ->firstOrFail();
 
-        // ✅ 2. Récupérer TOUS les enfants pour le menu déroulant
+        // 2. Récupérer TOUS les enfants pour le menu déroulant
         $siblings = $parent->children()->get();
 
         // 3. Récupérer tous les bulletins de cet élève
@@ -61,7 +45,39 @@ class GradeController extends Controller
         // 4. Historique complet de la moyenne, toutes années confondues, pour le graphique de progression
         $progression = app(StudentProgressionService::class)->forStudent($student);
 
-        return view('parent.grades.index', compact('student', 'siblings', 'reportCards', 'progression'));
+        $schedule = $this->reportCardSchedule($student, $reportCards);
+
+        return view('parent.grades.index', compact('student', 'siblings', 'reportCards', 'progression', 'schedule'));
+    }
+
+    /**
+     * Calendrier des bulletins trimestriels de l'année active : l'année de l'école est découpée en trois
+     * trimestres égaux ; chacun est « disponible », « en préparation » (terminé, bulletin pas encore publié)
+     * ou « prévu ».
+     *
+     * @return list<array{label: string, until: \Carbon\Carbon, status: string}>
+     */
+    private function reportCardSchedule($student, $reportCards): array
+    {
+        $year = SchoolYear::where('school_id', $student->school_id)->where('is_active', true)->first();
+        if (! $year || ! $year->start_date || ! $year->end_date) {
+            return [];
+        }
+
+        $published = $reportCards->where('school_year_id', $year->id)
+            ->filter(fn ($card) => strtolower($card->period) === 'trimestriel')
+            ->pluck('quarter')->map(fn ($q) => (int) $q)->all();
+        $length = $year->start_date->diffInDays($year->end_date) / 3;
+
+        return collect([1, 2, 3])->map(function ($quarter) use ($year, $length, $published) {
+            $until = $year->start_date->copy()->addDays((int) round($length * $quarter));
+
+            return [
+                'label' => $quarter === 1 ? '1er trimestre' : "{$quarter}e trimestre",
+                'until' => $until,
+                'status' => in_array($quarter, $published, true) ? 'disponible' : ($until->isPast() ? 'en préparation' : 'prévu'),
+            ];
+        })->all();
     }
 
     /**

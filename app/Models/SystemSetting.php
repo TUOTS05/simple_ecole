@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Réglage global de la plateforme (clé et valeur).
+ */
 class SystemSetting extends Model
 {
     protected $fillable = [

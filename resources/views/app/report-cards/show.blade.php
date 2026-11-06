@@ -38,7 +38,7 @@
                 Année scolaire : <strong>{{ $reportCard->schoolYear->name ?? 'Non spécifiée' }}</strong>
             </p>
             
-            {{-- ✅ CORRECTION 1 : Comparaison insensible à la casse et affichage direct du mois --}}
+            {{-- Période comparée sans tenir compte de la casse ; le mois est affiché tel quel --}}
             @php
                 $periodLower = strtolower($reportCard->period);
             @endphp
@@ -89,7 +89,7 @@
                 @php
                     $totalWeightedScore = 0;
                     $totalCoefficients = 0;
-                    // ✅ CORRECTION 2 : Utiliser $allSubjects pour afficher TOUTES les matières
+                    // $allSubjects : toutes les matières, y compris celles sans note
                     $subjectsToDisplay = $allSubjects ?? $reportCard->grades->pluck('subject')->unique('id');
                 @endphp
 
@@ -102,7 +102,7 @@
                             $maxScore = $subject->max_score ?? $grade->max_score ?? 20;
                             $scoreOutOf20 = ($grade->score / $maxScore) * 20;
                             
-                            // ✅ CORRECTION 4 : Calcul pondéré par les coefficients
+                            // Moyenne pondérée par les coefficients
                             $totalWeightedScore += ($scoreOutOf20 * $coefficient);
                             $totalCoefficients += $coefficient;
                             
@@ -142,7 +142,7 @@
                     </tr>
                 @endforeach
 
-                <!-- ✅ CORRECTION 3 : Une seule ligne propre pour la Moyenne Générale (suppression des doublons) -->
+                <!-- Moyenne générale -->
                 <tr class="bg-blue-50 font-bold">
                     <td class="border border-blue-300 px-4 py-3" colspan="2" style="text-align: right; padding-right: 15px; text-transform: uppercase;">
                         Moyenne Générale

@@ -9,10 +9,13 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
+/**
+ * Demande du lien de réinitialisation du mot de passe.
+ */
 class PasswordResetLinkController extends Controller
 {
     /**
-     * Display the password reset link request view.
+     * Affiche le formulaire de demande de réinitialisation du mot de passe.
      */
     public function create(): View
     {
@@ -20,7 +23,7 @@ class PasswordResetLinkController extends Controller
     }
 
     /**
-     * Handle an incoming password reset link request.
+     * Envoie le lien de réinitialisation du mot de passe.
      *
      * @throws ValidationException
      */
@@ -30,9 +33,7 @@ class PasswordResetLinkController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        // We will send the password reset link to this user. Once we have attempted
-        // to send the link, we will examine the response then see the message we
-        // need to show to the user. Finally, we'll send out a proper response.
+        // Envoi du lien de réinitialisation, puis message adapté selon le résultat de l'envoi.
         $status = Password::sendResetLink(
             $request->only('email')
         );

@@ -7,8 +7,14 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use Illuminate\Http\Request;
 
+/**
+ * Classes de l'école : création par cycle et par niveau, effectifs, frais de scolarité.
+ */
 class SchoolClassController extends Controller
 {
+    /**
+     * Liste des classes avec leur effectif, filtrable par cycle.
+     */
     public function index(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -33,20 +39,9 @@ class SchoolClassController extends Controller
         return view('app.classes.index', compact('classes', 'school'));
     }
 
-    // public function create()
-    // {
-    //     $school = session('current_school');
-    //     $allowedLevels = $school->getAllowedLevels();
-
-    //     // Grouper les niveaux par cycle
-    //     $levelsByCycle = [
-    //         'maternelle' => array_intersect($allowedLevels, ['TPS', 'PS', 'MS', 'GS']),
-    //         'primaire' => array_intersect($allowedLevels, ['CP', 'CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2']),
-    //     ];
-
-    //     return view('app.classes.create', compact('school', 'levelsByCycle'));
-    // }
-
+    /**
+     * Formulaire de création, avec les niveaux proposés selon le type d'école.
+     */
     public function create()
     {
         $school = session('current_school');
@@ -57,6 +52,9 @@ class SchoolClassController extends Controller
         return view('app.classes.create', compact('school', 'levelsByCycle'));
     }
 
+    /**
+     * Crée une classe, après avoir vérifié que le niveau appartient au cycle et que le nom est unique dans l'école.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -106,6 +104,9 @@ class SchoolClassController extends Controller
             ->with('success', 'Classe créée avec succès !');
     }
 
+    /**
+     * Détail d'une classe et liste de ses élèves.
+     */
     public function show(SchoolClass $class)
     {
         if ($class->school_id !== session('current_school_id')) {
@@ -125,23 +126,9 @@ class SchoolClassController extends Controller
         return view('app.classes.show', compact('class', 'students'));
     }
 
-    // public function edit(SchoolClass $class)
-    // {
-    //     if ($class->school_id !== session('current_school_id')) {
-    //         abort(403);
-    //     }
-
-    //     $school = session('current_school');
-    //     $allowedLevels = $school->getAllowedLevels();
-
-    //     $levelsByCycle = [
-    //         'maternelle' => array_intersect($allowedLevels, ['TPS', 'PS', 'MS', 'GS']),
-    //         'primaire' => array_intersect($allowedLevels, ['CP', 'CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2']),
-    //     ];
-
-    //     return view('app.classes.edit', compact('class', 'school', 'levelsByCycle'));
-    // }
-
+    /**
+     * Formulaire de modification d'une classe.
+     */
     public function edit(SchoolClass $class)
     {
         if ($class->school_id !== session('current_school_id')) {
@@ -154,6 +141,9 @@ class SchoolClassController extends Controller
         return view('app.classes.edit', compact('class', 'school', 'levelsByCycle'));
     }
 
+    /**
+     * Met à jour une classe et ses frais de scolarité.
+     */
     public function update(Request $request, SchoolClass $class)
     {
         if ($class->school_id !== session('current_school_id')) {
@@ -204,6 +194,9 @@ class SchoolClassController extends Controller
             ->with('success', 'Classe mise à jour !');
     }
 
+    /**
+     * Supprime une classe, refusé si des élèves y sont encore affectés.
+     */
     public function destroy(SchoolClass $class)
     {
         if ($class->school_id !== session('current_school_id')) {

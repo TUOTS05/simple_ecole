@@ -6,8 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\CrecheAttendance;
 use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Support\SchoolRules;
 use Illuminate\Http\Request;
 
+/**
+ * Pointage des présences de la crèche (arrivées et départs des tout-petits).
+ */
 class CrecheAttendanceController extends Controller
 {
     /**
@@ -39,12 +43,15 @@ class CrecheAttendanceController extends Controller
         return view('app.creche.attendances.index', compact('classes', 'classId', 'date', 'students'));
     }
 
+    /**
+     * Enregistre les présences de la crèche d'une classe pour une journée.
+     */
     public function store(Request $request)
     {
         $schoolId = session('current_school_id');
 
         $validated = $request->validate([
-            'class_id' => 'required|exists:school_classes,id',
+            'class_id' => ['required', SchoolRules::exists('school_classes')],
             'date' => 'required|date',
             'records' => 'required|array',
             'records.*.status' => 'required|in:present,absent',

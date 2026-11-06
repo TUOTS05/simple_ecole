@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Catégorie d'extras (activités, sorties, services…), propre à chaque école.
+ */
 class ExtraCategory extends Model
 {
     protected $fillable = [

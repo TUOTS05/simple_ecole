@@ -164,7 +164,7 @@
                         <td class="py-3 px-4">
                             @if($card->period === 'mensuel')
                             <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                                Mensuel - {{ \Carbon\Carbon::parse($card->month)->format('F Y') }}
+                                Mensuel - {{ $card->month }}
                             </span>
                             @else
                             <span class="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">

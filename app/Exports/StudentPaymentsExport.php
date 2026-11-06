@@ -9,18 +9,27 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
+/**
+ * Feuille des paiements d'un élève pour une année.
+ */
 class StudentPaymentsExport implements FromCollection, WithHeadings, WithMapping
 {
     protected $studentId;
 
     protected $schoolYearId;
 
+    /**
+     * Élève et année concernés.
+     */
     public function __construct($studentId, $schoolYearId)
     {
         $this->studentId = $studentId;
         $this->schoolYearId = $schoolYearId;
     }
 
+    /**
+     * Paiements de l'inscription de l'élève, du plus récent au plus ancien.
+     */
     public function collection()
     {
         $enrollment = Enrollment::where('student_id', $this->studentId)
@@ -37,6 +46,9 @@ class StudentPaymentsExport implements FromCollection, WithHeadings, WithMapping
         return ['Date Paiement', 'Montant (FCFA)', 'Type de Paiement', 'Mode de Paiement', 'Référence', 'Notes'];
     }
 
+    /**
+     * Une ligne par paiement, date au format français.
+     */
     public function map($row): array
     {
         return [

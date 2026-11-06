@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Trace d'un SMS envoyé, avec la réponse de l'opérateur.
+ */
 class SmsLog extends Model
 {
     protected $fillable = [

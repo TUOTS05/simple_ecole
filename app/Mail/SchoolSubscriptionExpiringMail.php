@@ -8,6 +8,9 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
 
+/**
+ * E-mail à l'école : son abonnement arrive à échéance.
+ */
 class SchoolSubscriptionExpiringMail extends Mailable
 {
     use Queueable, SerializesModels;

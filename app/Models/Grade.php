@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Note d'un élève dans une matière, pour un mois ou un trimestre.
+ */
 class Grade extends Model
 {
     use SoftDeletes;

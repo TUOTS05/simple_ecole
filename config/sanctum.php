@@ -9,12 +9,12 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Stateful Domains
+    | Domaines avec session
     |--------------------------------------------------------------------------
     |
-    | Requests from the following domains / hosts will receive stateful API
-    | authentication cookies. Typically, these should include your local
-    | and production domains which access your API via a frontend SPA.
+    | Les requêtes venant de ces domaines reçoivent des cookies
+    | d'authentification avec état. En général, les domaines locaux et de
+    | production qui consomment l'API depuis un SPA.
     |
     */
 
@@ -22,18 +22,15 @@ return [
         '%s%s',
         'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1',
         Sanctum::currentApplicationUrlWithPort(),
-        // Sanctum::currentRequestHost(),
     ))),
 
     /*
     |--------------------------------------------------------------------------
-    | Sanctum Guards
+    | Gardes Sanctum
     |--------------------------------------------------------------------------
     |
-    | This array contains the authentication guards that will be checked when
-    | Sanctum is trying to authenticate a request. If none of these guards
-    | are able to authenticate the request, Sanctum will use the bearer
-    | token that's present on an incoming request for authentication.
+    | Gardes essayées, dans l'ordre, pour authentifier une requête. Si aucune ne
+    | réussit, Sanctum utilise le jeton Bearer de la requête.
     |
     */
 
@@ -41,12 +38,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Expiration Minutes
+    | Expiration des jetons
     |--------------------------------------------------------------------------
     |
-    | This value controls the number of minutes until an issued token will be
-    | considered expired. This will override any values set in the token's
-    | "expires_at" attribute, but first-party sessions are not affected.
+    | Durée de validité, en minutes, d'un jeton émis. Ne s'applique pas aux
+    | sessions d'une application monopage. Null : pas d'expiration.
     |
     */
 
@@ -54,14 +50,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Token Prefix
+    | Préfixe des jetons
     |--------------------------------------------------------------------------
     |
-    | Sanctum can prefix new tokens in order to take advantage of numerous
-    | security scanning initiatives maintained by open source platforms
-    | that notify developers if they commit tokens into repositories.
-    |
-    | See: https://docs.github.com/en/code-security/secret-scanning/about-secret-scanning
+    | Préfixe ajouté aux nouveaux jetons, pour permettre aux outils d'analyse de
+    | secrets de les détecter s'ils fuitent dans un dépôt.
     |
     */
 
@@ -69,12 +62,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Sanctum Middleware
+    | Intergiciels Sanctum
     |--------------------------------------------------------------------------
     |
-    | When authenticating your first-party SPA with Sanctum you may need to
-    | customize some of the middleware Sanctum uses while processing the
-    | request. You may change the middleware listed below as required.
+    | Intergiciels exécutés pour authentifier les requêtes d'une application
+    | monopage. Ils peuvent être remplacés par des versions personnalisées.
     |
     */
 

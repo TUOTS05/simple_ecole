@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('canteen_installments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('canteen_subscription_id')->constrained('canteen_subscriptions')->onDelete('cascade');
-            $table->string('month'); // Format: '2026-09'
+            $table->string('month'); // Format : '2026-09'
             $table->decimal('amount', 12, 2); // monthly_rate
             $table->decimal('paid_amount', 12, 2)->default(0);
             $table->date('due_date'); // Premier jour du mois

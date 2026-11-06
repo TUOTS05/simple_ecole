@@ -41,7 +41,7 @@
                         </span>
                         <span class="px-4 py-2 rounded-full text-sm font-semibold 
                             {{ $school->status === 'active' ? 'bg-accent text-white' : ($school->status === 'trial' ? 'bg-secondary text-gray-800' : 'bg-danger text-white') }}">
-                            Statut: {{ $school->status }}
+                            Statut : {{ \App\Support\Labels::of($school->status) }}
                         </span>
                     </div>
                 </div>

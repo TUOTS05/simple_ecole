@@ -24,7 +24,7 @@
             padding: 15mm; /* Marge autour du cadre */
         }
 
-        /* ✅ CADRE GLOBAL AUTOUR DU BULLETIN */
+        /* CADRE GLOBAL AUTOUR DU BULLETIN */
         .bulletin-container {
             border: 2px solid #000; /* Remplacez #000 par #1e40af pour un cadre bleu */
             padding: 15px;
@@ -142,7 +142,7 @@
             border: 1px solid #000;
             padding: 5px 6px;
             font-size: 9px;
-            width: 33.33%; /* ✅ 3 colonnes égales sur la même ligne */
+            width: 33.33%; /* 3 colonnes égales sur la même ligne */
         }
 
         .summary-cell strong {
@@ -191,7 +191,7 @@
 
 <body>
 
-    <!-- ✅ DÉBUT DU CADRE GLOBAL -->
+    <!-- DÉBUT DU CADRE GLOBAL -->
     <div class="bulletin-container">
 
         <!-- En-tête : Logo à gauche (avec année en dessous), Infos école à droite -->
@@ -313,7 +313,7 @@
             </tbody>
         </table>
 
-        <!-- Résumé (✅ Les 3 éléments sont maintenant sur la MÊME LIGNE) -->
+        <!-- Résumé : les 3 éléments sur une même ligne -->
         <div class="summary">
             <div class="summary-row">
                 <div class="summary-cell">
@@ -359,7 +359,7 @@
         </div>
 
     </div>
-    <!-- ✅ FIN DU CADRE GLOBAL -->
+    <!-- FIN DU CADRE GLOBAL -->
 
 </body>
 </html>

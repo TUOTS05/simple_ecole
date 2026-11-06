@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Classe d'une école (cycle, niveau, capacité, frais de scolarité).
+ */
 class SchoolClass extends Model
 {
     protected $fillable = [
@@ -35,6 +38,9 @@ class SchoolClass extends Model
         return $this->belongsTo(School::class);
     }
 
+    /**
+     * Élèves affectés à la classe (l'année est précisée sur le pivot).
+     */
     public function students(): BelongsToMany
     {
         return $this->belongsToMany(Student::class, 'student_school_class', 'school_class_id', 'student_id')
@@ -47,7 +53,7 @@ class SchoolClass extends Model
         return $this->hasMany(Enrollment::class);
     }
 
-    // Helpers
+    // Méthodes utilitaires
     public function isMaternelle(): bool
     {
         return $this->cycle === 'maternelle';
@@ -58,6 +64,9 @@ class SchoolClass extends Model
         return $this->cycle === 'primaire';
     }
 
+    /**
+     * Taux de remplissage en pourcentage, ou null si la classe n'a pas de capacité.
+     */
     public function getFillRateAttribute(): ?float
     {
         if (! $this->capacity) {
@@ -72,6 +81,9 @@ class SchoolClass extends Model
         return $this->hasMany(TeacherAssignment::class, 'school_class_id');
     }
 
+    /**
+     * Enseignants affectés à la classe pour l'année active de l'école.
+     */
     public function teachers()
     {
         $activeSchoolYearId = SchoolYear::where('school_id', $this->school_id)
@@ -88,6 +100,9 @@ class SchoolClass extends Model
         return $this->belongsTo(Teacher::class, 'teacher_id');
     }
 
+    /**
+     * Niveau suivant dans le cursus (null pour le dernier niveau).
+     */
     public function getNextLevel(): ?string
     {
         // Ordre logique des niveaux dans votre établissement
@@ -101,6 +116,9 @@ class SchoolClass extends Model
         return null; // Fin du cycle (ex: après CM2)
     }
 
+    /**
+     * Classe du niveau suivant dans la même école, pour le passage en fin d'année.
+     */
     public function getNextClassForSchoolYear($schoolYearId): ?SchoolClass
     {
         $nextLevel = $this->getNextLevel();

@@ -29,7 +29,7 @@
                                 @error('name') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
                             </div>
                             
-                            <!-- Slug -->
+                            <!-- Identifiant d'URL (slug) -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Slug (URL) *</label>
                                 <input type="text" name="slug" id="slug" value="{{ old('slug', $school->slug) }}" required
@@ -49,7 +49,7 @@
                                 @error('school_type') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
                             </div>
 
-                            <!-- Email -->
+                            <!-- Adresse e-mail -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2" >Email de contact *</label>
                                 <input type="email" name="email" value="{{ old('email', $school->email) }}" required
@@ -81,43 +81,18 @@
                         <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center border-b pb-2">
                             <span class="mr-2">📜</span> Contrat et Abonnement
                         </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Plan d'abonnement -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Plan d'abonnement *</label>
-                                <select name="subscription_plan" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent @error('subscription_plan') border-red-500 @enderror">
-                                    <option value="basic" {{ old('subscription_plan', $school->subscription_plan) === 'basic' ? 'selected' : '' }}>Basique (Limité)</option>
-                                    <option value="premium" {{ old('subscription_plan', $school->subscription_plan) === 'premium' ? 'selected' : '' }}>Premium (Recommandé)</option>
-                                    <option value="enterprise" {{ old('subscription_plan', $school->subscription_plan) === 'enterprise' ? 'selected' : '' }}>Entreprise (Illimité)</option>
-                                </select>
-                                @error('subscription_plan') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
-                            </div>
-
-                            <!-- Nombre max d'élèves -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre max. d'élèves *</label>
-                                <input type="number" name="max_students" value="{{ old('max_students', $school->max_students) }}" required min="1"
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent @error('max_students') border-red-500 @enderror">
-                                @error('max_students') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
-                            </div>
-
-                            <!-- Date de début -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Date de début d'abonnement *</label>
-                                <input type="date" name="subscription_start_date" value="{{ old('subscription_start_date', $school->subscription_start_date?->format('Y-m-d')) }}" required
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent @error('subscription_start_date') border-red-500 @enderror">
-                                @error('subscription_start_date') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
-                            </div>
-
-                            <!-- Date de fin -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Date d'expiration *</label>
-                                <input type="date" name="subscription_end_date" value="{{ old('subscription_end_date', $school->subscription_end_date?->format('Y-m-d')) }}" required
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent @error('subscription_end_date') border-red-500 @enderror">
-                                <p class="text-xs text-red-500 mt-1">⚠️ L'école sera automatiquement bloquée après cette date.</p>
-                                @error('subscription_end_date') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
-                            </div>
-                        </div>
+                        {{-- L'abonnement découle du contrat signé : il ne se modifie pas ici, mais par un
+                             nouveau contrat, un renouvellement ou un avenant (page Abonnements). --}}
+                        <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div class="bg-gray-50 rounded-lg p-3"><dt class="text-gray-500">Offre</dt><dd class="font-semibold text-gray-800">{{ $school->subscription_plan ?: '—' }}</dd></div>
+                            <div class="bg-gray-50 rounded-lg p-3"><dt class="text-gray-500">Élèves / utilisateurs maximum</dt><dd class="font-semibold text-gray-800">{{ $school->max_students ?? '—' }} / {{ $school->max_users ?? '—' }}</dd></div>
+                            <div class="bg-gray-50 rounded-lg p-3"><dt class="text-gray-500">Début</dt><dd class="font-semibold text-gray-800">{{ $school->subscription_start_date?->format('d/m/Y') ?? '—' }}</dd></div>
+                            <div class="bg-gray-50 rounded-lg p-3"><dt class="text-gray-500">Fin</dt><dd class="font-semibold text-gray-800">{{ $school->subscription_end_date?->format('d/m/Y') ?? '—' }}</dd></div>
+                        </dl>
+                        <p class="text-sm text-gray-600 mt-3">
+                            Ces informations proviennent du contrat. Pour les changer, établissez un nouveau contrat, un renouvellement ou un avenant depuis la page
+                            <a href="{{ route('superadmin.subscriptions.index') }}" class="text-primary underline">Abonnements</a>.
+                        </p>
                     </div>
 
                     <!-- ═══════════════════════════════════════════════════════════════ -->

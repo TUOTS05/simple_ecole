@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Échéance d'une inscription au goûter.
+ */
 class GouterInstallment extends Model
 {
     protected $fillable = [

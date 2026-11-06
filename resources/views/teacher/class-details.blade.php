@@ -17,7 +17,7 @@
         </div>
     </div>
 
-    <!-- ✅ BOUTONS D'ACTION EN HAUT (Alignés à droite, taille réduite) -->
+    <!-- BOUTONS D'ACTION EN HAUT (Alignés à droite, taille réduite) -->
     <div class="flex justify-end gap-3 mb-4">
         <a href="{{ route('teacher.attendance.create', ['classId' => $class->id]) }}" class="flex items-center px-4 py-2 bg-accent hover:bg-green-400 text-gray-800 rounded-lg font-semibold text-sm transition shadow-sm">
             <i class="fas fa-clipboard-check mr-2"></i> Faire l'appel

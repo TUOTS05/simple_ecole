@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Abonnement d'une école à une offre.
+ */
 class Subscription extends Model
 {
     // Les champs qui peuvent être remplis en masse

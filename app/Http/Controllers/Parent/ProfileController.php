@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
+/**
+ * Espace parent : profil et mot de passe.
+ */
 class ProfileController extends Controller
 {
     /**

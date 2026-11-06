@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Paiement des frais de scolarité, imputé sur une échéance d'une inscription.
+ */
 class Payment extends Model
 {
     use SoftDeletes;
@@ -46,7 +49,7 @@ class Payment extends Model
         return $this->belongsTo(User::class, 'received_by');
     }
 
-    // Helpers
+    // Méthodes utilitaires
     public function isForRegistration(): bool
     {
         return $this->payment_type === 'registration';

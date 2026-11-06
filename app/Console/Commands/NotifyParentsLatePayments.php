@@ -8,12 +8,18 @@ use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 
+/**
+ * Relance par e-mail les parents dont une échéance de scolarité est en retard.
+ */
 class NotifyParentsLatePayments extends Command
 {
     protected $signature = 'notify:parents-late';
 
     protected $description = 'Envoie une alerte aux parents dont les enfants ont des échéances en retard.';
 
+    /**
+     * Envoie un e-mail pour chaque échéance de scolarité échue et non réglée.
+     */
     public function handle()
     {
         $this->info('🔍 Vérification des échéances en retard...');

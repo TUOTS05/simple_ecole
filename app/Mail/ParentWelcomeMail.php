@@ -6,6 +6,9 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
+/**
+ * E-mail de bienvenue au parent, avec ses identifiants de l'espace parent.
+ */
 class ParentWelcomeMail extends Mailable
 {
     use Queueable, SerializesModels;
@@ -22,6 +25,9 @@ class ParentWelcomeMail extends Mailable
 
     public $loginUrl;
 
+    /**
+     * Noms du parent, de l'élève et de l'école, et identifiants de connexion.
+     */
     public function __construct($parentName, $studentName, $schoolName, $email, $password)
     {
         $this->parentName = $parentName;
@@ -32,6 +38,9 @@ class ParentWelcomeMail extends Mailable
         $this->loginUrl = url('/login');
     }
 
+    /**
+     * Objet et vue de l'e-mail.
+     */
     public function build()
     {
         return $this->subject('🎓 Bienvenue sur Simple Ecole - Votre espace parent')

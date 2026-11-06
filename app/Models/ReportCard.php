@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Bulletin d'un élève pour un mois ou un trimestre : moyenne, rang, appréciations et décision de fin
+ * d'année.
+ */
 class ReportCard extends Model
 {
     use SoftDeletes;
@@ -58,11 +61,9 @@ class ReportCard extends Model
         return $this->belongsTo(SchoolClass::class);
     }
 
-    // public function grades(): HasMany
-    // {
-    //     return $this->hasMany(Grade::class);
-    // }
-
+    /**
+     * Notes de l'élève correspondant à la période du bulletin (le mois ou le trimestre).
+     */
     public function grades()
     {
         return $this->hasMany(Grade::class, 'student_id', 'student_id')

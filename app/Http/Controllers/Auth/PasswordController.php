@@ -8,10 +8,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
+/**
+ * Changement du mot de passe depuis le profil.
+ */
 class PasswordController extends Controller
 {
     /**
-     * Update the user's password.
+     * Met à jour le mot de passe.
      */
     public function update(Request $request): RedirectResponse
     {

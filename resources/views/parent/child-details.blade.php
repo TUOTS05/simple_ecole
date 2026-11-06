@@ -76,17 +76,17 @@
             <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Situation financière — {{ $currentYear->name }}</h2>
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <div>
-                    <p class="text-xs text-gray-500 mb-1">Frais de scolarité</p>
-                    <p class="font-semibold text-gray-800">{{ number_format($enrollment->tuition_fee_total, 0, ',', ' ') }} FCFA</p>
+                    <p class="text-xs text-gray-500 mb-1">Frais scolaires</p>
+                    <p class="font-semibold text-gray-800">{{ number_format($fees['expected'], 0, ',', ' ') }} FCFA</p>
                 </div>
                 <div>
                     <p class="text-xs text-gray-500 mb-1">Déjà payé</p>
-                    <p class="font-semibold text-green-700">{{ number_format($enrollment->tuition_fee_paid, 0, ',', ' ') }} FCFA</p>
+                    <p class="font-semibold text-green-700">{{ number_format($fees['paid'], 0, ',', ' ') }} FCFA</p>
                 </div>
                 <div>
                     <p class="text-xs text-gray-500 mb-1">Reste à payer</p>
-                    <p class="font-semibold {{ $enrollment->tuition_fee_remaining > 0 ? 'text-red-600' : 'text-green-700' }}">
-                        {{ number_format(max(0, $enrollment->tuition_fee_remaining), 0, ',', ' ') }} FCFA
+                    <p class="font-semibold {{ $fees['remaining'] > 0 ? 'text-red-600' : 'text-green-700' }}">
+                        {{ number_format($fees['remaining'], 0, ',', ' ') }} FCFA
                     </p>
                 </div>
                 <div>
@@ -102,7 +102,7 @@
                             @case('enrolled') Inscrit @break
                             @case('reserved') Réservé @break
                             @case('withdrawn') Retiré @break
-                            @default {{ $enrollment->status }}
+                            @default {{ \App\Support\Labels::of($enrollment->status) }}
                         @endswitch
                     </p>
                 </div>

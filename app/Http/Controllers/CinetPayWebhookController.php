@@ -15,6 +15,10 @@ use Illuminate\Support\Facades\Log;
  */
 class CinetPayWebhookController extends Controller
 {
+    /**
+     * Reçoit la notification de CinetPay et fait vérifier le paiement auprès de CinetPay avant de le
+     * valider.
+     */
     public function notify(Request $request, ExtraOnlinePaymentService $service): Response
     {
         $transactionId = $request->input('cpm_trans_id') ?? $request->input('transaction_id');

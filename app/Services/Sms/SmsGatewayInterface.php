@@ -2,6 +2,9 @@
 
 namespace App\Services\Sms;
 
+/**
+ * Contrat commun aux passerelles d'envoi de SMS.
+ */
 interface SmsGatewayInterface
 {
     /**

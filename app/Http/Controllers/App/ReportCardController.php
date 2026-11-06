@@ -10,12 +10,19 @@ use App\Models\SchoolClass;
 use App\Models\SchoolYear;
 use App\Models\Student;
 use App\Models\Subject;
+use App\Support\SchoolRules;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Bulletins de notes : calcul des moyennes et des rangs, consultation, modification et PDF.
+ */
 class ReportCardController extends Controller
 {
+    /**
+     * Liste des bulletins, filtrable par année, classe et période.
+     */
     public function index(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -53,6 +60,9 @@ class ReportCardController extends Controller
         return view('app.report-cards.index', compact('reportCards', 'schoolYears', 'selectedYearId'));
     }
 
+    /**
+     * Formulaire de génération des bulletins d'une classe pour une période.
+     */
     public function create(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -87,7 +97,7 @@ class ReportCardController extends Controller
                 ->orderBy('name')
                 ->get();
 
-            // ✅ CHARGEMENT DES NOTES EXISTANTES (saisies par l'enseignant)
+            // CHARGEMENT DES NOTES EXISTANTES (saisies par l'enseignant)
             $gradesQuery = Grade::where('school_class_id', $selectedClassId)
                 ->where('school_year_id', $currentYear?->id)
                 ->where('period', $period); // "Mensuel" ou "Trimestriel"
@@ -116,18 +126,21 @@ class ReportCardController extends Controller
         ));
     }
 
+    /**
+     * Génère les bulletins de tous les élèves d'une classe pour la période choisie.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'class_id' => 'required|exists:school_classes,id',
-            // ✅ Tolérance sur la casse (Mensuel ou mensuel)
+            'class_id' => ['required', SchoolRules::exists('school_classes')],
+            // Tolérance sur la casse (Mensuel ou mensuel)
             'period' => 'required|in:Mensuel,mensuel,Trimestriel,trimestriel',
             'month' => 'nullable|string',
             'quarter' => 'nullable|integer|min:1|max:3',
-            'coefficients' => 'nullable|array', // ✅ Rendu optionnel
+            'coefficients' => 'nullable|array', // Rendu optionnel
             'coefficients.*' => 'nullable|numeric|min:1|max:10',
             'grades' => 'required|array',
-            'grades.*.*.score' => 'nullable|numeric|min:0|max:100', // ✅ Nullable pour permettre des champs vides
+            'grades.*.*.score' => 'nullable|numeric|min:0|max:100', // Nullable pour permettre des champs vides
             'grades.*.*.max_score' => 'required|numeric|min:1',
             'grades.*.*.remarks' => 'nullable|string|max:255',
         ]);
@@ -195,6 +208,10 @@ class ReportCardController extends Controller
         }
     }
 
+    /**
+     * Calcule la moyenne pondérée d'un élève, son rang et son appréciation, puis crée ou met à jour
+     * son bulletin.
+     */
     private function calculateAndCreateReportCard($schoolId, $student, $classId, $yearId, $period, $month, $quarter)
     {
         $gradesQuery = Grade::where('school_id', $schoolId)
@@ -203,7 +220,7 @@ class ReportCardController extends Controller
             ->where('school_year_id', $yearId)
             ->where('period', $period);
 
-        // ✅ CORRECTION : Utilisation de strtolower pour que "Mensuel" === "mensuel" fonctionne
+        // Comparaison insensible à la casse : la base contient « Mensuel » comme « mensuel »
         if (strtolower($period) === 'mensuel') {
             $gradesQuery->where('month', $month);
         } else {
@@ -246,7 +263,7 @@ class ReportCardController extends Controller
                 'school_year_id' => $yearId,
                 'school_class_id' => $classId,
                 'period' => $period,
-                // ✅ CORRECTION CRITIQUE : strtolower pour enregistrer correctement le mois ou le trimestre
+                // Insensible à la casse, pour enregistrer le mois ou le trimestre selon la période
                 'month' => strtolower($period) === 'mensuel' ? $month : null,
                 'quarter' => strtolower($period) === 'trimestriel' ? $quarter : null,
             ],
@@ -259,6 +276,9 @@ class ReportCardController extends Controller
         );
     }
 
+    /**
+     * Moyennes de tous les élèves actifs de la classe pour la période, servant à calculer les rangs.
+     */
     private function getAllStudentAverages($schoolId, $classId, $yearId, $period, $month, $quarter)
     {
         $averages = [];
@@ -275,7 +295,7 @@ class ReportCardController extends Controller
                 ->where('school_year_id', $yearId)
                 ->where('period', $period);
 
-            // ✅ CORRECTION : strtolower ici aussi
+            // Même comparaison insensible à la casse
             if (strtolower($period) === 'mensuel') {
                 $grades->where('month', $month);
             } else {
@@ -308,40 +328,9 @@ class ReportCardController extends Controller
         return $averages;
     }
 
-    // public function show(ReportCard $reportCard)
-    // {
-    //     if ($reportCard->school_id !== session('current_school_id')) {
-    //         abort(403);
-    //     }
-
-    //     $reportCard->load([
-    //         'student',
-    //         'schoolClass',
-    //         'schoolYear',
-    //         'createdBy'
-    //     ]);
-
-    //     // Charger les notes manuellement selon les critères
-    //     $gradesQuery = Grade::where('school_id', $reportCard->school_id)
-    //         ->where('student_id', $reportCard->student_id)
-    //         ->where('school_year_id', $reportCard->school_year_id)
-    //         ->where('period', $reportCard->period)
-    //         ->with('subject');
-
-    //     if (strtolower($reportCard->period) === 'mensuel') {
-    //         $gradesQuery->where('month', $reportCard->month);
-    //     } else {
-    //         $gradesQuery->where('quarter', $reportCard->quarter);
-    //     }
-
-    //     $grades = $gradesQuery->get();
-
-    //     // Attacher les notes au bulletin
-    //     $reportCard->setRelation('grades', $grades);
-
-    //     return view('app.report-cards.show', compact('reportCard'));
-    // }
-
+    /**
+     * Affiche un bulletin avec toutes les matières de la classe, notées ou non.
+     */
     public function show(ReportCard $reportCard)
     {
         if ($reportCard->school_id !== session('current_school_id')) {
@@ -367,7 +356,7 @@ class ReportCardController extends Controller
         $grades = $gradesQuery->get();
         $reportCard->setRelation('grades', $grades);
 
-        // ✅ AJOUT CRITIQUE : Charger toutes les matières pour que l'écran soit identique au PDF
+        // Toutes les matières de la classe, pour que l'écran soit identique au PDF
         $allSubjects = Subject::where('school_id', $schoolClass->school_id)
             ->where('school_year_id', $reportCard->school_year_id)
             ->where('cycle', $schoolClass->cycle)
@@ -376,10 +365,13 @@ class ReportCardController extends Controller
             ->orderBy('name')
             ->get();
 
-        // ✅ On passe maintenant $allSubjects à la vue
+        // On passe maintenant $allSubjects à la vue
         return view('app.report-cards.show', compact('reportCard', 'allSubjects'));
     }
 
+    /**
+     * Formulaire de modification d'un bulletin (appréciations, décision).
+     */
     public function edit(ReportCard $reportCard)
     {
         if ($reportCard->school_id !== session('current_school_id')) {
@@ -430,6 +422,9 @@ class ReportCardController extends Controller
         ));
     }
 
+    /**
+     * Enregistre les notes et appréciations modifiées, puis recalcule la moyenne du bulletin.
+     */
     public function update(Request $request, ReportCard $reportCard)
     {
         if ($reportCard->school_id !== session('current_school_id')) {
@@ -494,6 +489,9 @@ class ReportCardController extends Controller
         }
     }
 
+    /**
+     * Supprime un bulletin.
+     */
     public function destroy(ReportCard $reportCard)
     {
         if ($reportCard->school_id !== session('current_school_id')) {
@@ -537,7 +535,7 @@ class ReportCardController extends Controller
         $grades = $gradesQuery->get()->keyBy('subject_id');
         $reportCard->setRelation('grades', $grades->values());
 
-        // 2. ✅ NOUVEAU : Récupérer TOUTES les matières de la classe
+        // 2. Toutes les matières de la classe, même sans note
         $allSubjects = Subject::where('school_id', $schoolClass->school_id)
             ->where('school_year_id', $reportCard->school_year_id)
             ->where('cycle', $schoolClass->cycle)

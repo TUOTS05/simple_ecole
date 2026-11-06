@@ -11,6 +11,12 @@
 </div>
 @endif
 
+@if(session('error'))
+<div class="bg-red-100 border border-red-300 text-red-800 px-6 py-4 rounded-lg mb-6">
+    {{ session('error') }}
+</div>
+@endif
+
 <div class="flex justify-between items-center mb-6">
     <div>
         <h1 class="text-3xl font-bold text-gray-800">Matières</h1>

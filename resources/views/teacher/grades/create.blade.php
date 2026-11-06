@@ -5,7 +5,7 @@
 
 @section('content')
 
-<!-- ✅ TEST VISUEL CRITIQUE : Si vous voyez ce texte, le bon fichier est chargé -->
+<!-- TEST VISUEL CRITIQUE : Si vous voyez ce texte, le bon fichier est chargé -->
 <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 font-bold text-xl">
     ✅ FICHIER create.blade.php CHARGÉ AVEC SUCCÈS !
 </div>

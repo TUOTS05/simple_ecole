@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Inscription d'un élève de maternelle au goûter pour une année.
+ */
 class GouterSubscription extends Model
 {
     protected $fillable = [
@@ -56,6 +59,9 @@ class GouterSubscription extends Model
         return $this->hasMany(GouterPayment::class);
     }
 
+    /**
+     * Pourcentage déjà payé (attribut payment_rate).
+     */
     public function getPaymentRateAttribute(): float
     {
         $total = (float) $this->total_amount;

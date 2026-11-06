@@ -52,7 +52,7 @@
                                 {{ $message->subject ?? 'Sans objet' }}
                             </h3>
 
-                            {{-- ✅ NOUVEAU : Affichage du contexte (Classe ou Tous les parents) --}}
+                            {{-- Destinataires du message : une classe ou tous les parents --}}
                             @if($message->target_info)
                                 <span class="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 text-xs px-2 py-1 rounded-md font-medium border border-indigo-100 mt-1">
                                     🏫 {{ $message->target_info }}

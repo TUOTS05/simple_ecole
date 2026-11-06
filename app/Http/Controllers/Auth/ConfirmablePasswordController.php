@@ -9,10 +9,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
+/**
+ * Confirmation du mot de passe avant l'accès à une page sensible.
+ */
 class ConfirmablePasswordController extends Controller
 {
     /**
-     * Show the confirm password view.
+     * Affiche l'écran de confirmation du mot de passe.
      */
     public function show(): View
     {
@@ -20,7 +23,7 @@ class ConfirmablePasswordController extends Controller
     }
 
     /**
-     * Confirm the user's password.
+     * Vérifie le mot de passe de l'utilisateur.
      */
     public function store(Request $request): RedirectResponse
     {

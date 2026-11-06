@@ -28,7 +28,7 @@
                     <p class="text-sm text-gray-600">Période</p>
                     <p class="font-bold">
                         @if($reportCard->period === 'mensuel')
-                            Mensuel - {{ \Carbon\Carbon::parse($reportCard->month)->format('F Y') }}
+                            Mensuel - {{ $reportCard->month }}
                         @else
                             {{ $reportCard->quarter }}ème Trimestre
                         @endif

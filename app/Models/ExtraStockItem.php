@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Article géré en stock (uniforme, fourniture, kit…).
+ */
 class ExtraStockItem extends Model
 {
     protected $fillable = [

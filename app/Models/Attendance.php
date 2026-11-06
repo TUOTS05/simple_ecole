@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Présence d'un élève pour une date et une demi-journée (présent, absent, en retard, excusé).
+ */
 class Attendance extends Model
 {
     protected $fillable = [
@@ -44,7 +47,7 @@ class Attendance extends Model
         return $this->belongsTo(User::class, 'marked_by');
     }
 
-    // Helpers
+    // Méthodes utilitaires
     public function isPresent(): bool
     {
         return $this->status === 'present';

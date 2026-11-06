@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Matière enseignée à un niveau pour une année, avec son coefficient.
+ */
 class Subject extends Model
 {
     protected $fillable = [

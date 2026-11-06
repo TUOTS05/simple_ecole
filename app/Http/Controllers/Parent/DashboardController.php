@@ -12,6 +12,9 @@ use App\Services\StudentProgressionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Espace parent : tableau de bord avec la situation de chaque enfant.
+ */
 class DashboardController extends Controller
 {
     /**
@@ -52,12 +55,9 @@ class DashboardController extends Controller
         // Statistiques globales
         $globalStats = [
             'totalChildren' => $childrenData->count(),
-            'totalFees' => $childrenData->sum(function ($data) {
-                return $data['enrollment']->tuition_fee_total ?? 0;
-            }),
-            'totalPaid' => $childrenData->sum(function ($data) {
-                return $data['enrollment']->tuition_fee_paid ?? 0;
-            }),
+            // Mêmes montants que la page Paiements : toutes les échéances (inscription et scolarité)
+            'totalFees' => $childrenData->sum(fn ($data) => $data['fees']['expected'] ?? 0),
+            'totalPaid' => $childrenData->sum(fn ($data) => $data['fees']['paid'] ?? 0),
             'averageAttendance' => $childrenData->avg('attendanceRate'),
         ];
 
@@ -112,7 +112,7 @@ class DashboardController extends Controller
      * d'un enfant pour une année scolaire donnée. Partagé entre le dashboard et la fiche détail.
      *
      * @param  int|null  $progressionLimit  Nombre max de compositions à garder dans l'historique
-     *                                       de progression (null = historique complet, toutes années).
+     *                                      de progression (null = historique complet, toutes années).
      */
     private function resolveChildStats(Student $child, ?SchoolYear $currentYear, ?int $progressionLimit = null): array
     {
@@ -147,13 +147,9 @@ class DashboardController extends Controller
         $data['enrollment'] = $enrollment;
         $data['schoolClass'] = $enrollment->schoolClass;
 
-        // Calculer le taux de paiement
-        if ($enrollment->tuition_fee_total > 0) {
-            $data['paymentRate'] = round(
-                ($enrollment->tuition_fee_paid / $enrollment->tuition_fee_total) * 100,
-                1
-            );
-        }
+        // Situation des frais et taux de paiement, calculés sur les échéances
+        $data['fees'] = $enrollment->feeSummary();
+        $data['paymentRate'] = $data['fees']['rate'];
 
         // Calculer la moyenne générale (bulletin le plus récent de l'année :
         // un élève a un bulletin par période, donc on trie par updated_at)

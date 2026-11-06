@@ -43,6 +43,17 @@
                     <div class="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-lg mr-3">1</div>
                     <h2 class="text-2xl font-bold text-gray-800">Identification de l'élève</h2>
                 </div>
+
+                <!-- Recherche directe par matricule ou nom -->
+                <div class="mb-6">
+                    <label for="student_search" class="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                        <span class="mr-2">🔎</span> Rechercher un élève par matricule ou par nom
+                    </label>
+                    <input type="search" id="student_search" autocomplete="off" oninput="searchStudentForPayment(this.value)"
+                           placeholder="Ex. 2026-ECO-001 ou Koné"
+                           class="w-full px-4 py-3 border-2 border-primary/40 rounded-lg focus:ring-2 focus:ring-primary">
+                    <p class="text-xs text-gray-500 mt-1">Ou choisissez l'année, le cycle et la classe ci-dessous pour parcourir la liste.</p>
+                </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Année scolaire -->
@@ -64,9 +75,9 @@
                     <!-- Cycle -->
                     <div class="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
                         <label class="flex items-center text-sm font-semibold text-purple-900 mb-2">
-                            <span class="mr-2">🎓</span> Cycle *
+                            <span class="mr-2">🎓</span> Cycle
                         </label>
-                        <select name="cycle" id="cycle" required onchange="filterClasses()"
+                        <select name="cycle" id="cycle" onchange="filterClasses()"
                                 class="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white">
                             <option value="">-- Sélectionner --</option>
                             @foreach($cycles as $value => $label)
@@ -80,9 +91,9 @@
                     <!-- Classe -->
                     <div class="bg-green-50 p-4 rounded-lg border-2 border-green-200">
                         <label class="flex items-center text-sm font-semibold text-green-900 mb-2">
-                            <span class="mr-2">🏫</span> Classe *
+                            <span class="mr-2">🏫</span> Classe
                         </label>
-                        <select name="class_id" id="class_id" required onchange="loadStudentsByClass()"
+                        <select name="class_id" id="class_id" onchange="loadStudentsByClass()"
                                 class="w-full px-4 py-3 border-2 border-green-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white">
                             <option value="">-- D'abord, sélectionner un cycle --</option>
                             @foreach($classes as $class)
@@ -302,41 +313,78 @@
             .then(data => {
                 if (data.error) throw new Error(data.message);
                 
-                tbody.innerHTML = '';
-                if (!data || data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-gray-500">Aucun élève trouvé dans cette classe pour cette année.</td></tr>';
-                    return;
-                }
-
-                data.forEach(student => {
-                    const tr = document.createElement('tr');
-                    tr.className = 'hover:bg-yellow-50 cursor-pointer transition';
-                    tr.onclick = (e) => {
-                        if(e.target.type !== 'checkbox') {
-                            const cb = tr.querySelector('input[type="checkbox"]');
-                            cb.checked = !cb.checked;
-                            selectStudentForPayment(student, cb);
-                        }
-                    };
-
-                    // Échapper les guillemets pour le JSON inline
-                    const safeStudentJson = JSON.stringify(student).replace(/'/g, "&#39;").replace(/"/g, '&quot;');
-
-                    tr.innerHTML = `
-                        <td class="px-4 py-3">
-                            <input type="checkbox" class="student-checkbox w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary" 
-                                   onchange="selectStudentForPayment(null, this)" data-student='${safeStudentJson}'>
-                        </td>
-                        <td class="px-4 py-3 text-sm font-medium text-gray-900">${student.matricule || 'N/A'}</td>
-                        <td class="px-4 py-3 text-sm text-gray-700 font-semibold">${student.name}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
+                renderStudentRows(data, 'Aucun élève trouvé dans cette classe pour cette année.');
             })
             .catch(error => {
                 console.error("Erreur AJAX:", error);
                 tbody.innerHTML = `<tr><td colspan="3" class="px-4 py-8 text-center text-red-600 font-bold">❌ Erreur: ${error.message}<br><span class="text-xs font-normal text-gray-500">Vérifiez la console (F12) et votre contrôleur.</span></td></tr>`;
             });
+    }
+
+    // Échappe un texte avant de l'insérer dans le HTML (noms saisis par les utilisateurs).
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // Affiche les élèves (liste d'une classe ou résultats de recherche) dans le tableau de sélection.
+    function renderStudentRows(data, emptyMessage) {
+        const tbody = document.getElementById('students-table-body');
+        document.getElementById('students-table-container').classList.remove('hidden');
+        tbody.innerHTML = '';
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3" class="px-4 py-8 text-center text-gray-500">${escapeHtml(emptyMessage)}</td></tr>`;
+            return;
+        }
+
+        data.forEach(student => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-yellow-50 cursor-pointer transition';
+            tr.onclick = (e) => {
+                if (e.target.type !== 'checkbox') {
+                    const cb = tr.querySelector('input[type="checkbox"]');
+                    cb.checked = !cb.checked;
+                    selectStudentForPayment(student, cb);
+                }
+            };
+            tr.innerHTML = `
+                <td class="px-4 py-3">
+                    <input type="checkbox" class="student-checkbox w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary"
+                           onchange="selectStudentForPayment(null, this)">
+                </td>
+                <td class="px-4 py-3 text-sm font-medium text-gray-900">${escapeHtml(student.matricule || 'N/A')}</td>
+                <td class="px-4 py-3 text-sm text-gray-700 font-semibold">${escapeHtml(student.name)}${student.class_name ? ` <span class="text-xs text-gray-500">(${escapeHtml(student.class_name)})</span>` : ''}</td>
+            `;
+            // Données de l'élève attachées à la case, sans passer par un attribut HTML
+            tr.querySelector('.student-checkbox').studentData = student;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Recherche par matricule ou par nom, sans passer par la liste de classe
+    let searchTimer = null;
+    function searchStudentForPayment(value) {
+        clearTimeout(searchTimer);
+        const yearId = document.getElementById('school_year_id').value;
+        if (value.trim().length < 2) return;
+        if (!yearId) {
+            renderStudentRows([], "Choisissez d'abord l'année scolaire.");
+            return;
+        }
+        searchTimer = setTimeout(() => {
+            resetInstallments();
+            fetch(`{{ route('app.payments.search-students') }}?year_id=${encodeURIComponent(yearId)}&q=${encodeURIComponent(value.trim())}`, { headers: { 'Accept': 'application/json' } })
+                .then(response => response.json())
+                .then(data => {
+                    renderStudentRows(data, 'Aucun élève ne correspond à cette recherche.');
+                    // Un seul résultat (matricule exact) : sélection directe
+                    const boxes = document.querySelectorAll('.student-checkbox');
+                    if (data.length === 1 && boxes.length === 1) {
+                        boxes[0].checked = true;
+                        selectStudentForPayment(data[0], boxes[0]);
+                    }
+                })
+                .catch(() => renderStudentRows([], 'La recherche a échoué, réessayez.'));
+        }, 300);
     }
 
     // 3. Quand on coche un élève, afficher ses échéances
@@ -349,7 +397,7 @@
             return;
         }
 
-        const student = studentData || JSON.parse(checkbox.getAttribute('data-student').replace(/&quot;/g, '"'));
+        const student = studentData || checkbox.studentData;
         
         document.getElementById('selected_student_id').value = student.id;
         document.getElementById('selected_enrollment_id').value = student.enrollment_id || '';
@@ -403,7 +451,7 @@
                                ${index === 0 ? 'checked' : ''}
                                onchange="updateAmountAndInstallment(${inst.remaining}, ${inst.id}, '${safeDesc}', '${inst.type || 'tuition'}')">
                         <div class="ml-4">
-                            <p class="text-sm font-bold text-gray-800 group-hover:text-primary transition">${inst.description}</p>
+                            <p class="text-sm font-bold text-gray-800 group-hover:text-primary transition">${escapeHtml(inst.description)}</p>
                             <p class="text-xs text-gray-500">Échéance le : <span class="font-semibold">${inst.due_date}</span></p>
                         </div>
                     </div>

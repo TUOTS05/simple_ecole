@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Année scolaire d'une école ; une seule est active à la fois.
+ */
 class SchoolYear extends Model
 {
     protected $fillable = [
@@ -38,7 +41,7 @@ class SchoolYear extends Model
         return $this->hasMany(Enrollment::class);
     }
 
-    // Helpers
+    // Méthodes utilitaires
     public function isActive(): bool
     {
         return $this->is_active;
@@ -47,5 +50,11 @@ class SchoolYear extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    // Les années scolaires sont propres à chaque école : ne jamais chercher "l'année active" sans école.
+    public static function activeIdFor(?int $schoolId): ?int
+    {
+        return static::where('school_id', $schoolId)->where('is_active', true)->value('id');
     }
 }

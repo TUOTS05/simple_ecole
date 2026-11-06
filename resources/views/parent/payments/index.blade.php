@@ -14,7 +14,7 @@
         </div>
     </div>
 
-    <!-- ✅ SÉLECTEUR D'ENFANT (visible seulement s'il y a plus d'un enfant) -->
+    <!-- SÉLECTEUR D'ENFANT (visible seulement s'il y a plus d'un enfant) -->
     @if($siblings->count() > 1)
     <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <span class="font-semibold text-blue-800 text-sm">Vous avez plusieurs enfants. Sélectionnez celui dont vous voulez voir les paiements :</span>
@@ -47,96 +47,102 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <!-- Colonne Gauche : Échéances (2/3 de la largeur) -->
-        <div class="lg:col-span-2">
-            <h2 class="text-sm font-semibold text-gray-500 uppercase mb-3 px-1">Échéances à régler</h2>
-            
-            @forelse($installments as $installment)
-                @php
-                    $reste = $installment->amount - $installment->paid_amount;
-                    $isLate = $reste > 0 && \Carbon\Carbon::parse($installment->due_date)->isPast();
-                    $isPaid = $reste <= 0;
-                    
-                    $badgeClass = $isPaid ? 'bg-green-100 text-green-700' : ($isLate ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700');
-                    $badgeText = $isPaid ? 'Payé' : ($isLate ? 'En retard' : 'En attente');
-                @endphp
-                
-                <div class="bg-white border border-gray-200 rounded-xl p-5 mb-3 shadow-sm hover:shadow-md transition">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
-                        <h3 class="font-bold text-gray-800">{{ $installment->description }}</h3>
-                        <span class="text-xs font-semibold px-3 py-1 rounded-full {{ $badgeClass }}">
-                            {{ $badgeText }}
-                        </span>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <p class="text-gray-500 text-xs uppercase">Date d'échéance</p>
-                            <p class="font-medium {{ $isLate ? 'text-red-600' : 'text-gray-800' }}">
-                                {{ \Carbon\Carbon::parse($installment->due_date)->isoFormat('DD MMMM YYYY') }}
-                            </p>
-                        </div>
-                        <div>
-                            <p class="text-gray-500 text-xs uppercase">Montant total</p>
-                            <p class="font-medium text-gray-800">{{ number_format($installment->amount, 0, ',', ' ') }} FCFA</p>
-                        </div>
-                    </div>
+    {{-- Échéances : un clic sur une ligne affiche les paiements effectués sur cette échéance,
+         avec la réédition de chaque reçu. --}}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase px-6 pt-5 pb-3">Échéances</h2>
 
-                    @if(!$isPaid)
-                        <div class="flex justify-between items-center text-red-600 font-semibold pt-3 mt-3 border-t border-gray-100">
-                            <span>Reste à payer :</span>
-                            <span class="text-lg">{{ number_format($reste, 0, ',', ' ') }} FCFA</span>
-                        </div>
-                    @else
-                        <div class="flex justify-between items-center text-green-600 font-semibold pt-3 mt-3 border-t border-gray-100">
-                            <span>Statut :</span>
-                            <span>Soldé ✅</span>
-                        </div>
-                    @endif
-                </div>
-            @empty
-                <div class="text-center py-10 text-gray-500 bg-white rounded-xl border border-gray-200 border-dashed">
-                    <p>Aucune échéance configurée pour le moment.</p>
-                </div>
-            @endforelse
-        </div>
+        @if(count($installments))
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-gray-50 text-xs uppercase text-gray-500">
+                        <tr>
+                            <th class="px-2 sm:px-4 py-3 text-left">Échéance</th>
+                            <th class="px-2 sm:px-4 py-3 text-left">Date limite</th>
+                            <th class="px-2 sm:px-4 py-3 text-right hidden sm:table-cell">Montant</th>
+                            <th class="px-2 sm:px-4 py-3 text-right hidden sm:table-cell">Payé</th>
+                            <th class="px-2 sm:px-4 py-3 text-right">Reste</th>
+                            <th class="px-2 sm:px-4 py-3 text-center">Statut</th>
+                            <th class="px-2 py-3"></th>
+                        </tr>
+                    </thead>
+                    @foreach($installments as $installment)
+                        @php
+                            $reste = max(0, $installment->amount - $installment->paid_amount);
+                            $isPaid = $reste <= 0;
+                            $isLate = ! $isPaid && \Carbon\Carbon::parse($installment->due_date)->isPast();
+                            $isPartial = ! $isPaid && $installment->paid_amount > 0;
+                            $badgeClass = $isPaid ? 'bg-green-100 text-green-700' : ($isLate ? 'bg-red-100 text-red-700' : ($isPartial ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'));
+                            $badgeText = $isPaid ? 'Payé' : ($isLate ? 'En retard' : ($isPartial ? 'Partiel' : 'En attente'));
+                            $installmentPayments = $paymentsByInstallment->get($installment->id, collect());
+                        @endphp
+                        <tbody x-data="{ open: false }" class="border-t border-gray-100">
+                            <tr @click="open = !open" class="cursor-pointer hover:bg-gray-50" title="Voir les paiements de cette échéance">
+                                <td class="px-2 sm:px-4 py-3 font-semibold text-gray-800">{{ $installment->description }}</td>
+                                <td class="px-2 sm:px-4 py-3 {{ $isLate ? 'text-red-600 font-semibold' : 'text-gray-700' }}">{{ \Carbon\Carbon::parse($installment->due_date)->translatedFormat('d M Y') }}</td>
+                                <td class="px-2 sm:px-4 py-3 text-right whitespace-nowrap hidden sm:table-cell">{{ number_format($installment->amount, 0, ',', ' ') }}</td>
+                                <td class="px-2 sm:px-4 py-3 text-right whitespace-nowrap text-green-700 hidden sm:table-cell">{{ number_format($installment->paid_amount, 0, ',', ' ') }}</td>
+                                <td class="px-2 sm:px-4 py-3 text-right whitespace-nowrap font-semibold {{ $isPaid ? 'text-gray-400' : 'text-red-600' }}">{{ number_format($reste, 0, ',', ' ') }}</td>
+                                <td class="px-2 sm:px-4 py-3 text-center"><span class="text-xs font-semibold px-2 py-1 rounded-full {{ $badgeClass }}">{{ $badgeText }}</span></td>
+                                <td class="px-2 py-3 text-gray-400 text-center" x-text="open ? '▾' : '▸'">▸</td>
+                            </tr>
+                            <tr x-show="open" x-cloak>
+                                <td colspan="7" class="bg-gray-50 px-4 py-3">
+                                    @if($installmentPayments->isEmpty())
+                                        <p class="text-sm text-gray-500">Aucun paiement enregistré sur cette échéance.</p>
+                                    @else
+                                        <table class="w-full text-sm">
+                                            <thead class="text-xs text-gray-500">
+                                                <tr>
+                                                    <th class="text-left py-1">Date</th>
+                                                    <th class="text-right py-1">Montant</th>
+                                                    <th class="text-left py-1 pl-4 hidden sm:table-cell">Mode</th>
+                                                    <th class="text-left py-1 pl-4 hidden sm:table-cell">Référence</th>
+                                                    <th class="py-1"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($installmentPayments as $payment)
+                                                    <tr class="border-t border-gray-200">
+                                                        <td class="py-2">{{ \Carbon\Carbon::parse($payment->payment_date)->translatedFormat('d M Y') }}</td>
+                                                        <td class="py-2 text-right font-semibold text-gray-800 whitespace-nowrap">{{ number_format($payment->amount, 0, ',', ' ') }} FCFA</td>
+                                                        <td class="py-2 pl-4 hidden sm:table-cell">{{ \App\Support\Labels::of($payment->payment_method) }}</td>
+                                                        <td class="py-2 pl-4 hidden sm:table-cell text-gray-500">{{ $payment->reference ?: '—' }}</td>
+                                                        <td class="py-2 text-right">
+                                                            <a href="{{ route('parent.payments.receipt', ['student' => $student->id, 'payment' => $payment->id]) }}" target="_blank"
+                                                               class="inline-flex items-center gap-1 bg-white border border-gray-300 hover:bg-primary hover:text-white hover:border-primary text-gray-700 px-3 py-1 rounded-lg text-xs font-semibold transition">
+                                                                🧾 Rééditer le reçu
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    @endif
+                                </td>
+                            </tr>
+                        </tbody>
+                    @endforeach
+                </table>
+            </div>
+        @else
+            <div class="text-center py-10 text-gray-500 border-t border-gray-100">
+                <p>Aucune échéance n'a encore été établie pour cette année scolaire.</p>
+            </div>
+        @endif
 
-        <!-- Colonne Droite : Historique des Reçus (1/3 de la largeur) -->
-        <div>
-            <h2 class="text-sm font-semibold text-gray-500 uppercase mb-3 px-1">Historique des reçus</h2>
-            
-            @if($payments->count() > 0)
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="divide-y divide-gray-100">
-                        @foreach($payments as $payment)
-                            <div class="p-4 hover:bg-gray-50 transition">
-                                <div class="flex justify-between items-start mb-2">
-                                    <p class="font-bold text-gray-800 text-sm">{{ $payment->description ?? 'Paiement' }}</p>
-                                    <span class="text-sm font-bold text-blue-600">{{ number_format($payment->amount, 0, ',', ' ') }} F</span>
-                                </div>
-                                <p class="text-xs text-gray-500 mb-3">
-                                    {{ \Carbon\Carbon::parse($payment->payment_date)->isoFormat('DD MMM YYYY') }}
-                                </p>
-                                <a href="{{ route('parent.payments.receipt', ['student' => $student->id, 'payment' => $payment->id]) }}" 
-                                   class="w-full flex items-center justify-center gap-2 bg-gray-100 hover:bg-primary hover:text-white text-gray-700 px-3 py-2 rounded-lg text-xs font-semibold transition">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                    </svg>
-                                    Télécharger le reçu
-                                </a>
-                            </div>
-                        @endforeach
+        {{-- Paiements anciens rattachés à aucune échéance --}}
+        @if($paymentsByInstallment->has(''))
+            <div class="border-t border-gray-100 px-6 py-4">
+                <h3 class="text-xs font-semibold text-gray-500 uppercase mb-2">Autres paiements</h3>
+                @foreach($paymentsByInstallment->get('') as $payment)
+                    <div class="flex justify-between items-center py-2 text-sm">
+                        <span>{{ \Carbon\Carbon::parse($payment->payment_date)->translatedFormat('d M Y') }} — {{ number_format($payment->amount, 0, ',', ' ') }} FCFA</span>
+                        <a href="{{ route('parent.payments.receipt', ['student' => $student->id, 'payment' => $payment->id]) }}" target="_blank" class="text-primary text-xs font-semibold">🧾 Rééditer le reçu</a>
                     </div>
-                </div>
-            @else
-                <div class="text-center py-10 text-gray-500 bg-white rounded-xl border border-gray-200 border-dashed">
-                    <p class="text-sm">Aucun paiement enregistré.</p>
-                </div>
-            @endif
-        </div>
-
+                @endforeach
+            </div>
+        @endif
     </div>
 </div>
 @endsection

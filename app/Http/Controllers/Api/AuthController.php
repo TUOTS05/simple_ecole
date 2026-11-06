@@ -16,6 +16,9 @@ use Illuminate\Validation\ValidationException;
  */
 class AuthController extends Controller
 {
+    /**
+     * Connexion d'un parent depuis l'application mobile : renvoie un jeton Sanctum.
+     */
     public function login(Request $request)
     {
         $validated = $request->validate([
@@ -50,6 +53,9 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Révoque le jeton utilisé pour la requête.
+     */
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
@@ -62,6 +68,9 @@ class AuthController extends Controller
         return response()->json(['user' => $this->userPayload($request->user())]);
     }
 
+    /**
+     * Informations de l'utilisateur renvoyées à l'application mobile.
+     */
     private function userPayload(User $user): array
     {
         return [

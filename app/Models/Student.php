@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Élève d'une école. Les requêtes sont automatiquement limitées à l'école de l'utilisateur connecté.
+ */
 class Student extends Model
 {
     use BelongsToSchool;
@@ -16,7 +19,7 @@ class Student extends Model
 
     // TOUS les champs du formulaire doivent être ici pour être enregistrés
     protected $fillable = [
-        'admission_number', // ✅ AJOUTEZ CETTE LIGNE SI ELLE MANQUE
+        'admission_number',
         'matricule',
         'first_name',
         'last_name',
@@ -51,9 +54,9 @@ class Student extends Model
         'previous_school',
         'remarks',
         'dietary_restrictions',
-        'id_card_path', // ✅ Ajouté précédemment
+        'id_card_path', // Ajouté précédemment
         'documents',
-        // ... vos autres colonnes
+        // …
     ];
 
     protected $casts = [
@@ -70,6 +73,9 @@ class Student extends Model
         return $this->belongsTo(School::class);
     }
 
+    /**
+     * Classes de l'élève (l'année est précisée sur le pivot).
+     */
     public function classes(): BelongsToMany
     {
         return $this->belongsToMany(SchoolClass::class, 'student_school_class', 'student_id', 'school_class_id')
@@ -97,6 +103,9 @@ class Student extends Model
         return $this->hasMany(ReportCard::class);
     }
 
+    /**
+     * Comptes parents rattachés à l'élève.
+     */
     public function parents(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'parent_student', 'student_id', 'parent_id')
@@ -149,10 +158,14 @@ class Student extends Model
         return $this->hasMany(CanteenSubscription::class);
     }
 
+    /**
+     * Inscription active à la cantine pour l'année active.
+     */
     public function currentCanteenSubscription()
     {
         return $this->hasOne(CanteenSubscription::class)
-            ->where('school_year_id', SchoolYear::where('is_active', true)->value('id'))
+            // L'année de l'abonnement appartient à l'école de l'élève : pas besoin de chercher l'année active globalement.
+            ->whereHas('schoolYear', fn ($q) => $q->where('is_active', true))
             ->where('status', 'active');
     }
 
@@ -161,10 +174,14 @@ class Student extends Model
         return $this->hasMany(GouterSubscription::class);
     }
 
+    /**
+     * Inscription active au goûter pour l'année active.
+     */
     public function currentGouterSubscription()
     {
         return $this->hasOne(GouterSubscription::class)
-            ->where('school_year_id', SchoolYear::where('is_active', true)->value('id'))
+            // L'année de l'abonnement appartient à l'école de l'élève : pas besoin de chercher l'année active globalement.
+            ->whereHas('schoolYear', fn ($q) => $q->where('is_active', true))
             ->where('status', 'active');
     }
 

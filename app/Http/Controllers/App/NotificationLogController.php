@@ -6,8 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\NotificationLog;
 use Illuminate\Http\Request;
 
+/**
+ * Historique des notifications envoyées aux parents (SMS, WhatsApp, e-mail).
+ */
 class NotificationLogController extends Controller
 {
+    /**
+     * Historique filtrable par type, canal, statut et période.
+     */
     public function index(Request $request)
     {
         $schoolId = session('current_school_id');

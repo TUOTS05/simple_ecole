@@ -1,9 +1,18 @@
+@php
+    $doc = \App\Support\DocumentSettings::for($school ?? null);
+    $rec = $doc['receipt'];
+    $primaryColor = $doc['branding']['primary_color'];
+    $logoPath = \App\Support\DocumentSettings::imagePath($school->logo ?? null);
+    $stampPath = $rec['show_stamp'] ? \App\Support\DocumentSettings::imagePath($doc['branding']['stamp']) : null;
+    $signaturePath = $rec['show_stamp'] ? \App\Support\DocumentSettings::imagePath($doc['branding']['signature']) : null;
+    $headerLines = array_filter(array_map('trim', explode("\n", $doc['header']['lines'])));
+@endphp
 <!DOCTYPE html>
 <html lang="fr">
 
 <head>
     <meta charset="UTF-8">
-    <title>Reçu de Paiement N°{{ str_pad($payment->id, 6, '0', STR_PAD_LEFT) }}</title>
+    <title>{{ $rec['title'] }} N°{{ str_pad($payment->id, 6, '0', STR_PAD_LEFT) }}</title>
     <style>
         @page {
             size: A5 portrait;
@@ -17,7 +26,7 @@
         }
 
         .receipt-container {
-            border: 2px solid #1e40af;
+            border: 2px solid {{ $primaryColor }};
             padding: 15px;
         }
 
@@ -146,14 +155,20 @@
         <table>
             <tr>
                 <td class="header-logo">
-                    @if($school && $school->logo && file_exists(public_path('storage/' . $school->logo)))
-                    <img src="{{ public_path('storage/' . $school->logo) }}" alt="Logo">
+                    @if($logoPath)
+                    <img src="{{ $logoPath }}" alt="Logo">
                     @else
                     <div style="font-size: 9px; color: #666; border: 1px dashed #999; padding: 5px; display: inline-block;">[ LOGO ]</div>
                     @endif
                 </td>
                 <td class="header-info">
-                    <div class="school-name">{{ $school->name ?? 'NOM DE L\'ÉTABLISSEMENT' }}</div>
+                    @foreach($headerLines as $line)
+                    <div style="font-size: 8px; font-weight: bold; text-transform: uppercase;">{{ $line }}</div>
+                    @endforeach
+                    @if($doc['header']['motto'])
+                    <div style="font-size: 7px; font-style: italic; margin-bottom: 4px;">{{ $doc['header']['motto'] }}</div>
+                    @endif
+                    <div class="school-name" style="color: {{ $primaryColor }};">{{ $school->name ?? 'NOM DE L\'ÉTABLISSEMENT' }}</div>
                     <div class="school-details">
                         Adresse: {{ $school->address ?? 'BP 1234 Abidjan- Côte d\'Ivoire' }}<br>
                         Tél: {{ $school->phone ?? '+225 01 53 91 91 75/ 07 89 57 32 72' }}
@@ -164,7 +179,7 @@
 
         <!-- 2. TITRE -->
         <div class="title-section">
-            <div class="title-main">REÇU DE PAIEMENT N°: {{ str_pad($payment->id, 6, '0', STR_PAD_LEFT) }}</div><hr>
+            <div class="title-main">{{ $rec['title'] }} N°: {{ str_pad($payment->id, 6, '0', STR_PAD_LEFT) }}</div><hr>
         </div>
 
         <!-- 3. CHAMPS FORMULAIRE (sans soulignement) -->
@@ -198,7 +213,7 @@
             <tr>
                 <td>
                     <span class="form-label">MONTANT:</span>
-                    <span class="form-value">{{ number_format($payment->amount, 0, ',', ' ') }} FCFA</span>
+                    <span class="form-value">{{ number_format($payment->amount, 0, ',', ' ') }} {{ $rec['currency'] }}</span>
                 </td>
                 <td>
                     <span class="form-label">MODE:</span>
@@ -208,7 +223,8 @@
         </table>
 
         <!-- 4. TABLEAU ÉCHÉANCES (nombre de lignes = nombre d'échéances restantes) -->
-        @if(isset($pendingInstallments) && $pendingInstallments->isNotEmpty())
+        @if(! $rec['show_pending_installments'])
+        @elseif(isset($pendingInstallments) && $pendingInstallments->isNotEmpty())
         <div class="installments-title">ÉCHÉANCE(S) RESTANTE(S)</div>
         <table class="data-table">
             <thead>
@@ -223,7 +239,7 @@
                 <tr>
                     <td>{{ $inst->description }}</td>
                     <td style="text-align: center;">{{ \Carbon\Carbon::parse($inst->due_date)->format('d/m/Y') }}</td>
-                    <td style="text-align: right;">{{ number_format($inst->amount - $inst->paid_amount, 0, ',', ' ') }} FCFA</td>
+                    <td style="text-align: right;">{{ number_format($inst->amount - $inst->paid_amount, 0, ',', ' ') }} {{ $rec['currency'] }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -235,11 +251,16 @@
         @endif
 
         <!-- 5. SIGNATURE -->
-        <div class="signature-label">Signature/ Cachet</div>
-        <div class="signature-box"></div>
+        <div class="signature-label">{{ $rec['signature_label'] }}@if($doc['branding']['signatory_title']) — {{ $doc['branding']['signatory_title'] }}@endif</div>
+        <div class="signature-box" style="{{ ($stampPath || $signaturePath) ? 'height: auto; min-height: 40px; text-align: center;' : '' }}">
+            @if($stampPath)<img src="{{ $stampPath }}" alt="Cachet" style="max-height: 50px; max-width: 40%;">@endif
+            @if($signaturePath)<img src="{{ $signaturePath }}" alt="Signature" style="max-height: 40px; max-width: 40%;">@endif
+        </div>
 
-        <!-- 6. FOOTER -->
-        <div class="footer">MERCI POUR VOTRE CONFIANCE!</div>
+        <!-- 6. PIED DE PAGE -->
+        @if($rec['footer_text'])
+        <div class="footer">{{ $rec['footer_text'] }}</div>
+        @endif
 
     </div>
 </body>

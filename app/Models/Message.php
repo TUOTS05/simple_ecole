@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Message entre l'école et les parents : individuel, ou diffusé à une classe ou à toute l'école.
+ */
 class Message extends Model
 {
     protected $fillable = [
@@ -39,7 +42,7 @@ class Message extends Model
         return $this->belongsTo(User::class, 'sender_id');
     }
 
-    // ✅ Relation avec le destinataire (Parent)
+    // Relation avec le destinataire (Parent)
     public function receiver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'receiver_id');

@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Mouvement de stock : entrée, sortie, vente ou retour d'un article.
+ */
 class ExtraStockMovement extends Model
 {
     protected $fillable = [

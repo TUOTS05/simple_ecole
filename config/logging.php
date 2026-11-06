@@ -9,12 +9,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Default Log Channel
+    | Canal de journalisation par défaut
     |--------------------------------------------------------------------------
     |
-    | This option defines the default log channel that is utilized to write
-    | messages to your logs. The value provided here should match one of
-    | the channels present in the list of "channels" configured below.
+    | Canal utilisé pour écrire les messages dans les journaux. Doit
+    | correspondre à l'un des canaux définis plus bas.
     |
     */
 
@@ -22,12 +21,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Deprecations Log Channel
+    | Journal des dépréciations
     |--------------------------------------------------------------------------
     |
-    | This option controls the log channel that should be used to log warnings
-    | regarding deprecated PHP and library features. This allows you to get
-    | your application ready for upcoming major versions of dependencies.
+    | Canal où sont consignés les avertissements de fonctionnalités PHP et de
+    | bibliothèques dépréciées, pour préparer les mises à jour.
     |
     */
 
@@ -38,15 +36,12 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Log Channels
+    | Canaux de journalisation
     |--------------------------------------------------------------------------
     |
-    | Here you may configure the log channels for your application. Laravel
-    | utilizes the Monolog PHP logging library, which includes a variety
-    | of powerful log handlers and formatters that you're free to use.
-    |
-    | Available drivers: "single", "daily", "slack", "syslog",
-    |                    "errorlog", "monolog", "custom", "stack"
+    | Canaux de journalisation de l'application, basés sur la bibliothèque
+    | Monolog. Pilotes : « single », « daily », « slack », « syslog », «
+    | errorlog », « monolog », « custom », « stack ».
     |
     */
 

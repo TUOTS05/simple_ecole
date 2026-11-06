@@ -3,12 +3,19 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
+use App\Models\Grade;
 use App\Models\SchoolYear;
 use App\Models\Subject;
 use Illuminate\Http\Request;
 
+/**
+ * Matières enseignées et leurs coefficients, par niveau, pour l'année active.
+ */
 class SubjectController extends Controller
 {
+    /**
+     * Matières de l'année active, filtrables par cycle et par niveau.
+     */
     public function index(Request $request)
     {
         $schoolId = session('current_school_id');
@@ -30,6 +37,9 @@ class SubjectController extends Controller
         return view('app.subjects.index', compact('subjects'));
     }
 
+    /**
+     * Formulaire de saisie des matières, avec les niveaux de chaque cycle.
+     */
     public function create()
     {
         $school = session('current_school');
@@ -46,100 +56,21 @@ class SubjectController extends Controller
             'primaire' => ['Lecture', 'Écriture/Copie', 'Orthographe', 'Grammaire/Conjugaison', 'Vocabulaire/EDHC', 'Exploitation de texte', 'Expression Écrite', 'Éveil du Milieu', 'Sciences', 'Mathématique', 'Chant/Récitation', 'Dessin', 'EPS', 'Dictée', 'Anglais'],
         ];
 
-        return view('app.subjects.create', compact('school', 'currentYear', 'levelsByCycle', 'defaultSubjects'));
+        // Matières déjà enregistrées pour chaque niveau de l'année : le formulaire les recharge
+        // au lieu de proposer la liste par défaut.
+        $existingSubjects = Subject::where('school_id', session('current_school_id'))
+            ->where('school_year_id', $currentYear?->id)
+            ->orderBy('id')
+            ->get(['cycle', 'level', 'name', 'coefficient', 'max_score'])
+            ->groupBy(fn ($subject) => "{$subject->cycle}|{$subject->level}")
+            ->map(fn ($subjects) => $subjects->map(fn ($s) => ['name' => $s->name, 'coefficient' => (float) $s->coefficient, 'max_score' => (int) $s->max_score])->values());
+
+        return view('app.subjects.create', compact('school', 'currentYear', 'levelsByCycle', 'defaultSubjects', 'existingSubjects'));
     }
 
-    // public function store(Request $request)
-    // {
-
-    //     $validated = $request->validate([
-    //         'cycle' => 'required|in:maternelle,primaire',
-    //         'level' => 'required|string|max:10',
-    //         'subjects' => 'required|array',
-    //         'subjects.*.name' => 'required|string|max:255',
-    //         'subjects.*.coefficient' => 'required|numeric|min:1|max:10',
-    //     ]);
-
-    //     dd($validated);
-
-    //     $schoolId = session('current_school_id');
-    //     $currentYear = SchoolYear::where('school_id', $schoolId)->where('is_active', true)->first();
-
-    //     foreach ($validated['subjects'] as $subjectData) {
-    //         Subject::updateOrCreate(
-    //             [
-    //                 'school_id' => $schoolId,
-    //                 'school_year_id' => $currentYear?->id,
-    //                 'cycle' => $validated['cycle'],
-    //                 'level' => $validated['level'],
-    //                 'name' => $subjectData['name'],
-    //             ],
-    //             [
-    //                 'coefficient' => $subjectData['coefficient'],
-    //                 'is_active' => true,
-    //             ]
-    //         );
-    //     }
-
-    //     return redirect()->route('app.subjects.index')
-    //         ->with('success', 'Matières enregistrées avec succès !');
-    // }
-
-    //     public function store(Request $request)
-    // {
-    //     // Filtrer les entrées vides
-    //     $subjects = collect($request->input('subjects', []))
-    //         ->filter(function($subject) {
-    //             return !empty($subject['name']) && !empty($subject['coefficient']);
-    //         })
-    //         ->values()
-    //         ->all();
-
-    //     if (empty($subjects)) {
-    //         return back()->withErrors(['subjects' => 'Veuillez ajouter au moins une matière valide.'])
-    //             ->withInput();
-    //     }
-
-    //     $validated = $request->validate([
-    //         'cycle' => 'required|in:maternelle,primaire',
-    //         'level' => 'required|string|max:10',
-    //         'subjects' => 'required|array|min:1',
-    //         'subjects.*.name' => 'required|string|max:255',
-    //         'subjects.*.coefficient' => 'required|numeric|min:1|max:10',
-    //     ]);
-
-    //     $schoolId = session('current_school_id');
-    //     $currentYear = SchoolYear::where('school_id', $schoolId)->where('is_active', true)->first();
-
-    //     if (!$currentYear) {
-    //         return back()->withErrors(['error' => 'Aucune année scolaire active trouvée.'])
-    //             ->withInput();
-    //     }
-
-    //     $count = 0;
-    //     foreach ($validated['subjects'] as $subjectData) {
-    //         if (empty($subjectData['name'])) continue;
-
-    //         Subject::updateOrCreate(
-    //             [
-    //                 'school_id' => $schoolId,
-    //                 'school_year_id' => $currentYear->id,
-    //                 'cycle' => $validated['cycle'],
-    //                 'level' => $validated['level'],
-    //                 'name' => $subjectData['name'],
-    //             ],
-    //             [
-    //                 'coefficient' => $subjectData['coefficient'],
-    //                 'is_active' => true,
-    //             ]
-    //         );
-    //         $count++;
-    //     }
-
-    //     return redirect()->route('app.subjects.index')
-    //         ->with('success', "{$count} matière(s) enregistrée(s) avec succès !");
-    // }
-
+    /**
+     * Enregistre plusieurs matières à la fois ; les lignes incomplètes sont ignorées.
+     */
     public function store(Request $request)
     {
         $subjects = collect($request->input('subjects', []))
@@ -198,10 +129,19 @@ class SubjectController extends Controller
             ->with('success', "{$count} matière(s) enregistrée(s) avec succès !");
     }
 
+    /**
+     * Supprime une matière.
+     */
     public function destroy(Subject $subject)
     {
         if ($subject->school_id !== session('current_school_id')) {
             abort(403);
+        }
+
+        // La suppression efface en cascade les notes de la matière : on la refuse tant qu'il y en a.
+        if (Grade::where('subject_id', $subject->id)->exists()) {
+            return redirect()->route('app.subjects.index')
+                ->with('error', "Impossible de supprimer « {$subject->name} » : des notes ont déjà été saisies dans cette matière.");
         }
 
         $subject->delete();

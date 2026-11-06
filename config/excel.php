@@ -9,38 +9,39 @@ return [
 
         /*
         |--------------------------------------------------------------------------
-        | Chunk size
+        | Taille des lots
         |--------------------------------------------------------------------------
         |
-        | When using FromQuery, the query is automatically chunked.
-        | Here you can specify how big the chunk should be.
+        | Avec FromQuery, la requête est découpée automatiquement en lots ; nombre
+        | de lignes par lot.
         |
         */
         'chunk_size' => 1000,
 
         /*
         |--------------------------------------------------------------------------
-        | Pre-calculate formulas during export
+        | Précalcul des formules à l'export
         |--------------------------------------------------------------------------
         */
         'pre_calculate_formulas' => false,
 
         /*
         |--------------------------------------------------------------------------
-        | Enable strict null comparison
+        | Comparaison stricte des valeurs nulles
         |--------------------------------------------------------------------------
         |
-        | When enabling strict null comparison empty cells ('') will
-        | be added to the sheet.
+        | Si elle est activée, les cellules vides ('') sont ajoutées à la feuille.
+        |
         */
         'strict_null_comparison' => false,
 
         /*
         |--------------------------------------------------------------------------
-        | CSV Settings
+        | Paramètres CSV
         |--------------------------------------------------------------------------
         |
-        | Configure e.g. delimiter, enclosure and line ending for CSV exports.
+        | Délimiteur, encadrement des valeurs, fin de ligne, etc. pour les exports
+        | CSV.
         |
         */
         'csv' => [
@@ -56,10 +57,10 @@ return [
 
         /*
         |--------------------------------------------------------------------------
-        | Worksheet properties
+        | Propriétés du classeur
         |--------------------------------------------------------------------------
         |
-        | Configure e.g. default title, creator, subject,...
+        | Titre, auteur, sujet… appliqués par défaut.
         |
         */
         'properties' => [
@@ -79,37 +80,33 @@ return [
 
         /*
         |--------------------------------------------------------------------------
-        | Read Only
+        | Lecture seule
         |--------------------------------------------------------------------------
         |
-        | When dealing with imports, you might only be interested in the
-        | data that the sheet exists. By default we ignore all styles,
-        | however if you want to do some logic based on style data
-        | you can enable it by setting read_only to false.
+        | À l'import, seules les données sont lues et les styles ignorés. Passer
+        | read_only à false pour exploiter aussi les styles.
         |
         */
         'read_only' => true,
 
         /*
         |--------------------------------------------------------------------------
-        | Ignore Empty
+        | Lignes vides
         |--------------------------------------------------------------------------
         |
-        | When dealing with imports, you might be interested in ignoring
-        | rows that have null values or empty strings. By default rows
-        | containing empty strings or empty values are not ignored but can be
-        | ignored by enabling the setting ignore_empty to true.
+        | À l'import, les lignes ne contenant que des valeurs nulles ou vides sont
+        | conservées par défaut. Passer ignore_empty à true pour les ignorer.
         |
         */
         'ignore_empty' => false,
 
         /*
         |--------------------------------------------------------------------------
-        | Heading Row Formatter
+        | Format de la ligne d'en-tête
         |--------------------------------------------------------------------------
         |
-        | Configure the heading row formatter.
-        | Available options: none|slug|custom
+        | Transformation appliquée aux titres de colonnes. Options : none, slug,
+        | custom.
         |
         */
         'heading_row' => [
@@ -118,10 +115,11 @@ return [
 
         /*
         |--------------------------------------------------------------------------
-        | CSV Settings
+        | Paramètres CSV
         |--------------------------------------------------------------------------
         |
-        | Configure e.g. delimiter, enclosure and line ending for CSV imports.
+        | Délimiteur, encadrement des valeurs, fin de ligne, etc. pour les imports
+        | CSV.
         |
         */
         'csv' => [
@@ -134,10 +132,10 @@ return [
 
         /*
         |--------------------------------------------------------------------------
-        | Worksheet properties
+        | Propriétés du classeur
         |--------------------------------------------------------------------------
         |
-        | Configure e.g. default title, creator, subject,...
+        | Titre, auteur, sujet… appliqués par défaut.
         |
         */
         'properties' => [
@@ -154,16 +152,14 @@ return [
 
         /*
        |--------------------------------------------------------------------------
-       | Cell Middleware
+       | Intergiciels de cellule
        |--------------------------------------------------------------------------
        |
-       | Configure middleware that is executed on getting a cell value
+       | Traitements exécutés à la lecture de la valeur d'une cellule.
        |
        */
         'cells' => [
             'middleware' => [
-                // \Maatwebsite\Excel\Middleware\TrimCellValue::class,
-                // \Maatwebsite\Excel\Middleware\ConvertEmptyCellValuesToNull::class,
             ],
         ],
 
@@ -171,11 +167,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Extension detector
+    | Détection par extension
     |--------------------------------------------------------------------------
     |
-    | Configure here which writer/reader type should be used when the package
-    | needs to guess the correct type based on the extension alone.
+    | Type de lecteur ou d'écrivain utilisé quand le format doit être deviné
+    | d'après la seule extension du fichier.
     |
     */
     'extension_detector' => [
@@ -197,11 +193,11 @@ return [
 
         /*
         |--------------------------------------------------------------------------
-        | PDF Extension
+        | Moteur PDF
         |--------------------------------------------------------------------------
         |
-        | Configure here which Pdf driver should be used by default.
-        | Available options: Excel::MPDF | Excel::TCPDF | Excel::DOMPDF
+        | Moteur utilisé par défaut pour les exports PDF. Options : Excel::MPDF,
+        | Excel::TCPDF, Excel::DOMPDF.
         |
         */
         'pdf' => Excel::DOMPDF,
@@ -209,19 +205,14 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Value Binder
+    | Liaison des valeurs
     |--------------------------------------------------------------------------
     |
-    | PhpSpreadsheet offers a way to hook into the process of a value being
-    | written to a cell. In there some assumptions are made on how the
-    | value should be formatted. If you want to change those defaults,
-    | you can implement your own default value binder.
-    |
-    | Possible value binders:
-    |
-    | [x] Maatwebsite\Excel\DefaultValueBinder::class
-    | [x] PhpOffice\PhpSpreadsheet\Cell\StringValueBinder::class
-    | [x] PhpOffice\PhpSpreadsheet\Cell\AdvancedValueBinder::class
+    | Règle qui décide comment une valeur est formatée quand elle est écrite
+    | dans une cellule. On peut fournir sa propre classe, par exemple
+    | Maatwebsite\Excel\DefaultValueBinder,
+    | PhpOffice\PhpSpreadsheet\Cell\StringValueBinder ou
+    | PhpOffice\PhpSpreadsheet\Cell\AdvancedValueBinder.
     |
     */
     'value_binder' => [
@@ -231,30 +222,25 @@ return [
     'cache' => [
         /*
         |--------------------------------------------------------------------------
-        | Default cell caching driver
+        | Cache des cellules
         |--------------------------------------------------------------------------
         |
-        | By default PhpSpreadsheet keeps all cell values in memory, however when
-        | dealing with large files, this might result into memory issues. If you
-        | want to mitigate that, you can configure a cell caching driver here.
-        | When using the illuminate driver, it will store each value in the
-        | cache store. This can slow down the process, because it needs to
-        | store each value. You can use the "batch" store if you want to
-        | only persist to the store when the memory limit is reached.
-        |
-        | Drivers: memory|illuminate|batch
+        | PhpSpreadsheet garde par défaut toutes les cellules en mémoire, ce qui
+        | peut saturer la mémoire sur de gros fichiers. Le pilote « illuminate »
+        | stocke chaque valeur dans le cache (plus lent) ; le pilote « batch » ne
+        | l'y écrit qu'une fois la limite mémoire atteinte. Pilotes : memory,
+        | illuminate, batch.
         |
         */
         'driver' => 'memory',
 
         /*
         |--------------------------------------------------------------------------
-        | Batch memory caching
+        | Cache par lots
         |--------------------------------------------------------------------------
         |
-        | When dealing with the "batch" caching driver, it will only
-        | persist to the store when the memory limit is reached.
-        | Here you can tweak the memory limit to your liking.
+        | Avec le pilote « batch », les cellules ne sont écrites dans le cache
+        | qu'une fois cette limite mémoire atteinte.
         |
         */
         'batch' => [
@@ -263,14 +249,12 @@ return [
 
         /*
         |--------------------------------------------------------------------------
-        | Illuminate cache
+        | Cache Laravel
         |--------------------------------------------------------------------------
         |
-        | When using the "illuminate" caching driver, it will automatically use
-        | your default cache store. However if you prefer to have the cell
-        | cache on a separate store, you can configure the store name here.
-        | You can use any store defined in your cache config. When leaving
-        | at "null" it will use the default store.
+        | Avec le pilote « illuminate », le stockage de cache par défaut est utilisé
+        | ; on peut en désigner un autre, défini dans config/cache.php. Laisser «
+        | null » pour le stockage par défaut.
         |
         */
         'illuminate' => [
@@ -279,32 +263,24 @@ return [
 
         /*
         |--------------------------------------------------------------------------
-        | Cache Time-to-live (TTL)
+        | Durée de vie du cache
         |--------------------------------------------------------------------------
         |
-        | The TTL of items written to cache. If you want to keep the items cached
-        | indefinitely, set this to null.  Otherwise, set a number of seconds,
-        | a \DateInterval, or a callable.
+        | Durée de conservation des éléments mis en cache : null pour une durée
+        | illimitée, sinon un nombre de secondes, un \DateInterval ou une fonction.
         |
-        | Allowable types: callable|\DateInterval|int|null
-        |
-         */
+        */
         'default_ttl' => 10800,
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Transaction Handler
+    | Transactions
     |--------------------------------------------------------------------------
     |
-    | By default the import is wrapped in a transaction. This is useful
-    | for when an import may fail and you want to retry it. With the
-    | transactions, the previous import gets rolled-back.
-    |
-    | You can disable the transaction handler by setting this to null.
-    | Or you can choose a custom made transaction handler here.
-    |
-    | Supported handlers: null|db
+    | Chaque import est exécuté dans une transaction, annulée en cas d'échec
+    | pour pouvoir relancer l'import proprement. Mettre null pour désactiver.
+    | Gestionnaires : null, db.
     |
     */
     'transactions' => [
@@ -318,44 +294,35 @@ return [
 
         /*
         |--------------------------------------------------------------------------
-        | Local Temporary Path
+        | Dossier temporaire local
         |--------------------------------------------------------------------------
         |
-        | When exporting and importing files, we use a temporary file, before
-        | storing reading or downloading. Here you can customize that path.
-        | permissions is an array with the permission flags for the directory (dir)
-        | and the create file (file).
+        | Les exports et imports passent par un fichier temporaire avant d'être
+        | enregistrés, lus ou téléchargés. Emplacement de ce fichier.
         |
         */
         'local_path' => storage_path('framework/cache/laravel-excel'),
 
         /*
         |--------------------------------------------------------------------------
-        | Local Temporary Path Permissions
+        | Droits du dossier temporaire
         |--------------------------------------------------------------------------
         |
-        | Permissions is an array with the permission flags for the directory (dir)
-        | and the create file (file).
-        | If omitted the default permissions of the filesystem will be used.
+        | Droits du dossier (dir) et des fichiers créés (file). Sans valeur, les
+        | droits par défaut du système de fichiers s'appliquent.
         |
         */
         'local_permissions' => [
-            // 'dir'  => 0755,
-            // 'file' => 0644,
         ],
 
         /*
         |--------------------------------------------------------------------------
-        | Remote Temporary Disk
+        | Disque temporaire distant
         |--------------------------------------------------------------------------
         |
-        | When dealing with a multi server setup with queues in which you
-        | cannot rely on having a shared local temporary path, you might
-        | want to store the temporary file on a shared disk. During the
-        | queue executing, we'll retrieve the temporary file from that
-        | location instead. When left to null, it will always use
-        | the local path. This setting only has effect when using
-        | in conjunction with queued imports and exports.
+        | Avec plusieurs serveurs et des files d'attente, le fichier temporaire peut
+        | être placé sur un disque partagé. Laisser null pour toujours utiliser le
+        | dossier local. Ne concerne que les imports en file d'attente.
         |
         */
         'remote_disk' => null,
@@ -363,17 +330,13 @@ return [
 
         /*
         |--------------------------------------------------------------------------
-        | Force Resync
+        | Resynchronisation forcée
         |--------------------------------------------------------------------------
         |
-        | When dealing with a multi server setup as above, it's possible
-        | for the clean up that occurs after entire queue has been run to only
-        | cleanup the server that the last AfterImportJob runs on. The rest of the server
-        | would still have the local temporary file stored on it. In this case your
-        | local storage limits can be exceeded and future imports won't be processed.
-        | To mitigate this you can set this config value to be true, so that after every
-        | queued chunk is processed the local temporary file is deleted on the server that
-        | processed it.
+        | Avec plusieurs serveurs, le nettoyage final peut ne supprimer le fichier
+        | temporaire que sur le dernier serveur, et saturer le stockage des autres.
+        | Activer cette option force chaque serveur à reprendre le fichier depuis le
+        | disque distant puis à le nettoyer.
         |
         */
         'force_resync_remote' => null,

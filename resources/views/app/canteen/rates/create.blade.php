@@ -7,7 +7,7 @@
 <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-        {{-- ✅ CORRECTION ICI : enlever "app." --}}
+        {{-- Les routes de la cantine ne sont pas préfixées par « app. » --}}
         <form action="{{ route('canteen.rates.store') }}" method="POST">
             @csrf
 
@@ -56,7 +56,6 @@
             </div>
 
             <div class="flex justify-end gap-3">
-                {{-- ✅ CORRECTION ICI AUSSI : enlever "app." --}}
                 <a href="{{ route('canteen.rates.index', ['school_year_id' => $schoolYearId]) }}" 
                    class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition">
                     Annuler

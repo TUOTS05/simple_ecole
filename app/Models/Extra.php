@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Extra du catalogue de l'école : activité, sortie, garderie, transport, restauration…
+ */
 class Extra extends Model
 {
     protected $fillable = [
@@ -82,10 +85,13 @@ class Extra extends Model
     public function occupiedSeatsCount(): int
     {
         return $this->subscriptions()
-            ->whereIn('status', ['requested', 'pending', 'validated', 'active'])
+            ->whereIn('status', ['requested', 'pending', 'validated', 'active', 'completed'])
             ->count();
     }
 
+    /**
+     * Reste-t-il des places ? Toujours vrai si l'extra n'a pas de capacité maximale.
+     */
     public function hasAvailableCapacity(): bool
     {
         if ($this->capacity === null) {

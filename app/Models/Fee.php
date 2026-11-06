@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Frais de scolarité défini pour une année et un niveau.
+ */
 class Fee extends Model
 {
     protected $fillable = [
@@ -31,7 +34,7 @@ class Fee extends Model
         return $this->belongsTo(SchoolYear::class);
     }
 
-    // Helpers
+    // Méthodes utilitaires
     public function isRegistration(): bool
     {
         return $this->fee_type === 'registration';

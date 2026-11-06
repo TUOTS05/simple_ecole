@@ -1,0 +1,9 @@
+/* Source de public/css/app.css (voir tailwind.app.config.js) */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Éléments Alpine masqués jusqu'à l'initialisation (évite un clignotement au chargement) */
+[x-cloak] {
+    display: none !important;
+}

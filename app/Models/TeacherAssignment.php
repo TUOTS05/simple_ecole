@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Affectation d'un enseignant à une classe pour une année (titulaire ou non).
+ */
 class TeacherAssignment extends Model
 {
     protected $fillable = [

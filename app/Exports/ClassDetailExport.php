@@ -8,6 +8,9 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithTitle;
 
+/**
+ * Export Excel de la situation financière de chaque élève d'une classe.
+ */
 class ClassDetailExport implements FromCollection, WithHeadings, WithMapping, WithTitle
 {
     protected $classId;
@@ -16,6 +19,9 @@ class ClassDetailExport implements FromCollection, WithHeadings, WithMapping, Wi
 
     protected $schoolId;
 
+    /**
+     * Classe, année et école concernées.
+     */
     public function __construct($classId, $schoolYearId, $schoolId = null)
     {
         $this->classId = $classId;
@@ -23,6 +29,9 @@ class ClassDetailExport implements FromCollection, WithHeadings, WithMapping, Wi
         $this->schoolId = $schoolId;
     }
 
+    /**
+     * Montants dus, payés et restants par élève, calculés à partir des échéances.
+     */
     public function collection()
     {
         return DB::table('students')
@@ -52,6 +61,9 @@ class ClassDetailExport implements FromCollection, WithHeadings, WithMapping, Wi
             });
     }
 
+    /**
+     * En-têtes des colonnes.
+     */
     public function headings(): array
     {
         return [
@@ -64,6 +76,9 @@ class ClassDetailExport implements FromCollection, WithHeadings, WithMapping, Wi
         ];
     }
 
+    /**
+     * Une ligne par élève, avec ses totaux.
+     */
     public function map($row): array
     {
         return [

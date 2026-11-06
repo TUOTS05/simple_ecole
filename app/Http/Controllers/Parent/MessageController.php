@@ -6,8 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Message;
 use Illuminate\Http\Request;
 
+/**
+ * Espace parent : messagerie avec l'école.
+ */
 class MessageController extends Controller
 {
+    /**
+     * Messages du parent : envoyés, reçus personnellement et diffusions qui le concernent.
+     */
     public function index()
     {
         $parent = auth()->user();
@@ -25,6 +31,9 @@ class MessageController extends Controller
         return view('parent.messages.index', compact('messages', 'unreadCount'));
     }
 
+    /**
+     * Formulaire d'envoi d'un message à l'une des écoles de ses enfants.
+     */
     public function create()
     {
         $parent = auth()->user();
@@ -38,6 +47,9 @@ class MessageController extends Controller
         return view('parent.messages.create', compact('schools'));
     }
 
+    /**
+     * Envoie un message à l'école ; seules les écoles de ses enfants sont autorisées.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -70,6 +82,9 @@ class MessageController extends Controller
             ->with('success', 'Message envoyé avec succès !');
     }
 
+    /**
+     * Affiche un message visible par le parent et le marque comme lu s'il en est le destinataire.
+     */
     public function show(Message $message)
     {
         $parent = auth()->user();

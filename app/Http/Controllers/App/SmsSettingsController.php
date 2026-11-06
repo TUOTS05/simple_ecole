@@ -8,8 +8,14 @@ use App\Models\SmsLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 
+/**
+ * Paramètres d'envoi de SMS de l'école (API Orange), stockés chiffrés.
+ */
 class SmsSettingsController extends Controller
 {
+    /**
+     * Formulaire des paramètres SMS, avec les identifiants déchiffrés pour l'affichage.
+     */
     public function index()
     {
         $schoolId = session('current_school_id');
@@ -28,6 +34,9 @@ class SmsSettingsController extends Controller
         return view('app.settings.sms', compact('school', 'clientId', 'clientSecret', 'recentSms'));
     }
 
+    /**
+     * Enregistre les paramètres SMS en chiffrant les identifiants.
+     */
     public function update(Request $request)
     {
         $schoolId = session('current_school_id');

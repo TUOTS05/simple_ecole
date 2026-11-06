@@ -23,7 +23,7 @@
             <p class="text-gray-600 mt-1">Gérez les inscriptions et réservations des élèves</p>
         </div>
         
-        <!-- ✅ BOUTONS D'ACTION GROUPÉS -->
+        <!-- BOUTONS D'ACTION GROUPÉS -->
         <div class="flex space-x-3">
             <a href="{{ route('app.enrollments.export', request()->query()) }}" 
                class="inline-flex items-center px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition shadow-sm">
@@ -63,7 +63,7 @@
                 </select>
             </div>
 
-            <!-- ✅ NOUVEAU : Filtre par Classe -->
+            <!-- Filtre par classe -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Classe</label>
                 <select name="class_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
@@ -164,7 +164,7 @@
                             @endif
                         </td>
                         
-                        <!-- NOUVELLE COLONNE : État des Échéances -->
+                        <!-- État des échéances -->
                         <td class="py-3 px-4">
                             <div class="flex flex-col space-y-2 min-w-[200px]">
                                 

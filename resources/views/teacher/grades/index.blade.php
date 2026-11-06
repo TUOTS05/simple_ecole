@@ -148,7 +148,7 @@
     @endif
 </div>
 
-<!-- ✅ SCRIPT INFAILLIBLE -->
+<!-- SCRIPT INFAILLIBLE -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const periodSelect = document.getElementById('periodSelect');

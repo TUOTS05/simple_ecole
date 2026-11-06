@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Inscription d'un élève à la cantine pour une année, avec ses échéances et ses paiements.
+ */
 class CanteenSubscription extends Model
 {
     protected $fillable = [
@@ -44,6 +47,9 @@ class CanteenSubscription extends Model
         return $this->hasMany(CanteenPayment::class, 'canteen_subscription_id');
     }
 
+    /**
+     * Pourcentage déjà payé (attribut payment_rate).
+     */
     public function getPaymentRateAttribute()
     {
         return $this->total_amount > 0
