@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\App;
 
+use App\Exports\StudentImportTemplate;
 use App\Exports\StudentsExport;
 use App\Http\Controllers\Controller;
+use App\Imports\StudentRowsImport;
 use App\Models\Enrollment;
 use App\Models\ReportCard;
 use App\Models\School;
@@ -14,6 +16,7 @@ use App\Models\StudentInstallment;
 use App\Models\User;
 use App\Services\GuardianAccountService;
 use App\Services\StudentCardService;
+use App\Services\StudentImportService;
 use App\Support\SchoolRules;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -359,6 +362,58 @@ class StudentController extends Controller
         }
 
         return Storage::disk('public')->response($student->id_card_path, 'carte_'.($student->matricule ?? $student->id).'.pdf');
+    }
+
+    /**
+     * Page d'import d'une liste d'élèves.
+     */
+    public function importForm()
+    {
+        $classes = SchoolClass::where('school_id', session('current_school_id'))->orderBy('name')->get();
+
+        return view('app.students.import', compact('classes'));
+    }
+
+    /**
+     * Modèle Excel à remplir pour l'import.
+     */
+    public function importTemplate()
+    {
+        return Excel::download(new StudentImportTemplate, 'modele_import_eleves.xlsx');
+    }
+
+    /**
+     * Importe le fichier : chaque ligne valide devient une admission ; les erreurs sont listées par ligne.
+     */
+    public function import(Request $request, StudentImportService $importer)
+    {
+        $validated = $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv,txt|max:5120',
+            'default_class_id' => ['nullable', SchoolRules::exists('school_classes')],
+            'notify_guardians' => 'nullable|boolean',
+        ]);
+
+        $school = School::findOrFail(session('current_school_id'));
+        $year = SchoolYear::where('school_id', $school->id)->where('is_active', true)->first();
+        if (! $year) {
+            return back()->withErrors(['file' => "Aucune année scolaire active : créez-en une avant d'importer des élèves."]);
+        }
+
+        $reader = new StudentRowsImport;
+        Excel::import($reader, $request->file('file'));
+
+        $report = $importer->import(
+            $reader->rows ?? collect(),
+            $school,
+            $year,
+            isset($validated['default_class_id']) ? (int) $validated['default_class_id'] : null,
+            $request->boolean('notify_guardians'),
+        );
+
+        return redirect()->route('app.students.import')->with('import_report', [
+            'imported' => $report['imported'],
+            'errors' => $report['errors'],
+        ]);
     }
 
     /**

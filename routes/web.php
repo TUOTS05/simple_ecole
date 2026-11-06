@@ -155,6 +155,10 @@ Route::middleware(['auth', 'school.active', 'role:school_admin', 'tenant'])->pre
         Route::resource('/fees', FeeController::class)
             ->middleware('role:school_admin');
 
+        // Import d'une liste d'élèves (avant la ressource : « import » serait pris pour un identifiant)
+        Route::get('/students/import', [StudentController::class, 'importForm'])->name('students.import');
+        Route::get('/students/import/template', [StudentController::class, 'importTemplate'])->name('students.import.template');
+        Route::post('/students/import', [StudentController::class, 'import'])->name('students.import.store');
         Route::resource('/students', StudentController::class);
         Route::get('/students/by-matricule/{matricule}', [StudentController::class, 'getByMatricule'])
             ->name('students.by-matricule');

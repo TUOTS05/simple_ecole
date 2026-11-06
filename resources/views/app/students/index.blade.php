@@ -41,6 +41,12 @@
                 📕 Export PDF
             </a>
 
+            <!-- Import d'une liste -->
+            <a href="{{ route('app.students.import') }}"
+                class="bg-white border border-primary text-primary hover:bg-primary/10 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 text-sm shadow">
+                📤 Importer une liste
+            </a>
+
             <!-- Bouton Nouvel Élève -->
             <a href="{{ route('app.students.create') }}"
                 class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 text-sm shadow">
