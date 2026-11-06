@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\App;
 
+use App\Models\School;
+use App\Services\SchoolSetupChecklist;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Enrollment;
@@ -140,7 +142,11 @@ class DashboardController extends Controller
             ->count();
 
         // Envoi de TOUTES les variables à la vue
+        // Parcours de mise en route, affiché tant que les étapes obligatoires ne sont pas toutes faites
+        $setupSteps = app(SchoolSetupChecklist::class)->stepsFor(School::findOrFail($schoolId));
+
         return view('app.dashboard', compact(
+            'setupSteps',
             'totalTeachers', 'studentsPerClass',
             'totalStudents', 'totalClasses', 'totalEnrollments', 'enrollmentRate',
             'totalTuitionExpected', 'totalTuitionPaid', 'totalTuitionRemaining', 'collectionRate', 'totalCollected', 'registrationPaidCount',
