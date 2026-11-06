@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Mail\ChildLinkedMail;
+use App\Mail\ParentWelcomeMail;
 use App\Models\CanteenRate;
 use App\Models\Enrollment;
 use App\Models\ReportCard;
@@ -11,6 +13,8 @@ use App\Models\SchoolYear;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 /**
@@ -144,5 +148,45 @@ class SchoolWorkflowRegressionTest extends TestCase
                     && collect($rate['months'])->pluck('value')->all() === ['2026-09', '2026-10', '2026-11']
                     && $rate['months'][0]['label'] === 'Septembre 2026';
             });
+    }
+
+    // Chaque nouveau parent avait le même mot de passe, écrit en dur dans le code.
+    public function test_new_guardian_gets_a_personal_password_by_email(): void
+    {
+        Mail::fake();
+
+        $this->actingAs($this->admin)->post(route('app.students.store'), $this->studentPayload())->assertSessionHasNoErrors();
+
+        $parent = User::where('email', 'mariam@example.test')->firstOrFail();
+        $this->assertSame('parent', $parent->role);
+        $this->assertFalse(Hash::check('Ecole2024!', $parent->password));
+        Mail::assertSent(ParentWelcomeMail::class, fn ($mail) => $mail->hasTo('mariam@example.test') && Hash::check($mail->password, $parent->password));
+    }
+
+    // Un parent déjà inscrit dans une autre école était refusé ; il est rattaché et prévenu.
+    public function test_existing_parent_of_another_school_is_linked_and_notified(): void
+    {
+        Mail::fake();
+        $otherSchool = School::create(['name' => 'École B', 'slug' => 'b', 'status' => 'active']);
+        $parent = new User(['first_name' => 'Mariam', 'last_name' => 'Koné', 'email' => 'mariam@example.test', 'password' => bcrypt('secret')]);
+        $parent->role = 'parent';
+        $parent->school_id = $otherSchool->id;
+        $parent->save();
+
+        $this->actingAs($this->admin)->post(route('app.students.store'), $this->studentPayload())->assertSessionHasNoErrors();
+
+        $student = Student::where('last_name', 'Koné')->firstOrFail();
+        $this->assertDatabaseHas('parent_student', ['parent_id' => $parent->id, 'student_id' => $student->id, 'school_id' => $this->school->id]);
+        $this->assertSame(1, User::where('email', 'mariam@example.test')->count());
+        Mail::assertSent(ChildLinkedMail::class);
+        Mail::assertNotSent(ParentWelcomeMail::class);
+    }
+
+    // L'adresse d'un compte qui n'est pas un parent est refusée avec un message explicite.
+    public function test_guardian_email_of_a_staff_account_is_refused_clearly(): void
+    {
+        $this->actingAs($this->admin)
+            ->post(route('app.students.store'), $this->studentPayload(['guardian_email' => 'admin@example.test']))
+            ->assertSessionHasErrors(['guardian_email' => "Cette adresse est déjà celle d'un compte « Admin École ». Saisissez l'adresse personnelle du tuteur."]);
     }
 }
