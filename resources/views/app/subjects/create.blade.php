@@ -82,6 +82,7 @@
 <script>
     const levelsByCycle = @json($levelsByCycle);
     const defaultSubjects = @json($defaultSubjects);
+    const existingSubjects = @json($existingSubjects);
 
     const cycleSelect = document.getElementById('cycle');
     const levelSelect = document.getElementById('level');
@@ -112,11 +113,13 @@
             subjectsContainer.classList.remove('hidden');
             subjectsList.innerHTML = '';
 
-            // Ajouter les matières par défaut avec max_score = 20
-            const subjects = defaultSubjects[cycle] || [];
-            subjects.forEach((subject, index) => {
-                addSubject(subject, 1, 20); // 20 par défaut
-            });
+            // Matières déjà enregistrées pour ce niveau, sinon la liste par défaut (notées sur 20)
+            const saved = existingSubjects[`${cycle}|${level}`];
+            if (saved && saved.length) {
+                saved.forEach(s => addSubject(s.name, s.coefficient, s.max_score));
+            } else {
+                (defaultSubjects[cycle] || []).forEach(name => addSubject(name, 1, 20));
+            }
         }
     });
 
@@ -150,17 +153,22 @@
         </div>
     `;
         subjectsList.appendChild(div);
+        reindexSubjects();
+    }
+
+    // Renumérote TOUS les champs de chaque ligne (nom, coefficient et note maximale) : une ligne
+    // supprimée laissait sinon des numéros décalés entre les champs d'une même matière.
+    function reindexSubjects() {
+        Array.from(subjectsList.children).forEach((row, index) => {
+            row.querySelectorAll('[name^="subjects["]').forEach(field => {
+                field.name = field.name.replace(/^subjects\[\d+\]/, `subjects[${index}]`);
+            });
+        });
     }
 
     function removeSubject(button) {
-        button.parentElement.parentElement.remove();
-        // Réindexer les noms des inputs
-        Array.from(subjectsList.children).forEach((child, index) => {
-            const nameInput = child.querySelector('input[name*="[name]"]');
-            const coefInput = child.querySelector('input[name*="[coefficient]"]');
-            if (nameInput) nameInput.name = `subjects[${index}][name]`;
-            if (coefInput) coefInput.name = `subjects[${index}][coefficient]`;
-        });
+        button.closest('.grid').remove();
+        reindexSubjects();
     }
 </script>
 

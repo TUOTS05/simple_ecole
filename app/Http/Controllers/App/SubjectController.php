@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
+use App\Models\Grade;
 use App\Models\SchoolYear;
 use App\Models\Subject;
 use Illuminate\Http\Request;
@@ -55,7 +56,16 @@ class SubjectController extends Controller
             'primaire' => ['Lecture', 'Écriture/Copie', 'Orthographe', 'Grammaire/Conjugaison', 'Vocabulaire/EDHC', 'Exploitation de texte', 'Expression Écrite', 'Éveil du Milieu', 'Sciences', 'Mathématique', 'Chant/Récitation', 'Dessin', 'EPS', 'Dictée', 'Anglais'],
         ];
 
-        return view('app.subjects.create', compact('school', 'currentYear', 'levelsByCycle', 'defaultSubjects'));
+        // Matières déjà enregistrées pour chaque niveau de l'année : le formulaire les recharge
+        // au lieu de proposer la liste par défaut.
+        $existingSubjects = Subject::where('school_id', session('current_school_id'))
+            ->where('school_year_id', $currentYear?->id)
+            ->orderBy('id')
+            ->get(['cycle', 'level', 'name', 'coefficient', 'max_score'])
+            ->groupBy(fn ($subject) => "{$subject->cycle}|{$subject->level}")
+            ->map(fn ($subjects) => $subjects->map(fn ($s) => ['name' => $s->name, 'coefficient' => (float) $s->coefficient, 'max_score' => (int) $s->max_score])->values());
+
+        return view('app.subjects.create', compact('school', 'currentYear', 'levelsByCycle', 'defaultSubjects', 'existingSubjects'));
     }
 
     /**
@@ -126,6 +136,12 @@ class SubjectController extends Controller
     {
         if ($subject->school_id !== session('current_school_id')) {
             abort(403);
+        }
+
+        // La suppression efface en cascade les notes de la matière : on la refuse tant qu'il y en a.
+        if (Grade::where('subject_id', $subject->id)->exists()) {
+            return redirect()->route('app.subjects.index')
+                ->with('error', "Impossible de supprimer « {$subject->name} » : des notes ont déjà été saisies dans cette matière.");
         }
 
         $subject->delete();
