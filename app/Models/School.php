@@ -5,6 +5,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class School extends Model
@@ -55,6 +56,54 @@ class School extends Model
     public function schoolYears(): HasMany
     {
         return $this->hasMany(SchoolYear::class);
+    }
+
+    public function pendingSubscriptionRequest(): HasOne
+    {
+        return $this->hasOne(SubscriptionRequest::class)->where('status', 'pending')->latestOfMany();
+    }
+
+    // ==========================================
+    // LIBELLÉS D'AFFICHAGE (FR)
+    // ==========================================
+
+    /**
+     * Statut "réel" affiché au super admin : une école au statut technique
+     * 'active' mais encore en période d'essai apparaît comme "Essai".
+     */
+    public function getDisplayStatusAttribute(): string
+    {
+        if ($this->status === 'suspended') {
+            return 'suspended';
+        }
+        if ($this->status === 'expired' || $this->isExpired()) {
+            return 'expired';
+        }
+        if ($this->isTrialActive()) {
+            return 'trial';
+        }
+
+        return 'active';
+    }
+
+    public function getDisplayStatusLabelAttribute(): string
+    {
+        return [
+            'active' => 'Actif',
+            'trial' => 'Essai',
+            'suspended' => 'Suspendu',
+            'expired' => 'Expiré',
+        ][$this->display_status] ?? ucfirst((string) $this->status);
+    }
+
+    public function getSchoolTypeLabelAttribute(): string
+    {
+        return [
+            'maternelle' => 'Maternelle',
+            'primaire' => 'Primaire',
+            'both' => 'Maternelle + Primaire',
+            'creche' => 'Crèche',
+        ][$this->school_type] ?? ucfirst((string) $this->school_type);
     }
 
     // ==========================================

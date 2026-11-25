@@ -29,10 +29,10 @@
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
                         <option value="">-- Sélectionner un cycle --</option>
                         @if($school->isMaternelle() || $school->isBoth())
-                        <option value="maternelle">🧒 Maternelle</option>
+                        <option value="maternelle" @selected(old('cycle') === 'maternelle')>🧒 Maternelle</option>
                         @endif
                         @if($school->isPrimaire() || $school->isBoth())
-                        <option value="primaire"> Primaire</option>
+                        <option value="primaire" @selected(old('cycle') === 'primaire')> Primaire</option>
                         @endif
                     </select>
                 </div>
@@ -82,18 +82,17 @@
 <script>
     const levelsByCycle = @json($levelsByCycle);
     const defaultSubjects = @json($defaultSubjects);
+    // Saisie précédente (en cas d'erreur de validation) pour ne rien perdre
+    const oldLevel = @json(old('level'));
+    const oldSubjects = @json(array_values(old('subjects', [])));
 
     const cycleSelect = document.getElementById('cycle');
     const levelSelect = document.getElementById('level');
     const subjectsContainer = document.getElementById('subjects-container');
     const subjectsList = document.getElementById('subjects-list');
 
-    cycleSelect.addEventListener('change', function() {
-        const cycle = this.value;
+    function fillLevels(cycle) {
         levelSelect.innerHTML = '<option value="">-- Sélectionner un niveau --</option>';
-        subjectsContainer.classList.add('hidden');
-        subjectsList.innerHTML = '';
-
         if (cycle && levelsByCycle[cycle]) {
             levelsByCycle[cycle].forEach(level => {
                 const option = document.createElement('option');
@@ -102,6 +101,12 @@
                 levelSelect.appendChild(option);
             });
         }
+    }
+
+    cycleSelect.addEventListener('change', function() {
+        fillLevels(this.value);
+        subjectsContainer.classList.add('hidden');
+        subjectsList.innerHTML = '';
     });
 
     levelSelect.addEventListener('change', function() {
@@ -120,17 +125,21 @@
         }
     });
 
+    function escapeAttr(value) {
+        return String(value ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    }
+
     function addSubject(name = '', coefficient = 1, maxScore = 20) {
         const div = document.createElement('div');
         div.className = 'grid grid-cols-12 gap-4 items-center';
         const index = subjectsList.children.length;
         div.innerHTML = `
         <div class="col-span-5">
-            <input type="text" name="subjects[${index}][name]" value="${name}" placeholder="Nom de la matière" required
+            <input type="text" name="subjects[${index}][name]" value="${escapeAttr(name)}" placeholder="Nom de la matière" required
                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
         </div>
         <div class="col-span-2">
-            <input type="number" name="subjects[${index}][coefficient]" value="${coefficient}" min="1" max="10" step="0.5" required
+            <input type="number" name="subjects[${index}][coefficient]" value="${escapeAttr(coefficient)}" min="1" max="10" step="0.5" required
                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
         </div>
         <div class="col-span-3">
@@ -153,14 +162,30 @@
     }
 
     function removeSubject(button) {
-        button.parentElement.parentElement.remove();
-        // Réindexer les noms des inputs
+        button.closest('#subjects-list > div').remove();
+        // Réindexer TOUS les champs de chaque ligne (nom, coefficient ET barème),
+        // sinon les champs d'une même matière se retrouvent sous des index différents.
         Array.from(subjectsList.children).forEach((child, index) => {
-            const nameInput = child.querySelector('input[name*="[name]"]');
-            const coefInput = child.querySelector('input[name*="[coefficient]"]');
-            if (nameInput) nameInput.name = `subjects[${index}][name]`;
-            if (coefInput) coefInput.name = `subjects[${index}][coefficient]`;
+            child.querySelectorAll('[name^="subjects["]').forEach(field => {
+                field.name = field.name.replace(/^subjects\[\d+\]/, `subjects[${index}]`);
+            });
         });
+    }
+
+    // Restauration après une erreur de validation
+    if (cycleSelect.value) {
+        fillLevels(cycleSelect.value);
+        if (oldLevel) {
+            levelSelect.value = oldLevel;
+            if (levelSelect.value === oldLevel) {
+                subjectsContainer.classList.remove('hidden');
+                if (oldSubjects.length) {
+                    oldSubjects.forEach(s => addSubject(s.name ?? '', s.coefficient ?? 1, s.max_score ?? 20));
+                } else {
+                    (defaultSubjects[cycleSelect.value] || []).forEach(name => addSubject(name, 1, 20));
+                }
+            }
+        }
     }
 </script>
 

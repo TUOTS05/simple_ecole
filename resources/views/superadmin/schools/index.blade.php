@@ -102,14 +102,19 @@
                         <td class="py-3 px-4 font-semibold">{{ $school->name }}</td>
                         <td class="py-3 px-4">
                             <span class="px-3 py-1 rounded-full text-xs font-semibold bg-primary text-white">
-                                {{ $school->school_type }}
+                                {{ $school->school_type_label }}
                             </span>
                         </td>
                         <td class="py-3 px-4">
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold 
-                                {{ $school->status === 'active' ? 'bg-accent text-white' : ($school->status === 'trial' ? 'bg-secondary text-gray-800' : 'bg-danger text-white') }}">
-                                {{ $school->status }}
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold
+                                {{ $school->display_status === 'active' ? 'bg-accent text-white' : ($school->display_status === 'trial' ? 'bg-secondary text-gray-800' : 'bg-danger text-white') }}">
+                                {{ $school->display_status_label }}
                             </span>
+                            @if($school->pendingSubscriptionRequest)
+                            <a href="{{ route('superadmin.subscriptions.pending') }}" class="block mt-1 text-xs text-orange-600 hover:underline whitespace-nowrap">
+                                ⏳ Abonnement en attente
+                            </a>
+                            @endif
                         </td>
                         <td class="py-3 px-4 text-sm text-gray-600">
                             {{ $school->created_at->format('d/m/Y') }}

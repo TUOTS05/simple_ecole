@@ -53,54 +53,67 @@
         <div class="lg:col-span-2">
             <h2 class="text-sm font-semibold text-gray-500 uppercase mb-3 px-1">Échéances à régler</h2>
             
-            @forelse($installments as $installment)
-                @php
-                    $reste = $installment->amount - $installment->paid_amount;
-                    $isLate = $reste > 0 && \Carbon\Carbon::parse($installment->due_date)->isPast();
-                    $isPaid = $reste <= 0;
-                    
-                    $badgeClass = $isPaid ? 'bg-green-100 text-green-700' : ($isLate ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700');
-                    $badgeText = $isPaid ? 'Payé' : ($isLate ? 'En retard' : 'En attente');
-                @endphp
-                
-                <div class="bg-white border border-gray-200 rounded-xl p-5 mb-3 shadow-sm hover:shadow-md transition">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
-                        <h3 class="font-bold text-gray-800">{{ $installment->description }}</h3>
-                        <span class="text-xs font-semibold px-3 py-1 rounded-full {{ $badgeClass }}">
-                            {{ $badgeText }}
-                        </span>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <p class="text-gray-500 text-xs uppercase">Date d'échéance</p>
-                            <p class="font-medium {{ $isLate ? 'text-red-600' : 'text-gray-800' }}">
-                                {{ \Carbon\Carbon::parse($installment->due_date)->isoFormat('DD MMMM YYYY') }}
-                            </p>
-                        </div>
-                        <div>
-                            <p class="text-gray-500 text-xs uppercase">Montant total</p>
-                            <p class="font-medium text-gray-800">{{ number_format($installment->amount, 0, ',', ' ') }} FCFA</p>
-                        </div>
-                    </div>
-
-                    @if(!$isPaid)
-                        <div class="flex justify-between items-center text-red-600 font-semibold pt-3 mt-3 border-t border-gray-100">
-                            <span>Reste à payer :</span>
-                            <span class="text-lg">{{ number_format($reste, 0, ',', ' ') }} FCFA</span>
-                        </div>
-                    @else
-                        <div class="flex justify-between items-center text-green-600 font-semibold pt-3 mt-3 border-t border-gray-100">
-                            <span>Statut :</span>
-                            <span>Soldé ✅</span>
-                        </div>
-                    @endif
-                </div>
-            @empty
+            @if(collect($installments)->isEmpty())
                 <div class="text-center py-10 text-gray-500 bg-white rounded-xl border border-gray-200 border-dashed">
                     <p>Aucune échéance configurée pour le moment.</p>
                 </div>
-            @endforelse
+            @else
+            @php
+                $totalAmount = 0;
+                $totalPaid = 0;
+            @endphp
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+                        <tr>
+                            <th class="text-left font-semibold px-4 py-3">Échéance</th>
+                            <th class="text-left font-semibold px-4 py-3">Date limite</th>
+                            <th class="text-right font-semibold px-4 py-3">Montant</th>
+                            <th class="text-right font-semibold px-4 py-3">Payé</th>
+                            <th class="text-right font-semibold px-4 py-3">Reste</th>
+                            <th class="text-center font-semibold px-4 py-3">Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @foreach($installments as $installment)
+                        @php
+                            $reste = max(0, $installment->amount - $installment->paid_amount);
+                            $dueDate = \Carbon\Carbon::parse($installment->due_date)->locale('fr');
+                            $isPaid = $reste <= 0;
+                            $isLate = ! $isPaid && $dueDate->isPast();
+
+                            $badgeClass = $isPaid ? 'bg-green-100 text-green-700' : ($isLate ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700');
+                            $badgeText = $isPaid ? 'Payé' : ($isLate ? 'En retard' : 'En attente');
+
+                            $totalAmount += $installment->amount;
+                            $totalPaid += min($installment->paid_amount, $installment->amount);
+                        @endphp
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">{{ $installment->description }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap {{ $isLate ? 'text-red-600 font-semibold' : 'text-gray-700' }}">
+                                {{ $dueDate->isoFormat('DD MMM YYYY') }}
+                            </td>
+                            <td class="px-4 py-3 text-right whitespace-nowrap text-gray-800">{{ number_format($installment->amount, 0, ',', ' ') }}</td>
+                            <td class="px-4 py-3 text-right whitespace-nowrap text-green-700">{{ number_format(min($installment->paid_amount, $installment->amount), 0, ',', ' ') }}</td>
+                            <td class="px-4 py-3 text-right whitespace-nowrap font-semibold {{ $isPaid ? 'text-gray-400' : 'text-red-600' }}">{{ number_format($reste, 0, ',', ' ') }}</td>
+                            <td class="px-4 py-3 text-center">
+                                <span class="text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap {{ $badgeClass }}">{{ $badgeText }}</span>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot class="bg-gray-50 font-bold text-gray-800">
+                        <tr>
+                            <td class="px-4 py-3" colspan="2">Total (FCFA)</td>
+                            <td class="px-4 py-3 text-right whitespace-nowrap">{{ number_format($totalAmount, 0, ',', ' ') }}</td>
+                            <td class="px-4 py-3 text-right whitespace-nowrap text-green-700">{{ number_format($totalPaid, 0, ',', ' ') }}</td>
+                            <td class="px-4 py-3 text-right whitespace-nowrap text-red-600">{{ number_format(max(0, $totalAmount - $totalPaid), 0, ',', ' ') }}</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            @endif
         </div>
 
         <!-- Colonne Droite : Historique des Reçus (1/3 de la largeur) -->

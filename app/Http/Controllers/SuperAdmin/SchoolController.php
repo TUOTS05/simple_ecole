@@ -19,13 +19,23 @@ class SchoolController extends Controller
      */
     public function index(Request $request)
     {
-        $query = School::query();
+        $query = School::query()->with('pendingSubscriptionRequest');
 
         // Filtre par statut (inclut la logique d'expiration automatique)
         if ($request->filled('status')) {
             if ($request->status === 'expired') {
-                $query->where('status', 'expired')
-                    ->orWhereDate('subscription_end_date', '<', Carbon::today());
+                $query->where(function ($q) {
+                    $q->where('status', 'expired')
+                        ->orWhereDate('subscription_end_date', '<', Carbon::today());
+                });
+            } elseif ($request->status === 'trial') {
+                // L'essai n'est pas un statut technique : école active avec un essai en cours.
+                $query->where('status', 'active')->whereDate('trial_ends_at', '>=', Carbon::today());
+            } elseif ($request->status === 'active') {
+                $query->where('status', 'active')->where(function ($q) {
+                    $q->whereNull('trial_ends_at')
+                        ->orWhereDate('trial_ends_at', '<', Carbon::today());
+                });
             } else {
                 $query->where('status', $request->status);
             }

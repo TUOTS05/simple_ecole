@@ -142,17 +142,25 @@ class SubjectController extends Controller
 
     public function store(Request $request)
     {
+        // On ignore les lignes laissées vides (sans nom) et on complète les valeurs
+        // par défaut, puis on valide CES données filtrées (et non la requête brute,
+        // sinon une ligne vide fait échouer tout l'enregistrement).
         $subjects = collect($request->input('subjects', []))
-            ->filter(function ($subject) {
-                return ! empty($subject['name']) && ! empty($subject['coefficient']) && ! empty($subject['max_score']);
-            })
+            ->filter(fn ($subject) => is_array($subject) && trim((string) ($subject['name'] ?? '')) !== '')
+            ->map(fn ($subject) => [
+                'name' => trim($subject['name']),
+                'coefficient' => ($subject['coefficient'] ?? '') !== '' ? $subject['coefficient'] : 1,
+                'max_score' => ($subject['max_score'] ?? '') !== '' ? $subject['max_score'] : 20,
+            ])
             ->values()
             ->all();
 
         if (empty($subjects)) {
-            return back()->withErrors(['subjects' => 'Veuillez ajouter au moins une matière valide.'])
+            return back()->withErrors(['subjects' => 'Veuillez ajouter au moins une matière avec un nom.'])
                 ->withInput();
         }
+
+        $request->merge(['subjects' => $subjects]);
 
         $validated = $request->validate([
             'cycle' => 'required|in:maternelle,primaire',
@@ -161,6 +169,15 @@ class SubjectController extends Controller
             'subjects.*.name' => 'required|string|max:255',
             'subjects.*.coefficient' => 'required|numeric|min:1|max:10',
             'subjects.*.max_score' => 'required|numeric|in:10,20,40,50,100',
+        ], [
+            'cycle.required' => 'Veuillez sélectionner un cycle.',
+            'cycle.in' => 'Le cycle sélectionné est invalide.',
+            'level.required' => 'Veuillez sélectionner un niveau.',
+            'subjects.*.name.max' => 'Le nom de la matière n° :position est trop long (255 caractères max).',
+            'subjects.*.coefficient.numeric' => 'Le coefficient de la matière n° :position doit être un nombre.',
+            'subjects.*.coefficient.min' => 'Le coefficient de la matière n° :position doit être au moins 1.',
+            'subjects.*.coefficient.max' => 'Le coefficient de la matière n° :position ne peut pas dépasser 10.',
+            'subjects.*.max_score.in' => 'Le barème de la matière n° :position doit être 10, 20, 40, 50 ou 100.',
         ]);
 
         $schoolId = session('current_school_id');

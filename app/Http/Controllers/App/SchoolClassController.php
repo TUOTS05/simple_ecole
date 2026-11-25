@@ -99,6 +99,8 @@ class SchoolClassController extends Controller
         }
 
         $validated['school_id'] = $schoolId;
+        // Capacité optionnelle : la colonne est NOT NULL (défaut 25), on n'envoie jamais null.
+        $validated['capacity'] = $validated['capacity'] ?? SchoolClass::DEFAULT_CAPACITY;
 
         SchoolClass::create($validated);
 
@@ -197,6 +199,8 @@ class SchoolClassController extends Controller
             return back()->withErrors(['name' => 'Une classe avec ce nom existe déjà.'])
                 ->withInput();
         }
+
+        $validated['capacity'] = $validated['capacity'] ?? SchoolClass::DEFAULT_CAPACITY;
 
         $class->update($validated);
 

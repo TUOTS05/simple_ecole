@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SchoolClass extends Model
 {
+    /** Capacité appliquée quand le champ est laissé vide (colonne NOT NULL, défaut 25). */
+    public const DEFAULT_CAPACITY = 25;
+
     protected $fillable = [
         'school_id',
         'name',

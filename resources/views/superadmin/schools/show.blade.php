@@ -37,12 +37,17 @@
                     
                     <div class="flex space-x-4">
                         <span class="px-4 py-2 rounded-full text-sm font-semibold bg-primary text-white">
-                            Type: {{ $school->school_type }}
+                            Type : {{ $school->school_type_label }}
                         </span>
-                        <span class="px-4 py-2 rounded-full text-sm font-semibold 
-                            {{ $school->status === 'active' ? 'bg-accent text-white' : ($school->status === 'trial' ? 'bg-secondary text-gray-800' : 'bg-danger text-white') }}">
-                            Statut: {{ $school->status }}
+                        <span class="px-4 py-2 rounded-full text-sm font-semibold
+                            {{ $school->display_status === 'active' ? 'bg-accent text-white' : ($school->display_status === 'trial' ? 'bg-secondary text-gray-800' : 'bg-danger text-white') }}">
+                            Statut : {{ $school->display_status_label }}
                         </span>
+                        @if($school->pendingSubscriptionRequest)
+                        <a href="{{ route('superadmin.subscriptions.pending') }}" class="px-4 py-2 rounded-full text-sm font-semibold bg-orange-100 text-orange-700 hover:bg-orange-200">
+                            ⏳ Demande d'abonnement en attente
+                        </a>
+                        @endif
                     </div>
                 </div>
                 

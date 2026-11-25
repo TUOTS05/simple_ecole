@@ -172,8 +172,25 @@
                 <span class="font-mono bg-orange-100 px-2 py-1 rounded">{{ $classes->find($selectedClassId)->level }}</span>
                 (Cycle: {{ $classes->find($selectedClassId)->cycle }}).
             </p>
-            <p class="text-orange-700 mt-1">
-                → Allez dans <a href="{{ route('app.subjects.create') }}" class="underline font-bold">📚 Matières</a> et configurez les matières exactement pour ce niveau.
+            @if(($configuredLevels ?? collect())->isNotEmpty())
+            <p class="text-orange-700 mt-2">
+                Des matières existent pour ce cycle, mais pour d'autres niveaux :
+                @foreach($configuredLevels as $lvl)
+                <span class="font-mono bg-orange-100 px-2 py-0.5 rounded">{{ $lvl }}</span>
+                @endforeach
+                — le niveau doit correspondre <strong>exactement</strong> à celui de la classe.
+            </p>
+            @endif
+            @if($subjectsInOtherYears ?? false)
+            <p class="text-orange-700 mt-2">
+                Des matières de ce niveau existent sur une autre année scolaire, mais pas sur l'année active : elles doivent être reconfigurées pour l'année en cours.
+            </p>
+            @endif
+            <p class="text-orange-700 mt-2">
+                → Soit configurez les matières du niveau <strong>{{ $classes->find($selectedClassId)->level }}</strong> dans
+                <a href="{{ route('app.subjects.create') }}" class="underline font-bold">📚 Matières</a>,
+                soit corrigez le niveau de la classe dans
+                <a href="{{ route('app.classes.edit', $selectedClassId) }}" class="underline font-bold">Classes</a>.
             </p>
         </div>
         @endif

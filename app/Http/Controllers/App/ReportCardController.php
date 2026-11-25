@@ -69,6 +69,8 @@ class ReportCardController extends Controller
         $students = collect();
         $subjects = collect();
         $existingGrades = collect();
+        $configuredLevels = collect();
+        $subjectsInOtherYears = false;
 
         if ($selectedClassId) {
             $class = SchoolClass::find($selectedClassId);
@@ -86,6 +88,25 @@ class ReportCardController extends Controller
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->get();
+
+            // Aide au diagnostic quand aucune matière ne correspond exactement à la classe :
+            // niveaux du même cycle déjà configurés cette année, et matières de ce niveau
+            // existant seulement sur une autre année scolaire.
+            if ($subjects->isEmpty()) {
+                $configuredLevels = Subject::where('school_id', $schoolId)
+                    ->where('school_year_id', $currentYear?->id)
+                    ->where('cycle', $class->cycle)
+                    ->where('is_active', true)
+                    ->distinct()
+                    ->orderBy('level')
+                    ->pluck('level');
+
+                $subjectsInOtherYears = Subject::where('school_id', $schoolId)
+                    ->where('school_year_id', '!=', $currentYear?->id)
+                    ->where('cycle', $class->cycle)
+                    ->where('level', $class->level)
+                    ->exists();
+            }
 
             // ✅ CHARGEMENT DES NOTES EXISTANTES (saisies par l'enseignant)
             $gradesQuery = Grade::where('school_class_id', $selectedClassId)
@@ -112,7 +133,9 @@ class ReportCardController extends Controller
             'period',
             'month',
             'quarter',
-            'existingGrades'
+            'existingGrades',
+            'configuredLevels',
+            'subjectsInOtherYears'
         ));
     }
 
