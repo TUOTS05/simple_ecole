@@ -15,13 +15,18 @@ class SubscriptionPlan extends Model
         'max_classes',
         'monthly_price',
         'is_active',
+        'is_recommended',
         'features',
         'sort_order',
     ];
 
+    /** Valeur utilisée pour "illimité" (élèves / utilisateurs / classes) : les champs sont obligatoires. */
+    public const UNLIMITED = 99999;
+
     protected $casts = [
         'features' => 'array',
         'is_active' => 'boolean',
+        'is_recommended' => 'boolean',
         'monthly_price' => 'decimal:2',
         'yearly_price' => 'decimal:2',
     ];
@@ -43,6 +48,29 @@ class SubscriptionPlan extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * Plan "Sur devis" : aucun prix fixé (0 FCFA par mois et par an).
+     */
+    public function isQuote(): bool
+    {
+        return (float) $this->monthly_price <= 0 && (float) $this->yearly_price <= 0;
+    }
+
+    /**
+     * Libellé d'une limite : "illimités" au-delà du seuil UNLIMITED.
+     */
+    public static function formatLimit(?int $value, string $unit): string
+    {
+        if ($value === null || $value >= self::UNLIMITED) {
+            // Pas de ucfirst()/mb_* : non multi-octets / mbstring absent en production.
+            $labels = ['élèves' => 'Élèves', 'utilisateurs' => 'Utilisateurs', 'classes' => 'Classes'];
+
+            return ($labels[$unit] ?? $unit).' illimités';
+        }
+
+        return 'Max '.number_format($value, 0, ',', ' ').' '.$unit;
     }
 
     /**

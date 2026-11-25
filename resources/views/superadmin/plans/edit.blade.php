@@ -117,6 +117,11 @@
                                            class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
                                     <span class="ml-2 text-sm font-medium text-gray-700">Plan actif (visible pour les écoles)</span>
                                 </label>
+                                <label class="flex items-center cursor-pointer mt-2">
+                                    <input type="checkbox" name="is_recommended" value="1" {{ old('is_recommended', $plan->is_recommended) ? 'checked' : '' }}
+                                           class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
+                                    <span class="ml-2 text-sm font-medium text-gray-700">Mis en avant (badge « ⭐ POPULAIRE » sur la page publique)</span>
+                                </label>
                             </div>
 
                             <!-- Ordre d'affichage -->

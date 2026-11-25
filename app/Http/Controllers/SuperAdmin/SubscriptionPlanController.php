@@ -50,6 +50,7 @@ class SubscriptionPlanController extends Controller
 
         // Gérer la checkbox : true si cochée, false sinon
         $validated['is_active'] = $request->has('is_active');
+        $validated['is_recommended'] = $request->has('is_recommended');
 
         // Donner une valeur par défaut à sort_order s'il est vide
         $validated['sort_order'] = $request->input('sort_order', 0);
@@ -87,6 +88,7 @@ class SubscriptionPlanController extends Controller
         ]);
 
         $validated['is_active'] = $request->has('is_active');
+        $validated['is_recommended'] = $request->has('is_recommended');
 
         $plan->update($validated);
 

@@ -690,7 +690,7 @@
                                 number_format($plan->max_users, 0, ',', ' ') . ' utilisateurs',
                                 'Toutes les fonctionnalités',
                             ];
-                        $isPopular = $index === 1;
+                        $isPopular = (bool) $plan->is_recommended;
                         $savings = !$isQuote ? ((float) $plan->monthly_price * 12) - (float) $plan->yearly_price : 0;
                     @endphp
                     <div class="{{ $isPopular ? 'bg-gradient-to-br from-blue-600 to-blue-800 text-white transform lg:scale-105 shadow-2xl order-first lg:order-none' : 'bg-white border-2 border-gray-100 hover:border-blue-200' }} rounded-2xl p-8 relative transition reveal">

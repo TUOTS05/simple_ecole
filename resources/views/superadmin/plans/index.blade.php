@@ -48,22 +48,27 @@
                     @forelse($plans as $plan)
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4">
-                                <div class="text-sm font-semibold text-gray-900">{{ $plan->name }}</div>
+                                <div class="text-sm font-semibold text-gray-900">
+                                    {{ $plan->name }}
+                                    @if($plan->is_recommended)
+                                        <span class="ml-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800">⭐ Populaire</span>
+                                    @endif
+                                </div>
                                 <div class="text-xs text-gray-500">{{ $plan->slug }}</div>
                                 @if($plan->description)
                                     <div class="text-xs text-gray-600 mt-1">{{ Str::limit($plan->description, 50) }}</div>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-900 font-semibold">
-                                {{ $plan->formatted_monthly_price }}
+                                {{ $plan->isQuote() ? 'Sur devis' : $plan->formatted_monthly_price }}
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-900 font-semibold">
-                                {{ $plan->formatted_yearly_price }}
+                                {{ $plan->isQuote() ? 'Sur devis' : $plan->formatted_yearly_price }}
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-600">
-                                <div>👨‍🎓 {{ $plan->max_students }} élèves</div>
-                                <div>👥 {{ $plan->max_users }} utilisateurs</div>
-                                <div>🏫 {{ $plan->max_classes }} classes</div>
+                                <div>👨‍🎓 {{ \App\Models\SubscriptionPlan::formatLimit($plan->max_students, 'élèves') }}</div>
+                                <div>👥 {{ \App\Models\SubscriptionPlan::formatLimit($plan->max_users, 'utilisateurs') }}</div>
+                                <div>🏫 {{ \App\Models\SubscriptionPlan::formatLimit($plan->max_classes, 'classes') }}</div>
                             </td>
                             <td class="px-6 py-4">
                                 @if($plan->is_active)

@@ -170,8 +170,8 @@
                                         <p class="text-xs text-gray-500 -mt-1 mb-2">soit {{ number_format($plan->yearly_price ?? 0, 0, ',', ' ') }} FCFA/an</p>
                                     @endif
                                     <ul class="text-xs text-gray-600 space-y-1 mt-2">
-                                        <li><i class="fas fa-check text-green-500 mr-1"></i> Max {{ $plan->max_students ?? 'Illimité' }} élèves</li>
-                                        <li><i class="fas fa-check text-green-500 mr-1"></i> Max {{ $plan->max_users ?? 'Illimité' }} utilisateurs</li>
+                                        <li><i class="fas fa-check text-green-500 mr-1"></i> {{ \App\Models\SubscriptionPlan::formatLimit($plan->max_students, 'élèves') }}</li>
+                                        <li><i class="fas fa-check text-green-500 mr-1"></i> {{ \App\Models\SubscriptionPlan::formatLimit($plan->max_users, 'utilisateurs') }}</li>
                                     </ul>
                                 </label>
                                 @empty
