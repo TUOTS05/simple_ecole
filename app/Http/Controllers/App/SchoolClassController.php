@@ -88,6 +88,10 @@ class SchoolClassController extends Controller
                 ->withInput();
         }
 
+        if ($mismatch = $this->nameLevelMismatch($validated['name'], $validated['level'])) {
+            return back()->withErrors(['level' => $mismatch])->withInput();
+        }
+
         // Vérifier qu'une classe avec le même nom n'existe pas déjà
         $exists = SchoolClass::where('school_id', $schoolId)
             ->where('name', $validated['name'])
@@ -189,6 +193,10 @@ class SchoolClassController extends Controller
                 ->withInput();
         }
 
+        if ($mismatch = $this->nameLevelMismatch($validated['name'], $validated['level'])) {
+            return back()->withErrors(['level' => $mismatch])->withInput();
+        }
+
         // Vérifier qu'une classe avec le même nom n'existe pas déjà (sauf la classe actuelle)
         $exists = SchoolClass::where('school_id', $class->school_id)
             ->where('name', $validated['name'])
@@ -252,5 +260,29 @@ class SchoolClassController extends Controller
         }
 
         return $levelsByCycle;
+    }
+
+    /**
+     * Détecte un nom de classe qui contredit le niveau choisi (ex. "CM2 A" enregistrée en
+     * Maternelle / GS suite à une mauvaise sélection dans les listes déroulantes).
+     * Seuls les codes de niveau écrits comme mots isolés dans le nom sont pris en compte ;
+     * un nom sans code ("Petite section", "Les Lutins") n'est jamais bloqué.
+     */
+    private function nameLevelMismatch(string $name, string $level): ?string
+    {
+        $codes = ['TPS', 'PS', 'MS', 'GS', 'CP', 'CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2'];
+        // CP et CP1 désignent la même année
+        $normalize = fn (string $code) => $code === 'CP' ? 'CP1' : $code;
+
+        $tokens = preg_split('/[^A-Za-z0-9]+/', strtoupper($name), -1, PREG_SPLIT_NO_EMPTY);
+        $levelUpper = strtoupper($level);
+
+        foreach ($tokens as $token) {
+            if (in_array($token, $codes, true) && $normalize($token) !== $normalize($levelUpper)) {
+                return "Le nom « {$name} » correspond au niveau {$token}, mais le niveau choisi est {$level}. Vérifiez le cycle et le niveau sélectionnés.";
+            }
+        }
+
+        return null;
     }
 }

@@ -115,6 +115,33 @@ class TestFeedbackFixesTest extends TestCase
         ]);
     }
 
+    public function test_class_name_contradicting_selected_level_is_rejected(): void
+    {
+        $school = $this->makeSchool();
+        $this->makeActiveYear($school);
+        $admin = $this->makeUser($school, 'school_admin', 'admin@example.test');
+
+        // Cas réel : "CM2 A" enregistrée par erreur en Maternelle / GS
+        $this->actingAs($admin)->post(route('app.classes.store'), [
+            'name' => 'CM2 A', 'cycle' => 'maternelle', 'level' => 'GS',
+        ])->assertSessionHasErrors(['level' => 'Le nom « CM2 A » correspond au niveau CM2, mais le niveau choisi est GS. Vérifiez le cycle et le niveau sélectionnés.']);
+        $this->assertDatabaseMissing('school_classes', ['name' => 'CM2 A']);
+
+        // Cas valides : bon niveau, CP ≡ CP1, nom sans code de niveau
+        foreach ([['CM2 A', 'primaire', 'CM2'], ['CP A', 'primaire', 'CP1'], ['Les Lutins', 'maternelle', 'PS']] as [$name, $cycle, $level]) {
+            $this->actingAs($admin)->post(route('app.classes.store'), compact('name', 'cycle', 'level'))
+                ->assertSessionHasNoErrors();
+        }
+        $this->assertDatabaseHas('school_classes', ['name' => 'CM2 A', 'cycle' => 'primaire', 'level' => 'CM2']);
+
+        // Même contrôle à la modification
+        $class = SchoolClass::where('name', 'CM2 A')->first();
+        $this->actingAs($admin)->put(route('app.classes.update', $class), [
+            'name' => 'CM2 A', 'cycle' => 'maternelle', 'level' => 'GS',
+        ])->assertSessionHasErrors('level');
+        $this->assertSame('CM2', $class->fresh()->level);
+    }
+
     // ---------------------------------------------------------------
     // 3. Matières : lignes vides / incomplètes n'empêchent plus l'enregistrement
     // ---------------------------------------------------------------
