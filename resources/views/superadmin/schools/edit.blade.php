@@ -82,37 +82,63 @@
                             <span class="mr-2">📜</span> Contrat et Abonnement
                         </h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Plan d'abonnement -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Plan d'abonnement *</label>
-                                <select name="subscription_plan" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent @error('subscription_plan') border-red-500 @enderror">
-                                    <option value="basic" {{ old('subscription_plan', $school->subscription_plan) === 'basic' ? 'selected' : '' }}>Basique (Limité)</option>
-                                    <option value="premium" {{ old('subscription_plan', $school->subscription_plan) === 'premium' ? 'selected' : '' }}>Premium (Recommandé)</option>
-                                    <option value="enterprise" {{ old('subscription_plan', $school->subscription_plan) === 'enterprise' ? 'selected' : '' }}>Entreprise (Illimité)</option>
+                            <!-- Plan d'abonnement (forfaits gérés dans Super Admin > Plans d'abonnement) -->
+                            @php
+                                $currentPlan = old('subscription_plan', $school->subscription_plan);
+                                $knownPlan = $plans->firstWhere('name', $currentPlan);
+                                // La colonne vaut 'basic' par défaut (reliquat des anciens forfaits codés en dur) :
+                                // une école sans abonnement (pas de date d'expiration) n'a en réalité aucun forfait.
+                                if (! $knownPlan && ! old('subscription_plan') && ! $school->subscription_end_date) {
+                                    $currentPlan = null;
+                                }
+                            @endphp
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Plan d'abonnement</label>
+                                <select name="subscription_plan" id="subscription_plan" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent @error('subscription_plan') border-red-500 @enderror">
+                                    <option value="">— Aucun forfait (en attente d'abonnement) —</option>
+                                    @foreach($plans as $plan)
+                                        <option value="{{ $plan->name }}"
+                                                data-max-students="{{ $plan->max_students }}"
+                                                data-max-users="{{ $plan->max_users }}"
+                                                @selected($currentPlan === $plan->name)>
+                                            {{ $plan->name }}
+                                            — {{ $plan->isQuote() ? 'Sur devis' : number_format($plan->monthly_price, 0, ',', ' ').' FCFA/mois' }}
+                                            ({{ \App\Models\SubscriptionPlan::formatLimit($plan->max_students, 'élèves') }}, {{ \App\Models\SubscriptionPlan::formatLimit($plan->max_users, 'utilisateurs') }})
+                                            {{ $plan->is_active ? '' : '[inactif]' }}
+                                        </option>
+                                    @endforeach
+                                    @if($currentPlan && ! $knownPlan)
+                                        <option value="{{ $currentPlan }}" selected>{{ $currentPlan }} (ancien forfait, n'existe plus)</option>
+                                    @endif
                                 </select>
+                                <p class="text-xs text-gray-500 mt-1">Les plafonds d'élèves et d'utilisateurs sont ceux du forfait choisi.</p>
                                 @error('subscription_plan') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
                             </div>
 
-                            <!-- Nombre max d'élèves -->
+                            <!-- Plafonds (issus du forfait) -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre max. d'élèves *</label>
-                                <input type="number" name="max_students" value="{{ old('max_students', $school->max_students) }}" required min="1"
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent @error('max_students') border-red-500 @enderror">
-                                @error('max_students') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre max. d'élèves</label>
+                                <input type="number" id="max_students" value="{{ $school->max_students }}" readonly
+                                       class="w-full px-4 py-2 border border-gray-200 bg-gray-100 text-gray-600 rounded-lg cursor-not-allowed">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre max. d'utilisateurs</label>
+                                <input type="number" id="max_users" value="{{ $school->max_users }}" readonly
+                                       class="w-full px-4 py-2 border border-gray-200 bg-gray-100 text-gray-600 rounded-lg cursor-not-allowed">
                             </div>
 
                             <!-- Date de début -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Date de début d'abonnement *</label>
-                                <input type="date" name="subscription_start_date" value="{{ old('subscription_start_date', $school->subscription_start_date?->format('Y-m-d')) }}" required
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Date de début d'abonnement <span class="plan-required">*</span></label>
+                                <input type="date" name="subscription_start_date" value="{{ old('subscription_start_date', $school->subscription_start_date?->format('Y-m-d')) }}"
                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent @error('subscription_start_date') border-red-500 @enderror">
                                 @error('subscription_start_date') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
                             </div>
 
                             <!-- Date de fin -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Date d'expiration *</label>
-                                <input type="date" name="subscription_end_date" value="{{ old('subscription_end_date', $school->subscription_end_date?->format('Y-m-d')) }}" required
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Date d'expiration <span class="plan-required">*</span></label>
+                                <input type="date" name="subscription_end_date" value="{{ old('subscription_end_date', $school->subscription_end_date?->format('Y-m-d')) }}"
                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent @error('subscription_end_date') border-red-500 @enderror">
                                 <p class="text-xs text-red-500 mt-1">⚠️ L'école sera automatiquement bloquée après cette date.</p>
                                 @error('subscription_end_date') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
@@ -198,5 +224,25 @@
                 slugInput.dataset.autoGenerated = 'true';
             }
         });
+
+        // Les plafonds affichés suivent le forfait sélectionné (le serveur les applique de la même façon)
+        (function () {
+            const planSelect = document.getElementById('subscription_plan');
+            const maxStudents = document.getElementById('max_students');
+            const maxUsers = document.getElementById('max_users');
+            if (!planSelect) return;
+
+            function syncLimits() {
+                const option = planSelect.selectedOptions[0];
+                if (option && option.dataset.maxStudents) {
+                    maxStudents.value = option.dataset.maxStudents;
+                    maxUsers.value = option.dataset.maxUsers;
+                }
+                document.querySelectorAll('.plan-required').forEach(el => el.classList.toggle('hidden', !planSelect.value));
+            }
+
+            planSelect.addEventListener('change', syncLimits);
+            syncLimits();
+        })();
     </script>
 @endsection

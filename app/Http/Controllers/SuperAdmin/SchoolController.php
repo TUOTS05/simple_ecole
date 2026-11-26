@@ -5,9 +5,11 @@ namespace App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\School;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -318,7 +320,9 @@ class SchoolController extends Controller
      */
     public function edit(School $school)
     {
-        return view('superadmin.schools.edit', compact('school'));
+        $plans = SubscriptionPlan::orderBy('sort_order')->orderBy('monthly_price')->get();
+
+        return view('superadmin.schools.edit', compact('school', 'plans'));
     }
 
     /**
@@ -331,15 +335,38 @@ class SchoolController extends Controller
             'slug' => 'required|string|max:255|unique:schools,slug,'.$school->id,
             'school_type' => 'required|in:maternelle,primaire,both,creche',
             'status' => 'required|in:active,suspended,expired', // ✅ UNIFORMISÉ (suppression de 'trial')
-            'subscription_plan' => 'required|in:basic,premium,enterprise', // ✅ AJOUTÉ POUR SAAS
-            'subscription_start_date' => 'required|date', // ✅ AJOUTÉ POUR SAAS
-            'subscription_end_date' => 'required|date', // ✅ AJOUTÉ POUR SAAS
-            'max_students' => 'required|integer|min:1', // ✅ AJOUTÉ POUR SAAS
+            // Forfait = un plan géré par le super admin (stocké par son nom, comme lors de
+            // l'approbation d'un abonnement). L'ancienne valeur reste acceptée si le plan a
+            // depuis été renommé/supprimé, pour ne pas bloquer la modification de l'école.
+            'subscription_plan' => ['nullable', 'string', Rule::in(
+                SubscriptionPlan::pluck('name')->push($school->subscription_plan)->filter()->all()
+            )],
+            'subscription_start_date' => 'nullable|required_with:subscription_plan|date',
+            'subscription_end_date' => 'nullable|required_with:subscription_plan|date|after_or_equal:subscription_start_date',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ], [
+            'subscription_plan.in' => 'Ce forfait n\'existe pas. Choisissez un forfait de la liste.',
+            'subscription_start_date.required_with' => 'La date de début est obligatoire quand un forfait est choisi.',
+            'subscription_end_date.required_with' => 'La date d\'expiration est obligatoire quand un forfait est choisi.',
+            'subscription_end_date.after_or_equal' => 'La date d\'expiration doit être postérieure à la date de début.',
         ]);
 
+        // Les plafonds viennent du forfait choisi (et non d'une saisie libre) : le plan est respecté.
+        $plan = ! empty($validated['subscription_plan'])
+            ? SubscriptionPlan::where('name', $validated['subscription_plan'])->first()
+            : null;
+        if ($plan) {
+            $validated['max_students'] = $plan->max_students;
+            $validated['max_users'] = $plan->max_users;
+        }
+
+        // "Aucun forfait" : la colonne est NOT NULL, on ne l'écrase pas avec null.
+        if (empty($validated['subscription_plan'])) {
+            unset($validated['subscription_plan']);
+        }
+
         // ✅ LOGIQUE MÉTIER : Si la date de fin est dans le passé, forcer le statut à 'expired'
-        if (Carbon::parse($validated['subscription_end_date'])->isPast()) {
+        if (! empty($validated['subscription_end_date']) && Carbon::parse($validated['subscription_end_date'])->endOfDay()->isPast()) {
             $validated['status'] = 'expired';
         }
 

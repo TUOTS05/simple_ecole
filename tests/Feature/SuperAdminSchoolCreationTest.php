@@ -56,6 +56,74 @@ class SuperAdminSchoolCreationTest extends TestCase
             ->assertSessionHasNoErrors();
     }
 
+    private function editPayload(School $school, array $overrides = []): array
+    {
+        return array_merge([
+            'name' => $school->name,
+            'slug' => $school->slug,
+            'school_type' => $school->school_type,
+            'status' => 'active',
+        ], $overrides);
+    }
+
+    public function test_edit_form_lists_plans_managed_by_super_admin(): void
+    {
+        $this->seed(\Database\Seeders\SubscriptionPlanSeeder::class);
+        $school = School::create(['name' => 'Ecole Test', 'slug' => 'ecole-test', 'school_type' => 'both', 'status' => 'suspended']);
+
+        $this->actingAs($this->superAdmin())
+            ->get(route('superadmin.schools.edit', $school))
+            ->assertOk()
+            ->assertSee('Essentiel')->assertSee('Croissance')->assertSee('Premium')->assertSee('Sur Devis')
+            ->assertDontSee('value="basic"', false);
+    }
+
+    public function test_updating_school_with_a_plan_applies_the_plan_limits(): void
+    {
+        $this->seed(\Database\Seeders\SubscriptionPlanSeeder::class);
+        $school = School::create(['name' => 'Ecole Test', 'slug' => 'ecole-test', 'school_type' => 'both', 'status' => 'suspended', 'max_students' => 5]);
+
+        $this->actingAs($this->superAdmin())
+            ->put(route('superadmin.schools.update', $school), $this->editPayload($school, [
+                'subscription_plan' => 'Croissance',
+                'subscription_start_date' => now()->toDateString(),
+                'subscription_end_date' => now()->addYear()->toDateString(),
+                'max_students' => 999999, // ignoré : les plafonds viennent du forfait
+            ]))
+            ->assertRedirect(route('superadmin.schools.index'))
+            ->assertSessionHasNoErrors();
+
+        $school->refresh();
+        $this->assertSame('Croissance', $school->subscription_plan);
+        $this->assertSame(250, (int) $school->max_students);
+        $this->assertSame(5, (int) $school->max_users);
+        $this->assertSame('active', $school->status);
+    }
+
+    public function test_unknown_plan_is_rejected_and_school_without_plan_can_be_edited(): void
+    {
+        $this->seed(\Database\Seeders\SubscriptionPlanSeeder::class);
+        $school = School::create(['name' => 'Ecole Test', 'slug' => 'ecole-test', 'school_type' => 'both', 'status' => 'suspended']);
+        $admin = $this->superAdmin();
+
+        $this->actingAs($admin)
+            ->put(route('superadmin.schools.update', $school), $this->editPayload($school, [
+                'subscription_plan' => 'premium-inexistant',
+                'subscription_start_date' => now()->toDateString(),
+                'subscription_end_date' => now()->addYear()->toDateString(),
+            ]))
+            ->assertSessionHasErrors(['subscription_plan' => 'Ce forfait n\'existe pas. Choisissez un forfait de la liste.']);
+
+        // Sans forfait : pas de dates exigées
+        $this->actingAs($admin)
+            ->put(route('superadmin.schools.update', $school), $this->editPayload($school, [
+                'name' => 'Ecole Renommée', 'status' => 'suspended',
+                'subscription_plan' => '', 'subscription_start_date' => '', 'subscription_end_date' => '',
+            ]))
+            ->assertSessionHasNoErrors();
+        $this->assertSame('Ecole Renommée', $school->fresh()->name);
+    }
+
     public function test_invalid_phone_returns_a_french_validation_error(): void
     {
         $this->actingAs($this->superAdmin())
