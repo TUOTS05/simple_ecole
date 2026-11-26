@@ -52,6 +52,7 @@
     <!-- Filtres -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6">
         <form method="GET" action="{{ route('app.students.index') }}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+            @if(request('menu') === 'rapports')<input type="hidden" name="menu" value="rapports">@endif
             <div>
                 <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase">Année Scolaire</label>
                 <select name="school_year_id" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">

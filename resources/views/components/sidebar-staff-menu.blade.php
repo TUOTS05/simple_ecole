@@ -3,6 +3,9 @@
      correspondant (voir App\Support\Permissions) : le même menu sert à tous les rôles. --}}
 @php
     $isCreche = session('current_school')?->school_type === 'creche';
+    // Les rapports « Listes de classe » et « Présences » ouvrent les mêmes pages qu'Élèves / Présences :
+    // ?menu=rapports indique d'où l'on vient, pour garder le groupe Rapports ouvert (et pas Vie Scolaire).
+    $fromReports = request('menu') === 'rapports';
     $subLink = fn (bool $active) => 'block px-4 py-2 text-sm rounded-md transition '.($active ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50');
 @endphp
 
@@ -39,7 +42,7 @@
 
 @canany(['students.manage', 'parents.view', 'attendances.view', 'report_cards.manage'])
 <!-- Groupe : Vie Scolaire -->
-<div x-data="{ open: {{ request()->routeIs('app.students.*') || request()->routeIs('app.attendances.*') || request()->routeIs('app.report-cards.*') || request()->routeIs('app.parents.*') || request()->routeIs('app.end-of-year.*') ? 'true' : 'false' }} }" class="space-y-1">
+<div x-data="{ open: {{ ! $fromReports && (request()->routeIs('app.students.*') || request()->routeIs('app.attendances.*') || request()->routeIs('app.report-cards.*') || request()->routeIs('app.parents.*') || request()->routeIs('app.end-of-year.*')) ? 'true' : 'false' }} }" class="space-y-1">
     <button @click="if(!sidebarOpen) sidebarOpen = true; open = !open" title="Vie Scolaire"
         class="w-full flex items-center justify-between px-3 py-3 rounded-lg transition text-gray-700 hover:bg-gray-100 focus:outline-none">
         <div class="flex items-center">
@@ -52,13 +55,13 @@
     </button>
     <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
         @can('students.manage')
-        <a href="{{ route('app.students.index') }}" title="Liste des Élèves" class="{{ $subLink(request()->routeIs('app.students.*')) }}">Élèves</a>
+        <a href="{{ route('app.students.index') }}" title="Liste des Élèves" class="{{ $subLink(! $fromReports && request()->routeIs('app.students.*')) }}">Élèves</a>
         @endcan
         @can('parents.view')
         <a href="{{ route('app.parents.index') }}" title="Parents" class="{{ $subLink(request()->routeIs('app.parents.*')) }}">Parents</a>
         @endcan
         @can('attendances.view')
-        <a href="{{ route('app.attendances.index') }}" title="Présences" class="{{ $subLink(request()->routeIs('app.attendances.*')) }}">Présences</a>
+        <a href="{{ route('app.attendances.index') }}" title="Présences" class="{{ $subLink(! $fromReports && request()->routeIs('app.attendances.*')) }}">Présences</a>
         @endcan
         @can('report_cards.manage')
             @unless($isCreche)
@@ -115,7 +118,7 @@
 <!-- ✅ GROUPE : RAPPORTS -->
 {{-- Les élèves et présences sont déjà actifs dans "Vie Scolaire" :
      on ne les surligne pas ici pour éviter deux menus actifs en même temps. --}}
-<div x-data="{ open: {{ request()->routeIs('app.financial.*') ? 'true' : 'false' }} }" class="space-y-1">
+<div x-data="{ open: {{ $fromReports || request()->routeIs('app.financial.*') || request()->routeIs('app.notifications.*') ? 'true' : 'false' }} }" class="space-y-1">
     <button @click="if(!sidebarOpen) sidebarOpen = true; open = !open" title="Rapports"
         class="w-full flex items-center justify-between px-3 py-3 rounded-lg transition text-gray-700 hover:bg-gray-100 focus:outline-none">
         <div class="flex items-center">
@@ -129,10 +132,10 @@
     <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
         <a href="{{ route('app.financial.unpaid_by_class') }}" class="{{ $subLink(request()->routeIs('app.financial.*')) }}">États de scolarité</a>
         @can('students.manage')
-        <a href="{{ route('app.students.index') }}" class="{{ $subLink(false) }}">Listes de classe & Exports</a>
+        <a href="{{ route('app.students.index', ['menu' => 'rapports']) }}" class="{{ $subLink($fromReports && request()->routeIs('app.students.*')) }}">Listes de classe & Exports</a>
         @endcan
         @can('attendances.view')
-        <a href="{{ route('app.attendances.index') }}" class="{{ $subLink(false) }}">Rapport Présences/Absences</a>
+        <a href="{{ route('app.attendances.index', ['menu' => 'rapports']) }}" class="{{ $subLink($fromReports && request()->routeIs('app.attendances.*')) }}">Rapport Présences/Absences</a>
         @endcan
         <a href="{{ route('app.notifications.index') }}" class="{{ $subLink(request()->routeIs('app.notifications.*')) }}">Notifications SMS</a>
     </div>

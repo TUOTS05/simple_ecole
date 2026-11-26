@@ -20,6 +20,7 @@
 
 <div class="bg-white rounded-lg shadow p-6 mb-6">
     <form method="GET" action="{{ route('app.attendances.index') }}" class="grid gap-4 md:grid-cols-5">
+            @if(request('menu') === 'rapports')<input type="hidden" name="menu" value="rapports">@endif
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Classe</label>
             <select name="class_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">

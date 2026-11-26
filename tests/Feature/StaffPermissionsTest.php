@@ -157,6 +157,22 @@ class StaffPermissionsTest extends TestCase
             ->assertSee(route('app.staff.index'), false);
     }
 
+    public function test_report_links_keep_the_reports_group_open_instead_of_vie_scolaire(): void
+    {
+        $active = 'block px-4 py-2 text-sm rounded-md transition bg-primary/10 text-primary font-semibold';
+
+        // Depuis le menu Rapports : seul le lien du rapport est actif, Vie Scolaire reste fermé
+        $html = $this->actingAs($this->admin)->get(route('app.students.index', ['menu' => 'rapports']))->assertOk()->getContent();
+        $this->assertStringContainsString('menu=rapports" class="'.$active.'">Listes de classe', $html);
+        $this->assertStringNotContainsString('class="'.$active.'">Élèves</a>', $html);
+        $this->assertStringContainsString('name="menu" value="rapports"', $html); // conservé au filtrage
+
+        // Depuis Vie Scolaire : comportement normal
+        $html = $this->actingAs($this->admin)->get(route('app.students.index'))->getContent();
+        $this->assertStringContainsString('class="'.$active.'">Élèves</a>', $html);
+        $this->assertStringNotContainsString('class="'.$active.'">Listes de classe', $html);
+    }
+
     public function test_director_cannot_manage_other_schools_staff_or_non_staff_accounts(): void
     {
         $other = School::create(['name' => 'Autre', 'slug' => 'autre', 'status' => 'active', 'school_type' => 'both']);
