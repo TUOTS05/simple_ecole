@@ -16,7 +16,7 @@ class SubjectController extends Controller
 {
     private const LEVELS_BY_CYCLE = [
         'maternelle' => ['TPS', 'PS', 'MS', 'GS'],
-        'primaire' => ['CP', 'CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2'],
+        'primaire' => ['CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2'],
     ];
 
     public function index(Request $request)

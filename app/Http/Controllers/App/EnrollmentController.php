@@ -9,6 +9,7 @@ use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\SchoolYear;
 use App\Models\Student;
+use App\Models\StudentInstallment;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -338,6 +339,20 @@ class EnrollmentController extends Controller
 
             return back()->withErrors(['error' => 'Erreur : '.$e->getMessage()])->withInput();
         }
+    }
+
+    /**
+     * Génère les échéances de paiement de l'inscription (même logique que StudentController).
+     * Cette méthode était appelée par store() mais n'existait pas : l'inscription plantait.
+     */
+    private function generateFeeSchedule(Enrollment $enrollment, $classId, $startDate): void
+    {
+        $schoolClass = SchoolClass::find($classId);
+        if (! $schoolClass) {
+            return;
+        }
+
+        StudentInstallment::generateScheduleFor($enrollment, $schoolClass, $startDate);
     }
 
     public function show(Enrollment $enrollment)

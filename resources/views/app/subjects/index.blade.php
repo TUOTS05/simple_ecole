@@ -85,7 +85,7 @@
             <label class="block text-sm font-medium text-gray-700 mb-2">Niveau</label>
             <select name="level" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
                 <option value="">Tous les niveaux</option>
-                @foreach(['TPS', 'PS', 'MS', 'GS', 'CP', 'CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2'] as $level)
+                @foreach(['TPS', 'PS', 'MS', 'GS', 'CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2'] as $level)
                 <option value="{{ $level }}" @selected(request('level') === $level)>{{ $level }}</option>
                 @endforeach
             </select>

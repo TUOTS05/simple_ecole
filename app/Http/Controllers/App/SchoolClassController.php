@@ -239,7 +239,9 @@ class SchoolClassController extends Controller
     private function getLevelsByCycle($school): array
     {
         $maternelleLevels = ['TPS', 'PS', 'MS', 'GS'];
-        $primaireLevels = ['CP', 'CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2'];
+        // « CP » seul n'est plus proposé : il était choisi à la place de CP1/CP2 et les matières
+        // (configurées en CP1) ne correspondaient plus. Il reste accepté pour les classes existantes.
+        $primaireLevels = ['CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2'];
         $crecheLevels = ['Bébés (0-1 an)', 'Moyens (1-2 ans)', 'Grands (2-3 ans)'];
 
         $levelsByCycle = [];

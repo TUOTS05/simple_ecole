@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\App\AccountantController;
 use App\Http\Controllers\App\AccountantProfileController;
 use App\Http\Controllers\App\AttendanceController;
 use App\Http\Controllers\App\BroadcastMessageController;
@@ -14,7 +13,6 @@ use App\Http\Controllers\App\ExtraAttendanceController;
 use App\Http\Controllers\App\ExtraController;
 use App\Http\Controllers\App\ExtraMenuController;
 use App\Http\Controllers\App\ExtraRefundController;
-use App\Http\Controllers\App\ExtraStaffController;
 use App\Http\Controllers\App\ExtraStockController;
 use App\Http\Controllers\App\ExtraTransportController;
 use App\Http\Controllers\App\FeeController;
@@ -34,7 +32,6 @@ use App\Http\Controllers\App\StudentController;
 use App\Http\Controllers\App\StudentInstallmentController;
 use App\Http\Controllers\App\SubjectController;
 use App\Http\Controllers\App\TeacherAssignmentController;
-use App\Http\Controllers\App\TeacherController;
 use App\Http\Controllers\DemoController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SchoolOnboardingController;
@@ -201,22 +198,16 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountan
         Route::resource('/staff', StaffController::class)->except(['show'])
             ->parameters(['staff' => 'staffUser']);
 
-        // Anciens écrans par rôle, conservés pour les liens existants
-        Route::resource('/accountants', AccountantController::class)->except(['show']);
-        Route::resource('/teachers', TeacherController::class)->except(['show']);
-
         // Personnel Enseignant (Assignation aux classes)
         Route::resource('/teacher-assignments', TeacherAssignmentController::class)
             ->only(['index', 'create', 'store', 'destroy']);
 
-        Route::where(['type' => 'canteen|transport'])->group(function () {
-            Route::get('/extra-staff/{type}', [ExtraStaffController::class, 'index'])->name('extra-staff.index');
-            Route::get('/extra-staff/{type}/create', [ExtraStaffController::class, 'create'])->name('extra-staff.create');
-            Route::post('/extra-staff/{type}', [ExtraStaffController::class, 'store'])->name('extra-staff.store');
-            Route::get('/extra-staff/{type}/{user}/edit', [ExtraStaffController::class, 'edit'])->name('extra-staff.edit');
-            Route::put('/extra-staff/{type}/{user}', [ExtraStaffController::class, 'update'])->name('extra-staff.update');
-            Route::delete('/extra-staff/{type}/{user}', [ExtraStaffController::class, 'destroy'])->name('extra-staff.destroy');
-        });
+        // Anciennes adresses des écrans par rôle (supprimés) : redirigées vers « Personnel »
+        // filtré sur le rôle, pour que les favoris et anciens liens restent valides.
+        foreach (['teachers' => 'teacher', 'accountants' => 'accountant', 'extra-staff/canteen' => 'canteen_manager', 'extra-staff/transport' => 'transport_manager'] as $oldPath => $role) {
+            Route::get('/'.$oldPath.'/{any?}', fn () => redirect()->route('app.staff.index', ['role' => $role]))
+                ->where('any', '.*');
+        }
     });
 
     // Classes

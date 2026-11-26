@@ -85,5 +85,14 @@ class StudentInstallment extends Model
                 'status' => 'pending',
             ]);
         }
+
+        // Total de scolarité de l'inscription = somme des échéances (hors frais d'inscription,
+        // payés à part). Sans ce calcul, le total restait à 0 et le « reste à payer » devenait
+        // négatif dès le premier paiement.
+        $tuitionTotal = (float) static::where('enrollment_id', $enrollment->id)->where('type', 'installment')->sum('amount');
+        $enrollment->update([
+            'tuition_fee_total' => $tuitionTotal,
+            'tuition_fee_remaining' => $tuitionTotal - (float) $enrollment->tuition_fee_paid,
+        ]);
     }
 }

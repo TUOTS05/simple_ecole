@@ -93,7 +93,20 @@ class StaffPermissionsTest extends TestCase
         $secretary = $this->makeUser('secretary', 'sec@example.test', ['students.manage', Permissions::STAFF_MANAGE]);
         $this->assertFalse($secretary->hasPermission(Permissions::STAFF_MANAGE));
         $this->actingAs($secretary)->get(route('app.staff.index'))->assertForbidden();
-        $this->actingAs($secretary)->get(route('app.teachers.index'))->assertForbidden();
+        $this->actingAs($secretary)->get('/app/teachers')->assertForbidden();
+    }
+
+    public function test_old_staff_screens_redirect_to_the_unified_screen(): void
+    {
+        foreach ([
+            '/app/teachers' => 'teacher',
+            '/app/teachers/create' => 'teacher',
+            '/app/accountants' => 'accountant',
+            '/app/extra-staff/canteen' => 'canteen_manager',
+            '/app/extra-staff/transport' => 'transport_manager',
+        ] as $url => $role) {
+            $this->actingAs($this->admin)->get($url)->assertRedirect(route('app.staff.index', ['role' => $role]));
+        }
     }
 
     public function test_role_defaults_keep_historical_access(): void
