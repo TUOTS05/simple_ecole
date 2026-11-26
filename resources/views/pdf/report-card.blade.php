@@ -170,6 +170,14 @@
     </style>
 </head>
 <body>
+@php
+    // Personnalisation de l'école (Paramètres › Personnalisation) : valeurs par défaut identiques à l'ancien bulletin
+    $rc = fn (string $key) => \App\Support\SchoolSettings::get($school, 'report_card.'.$key);
+    $identity = fn (string $key) => \App\Support\SchoolSettings::get($school, 'identity.'.$key);
+    $showCoefficient = (bool) $rc('show_coefficient');
+    $groupByDomain = (bool) $rc('group_by_domain') && collect($allSubjects)->contains(fn ($subject) => filled($subject->domain));
+    $columnCount = $showCoefficient ? 4 : 3;
+@endphp
 
     <!-- ✅ DÉBUT DU CADRE GLOBAL -->
     <div class="bulletin-container">
@@ -185,12 +193,21 @@
                 <div style="font-size: 10px; margin-top: 8px;">Année Scolaire: <strong>{{ $schoolYear->name ?? '2025-2026' }}</strong></div>
             </div>
             <div class="header-cell info-cell">
+                @if($identity('header_line1'))
+                <div style="font-size: 10px; font-weight: bold; text-transform: uppercase;">{{ $identity('header_line1') }}</div>
+                @endif
+                @if($identity('header_line2'))
+                <div style="font-size: 9px; text-transform: uppercase; margin-bottom: 4px;">{{ $identity('header_line2') }}</div>
+                @endif
                 <div style="font-size: 16px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px;">{{ $school->name ?? 'NOM DE L\'ÉTABLISSEMENT SCOLAIRE' }}</div>
                 <div style="font-size: 9px; color: #333;">
                     Adresse: {{ $school->address ?? 'BP 1234 Abidjan- Côte d\'Ivoire' }}<br>
                     Téléphone: {{ $school->phone ?? '+225 01 53 91 91 75/ 07 89 57 32 72' }}<br>
                     Email: {{ $school->email ?? 'contact@ecole-excellence.ci' }}
                 </div>
+                @if($identity('motto'))
+                <div style="font-size: 9px; font-style: italic; margin-top: 4px;">« {{ $identity('motto') }} »</div>
+                @endif
             </div>
         </div>
 
@@ -222,10 +239,12 @@
         <table class="grades">
             <thead>
                 <tr>
-                    <th style="width: 40%;">MATIÈRE/ DISCIPLINE</th>
+                    <th style="width: {{ $showCoefficient ? 40 : 45 }}%;">MATIÈRE/ DISCIPLINE</th>
                     <th style="width: 15%;">NOTE/ 20</th>
+                    @if($showCoefficient)
                     <th style="width: 10%;">COEFF</th>
-                    <th style="width: 35%;">APPRÉCIATION/ OBSERVATION</th>
+                    @endif
+                    <th style="width: {{ $showCoefficient ? 35 : 40 }}%;">APPRÉCIATION/ OBSERVATION</th>
                 </tr>
             </thead>
             <tbody>
@@ -234,7 +253,14 @@
                 $totalCoefficients = 0;
                 @endphp
 
+                @php $currentDomain = false; @endphp
                 @foreach($allSubjects as $subject)
+                    @if($groupByDomain && $subject->domain !== $currentDomain)
+                        @php $currentDomain = $subject->domain; @endphp
+                        <tr>
+                            <td colspan="{{ $columnCount }}" style="background: #eeeeee; font-weight: bold; text-transform: uppercase; font-size: 9px;">{{ $currentDomain ?: 'Autres matières' }}</td>
+                        </tr>
+                    @endif
                     @php
                     $grade = $reportCard->grades->firstWhere('subject_id', $subject->id);
                     $score = $grade ? $grade->score : null;
@@ -250,13 +276,8 @@
                         $totalCoefficients += $coefficient;
                         $hasGrade = true;
 
-                        // Calcul automatique de la mention
-                        if ($scoreOutOf20 >= 18) $appreciation = 'Excellent';
-                        elseif ($scoreOutOf20 >= 16) $appreciation = 'Très Bien';
-                        elseif ($scoreOutOf20 >= 14) $appreciation = 'Bien';
-                        elseif ($scoreOutOf20 >= 12) $appreciation = 'Assez Bien';
-                        elseif ($scoreOutOf20 >= 10) $appreciation = 'Passable';
-                        else $appreciation = 'Insuffisant';
+                        // Mention selon le barème de l'école (Paramètres › Personnalisation › Bulletins)
+                        $appreciation = \App\Support\SchoolSettings::labelFor($rc('subject_scale'), $scoreOutOf20);
 
                         // Utilise l'observation saisie manuellement, sinon la mention calculée
                         $displayAppreciation = $grade->remarks ?: $appreciation;
@@ -272,7 +293,9 @@
                                 --
                             @endif
                         </td>
+                        @if($showCoefficient)
                         <td class="center">{{ $coefficient }}</td>
+                        @endif
                         <td class="italic">{{ $displayAppreciation }}</td>
                     </tr>
                 @endforeach
@@ -287,7 +310,9 @@
                             --
                         @endif
                     </td>
+                    @if($showCoefficient)
                     <td class="center"></td>
+                    @endif
                     <td></td>
                 </tr>
             </tbody>
@@ -296,23 +321,22 @@
         <!-- Résumé (3 éléments sur la MÊME LIGNE) -->
         <div class="summary">
             <div class="summary-row">
+                @if($rc('show_rank'))
                 <div class="summary-cell">
                     <strong>CLASSEMENT (RANG) :</strong> {{ $reportCard->rank ?? '--' }}
                 </div>
+                @endif
+                @if($rc('show_class_size'))
                 <div class="summary-cell">
                     <strong>EFFECTIF DE LA CLASSE :</strong> {{ $reportCard->total_students ?? '--' }} Élèves
                 </div>
+                @endif
+                @if($rc('show_mention'))
                 <div class="summary-cell">
-                    <strong>MENTION DU CONSEIL :</strong>
-                    @php
-                    $avg = $totalCoefficients > 0 ? ($totalWeightedScore / $totalCoefficients) : 0;
-                    if ($avg >= 16) echo 'Très Bien';
-                    elseif ($avg >= 14) echo 'Bien';
-                    elseif ($avg >= 12) echo 'Assez Bien';
-                    elseif ($avg >= 10) echo 'Passable';
-                    else echo 'Insuffisant';
-                    @endphp
+                    <strong>{{ $rc('mention_title') }} :</strong>
+                    {{ \App\Support\SchoolSettings::labelFor($rc('general_scale'), $totalCoefficients > 0 ? ($totalWeightedScore / $totalCoefficients) : 0) }}
                 </div>
+                @endif
             </div>
         </div>
 
@@ -372,22 +396,28 @@
             <!-- Ligne des signatures (Toujours présente) -->
             <div class="signature-row">
                 <div class="signature-cell">
-                    <div class="signature-title">APPRÉCIATION GÉNÉRALE & OBSERVATIONS</div>
+                    <div class="signature-title">{{ $rc('left_box_title') }}</div>
                     <div class="signature-box">
                         {{ $reportCard->teacher_comment ?? '' }}
                     </div>
                 </div>
                 <div class="signature-cell">
-                    <div class="signature-title">LA DIRECTION/ CACHET & SIGNATURE</div>
+                    <div class="signature-title">{{ $rc('right_box_title') }}</div>
                     <div class="signature-box"></div>
+                    @if($rc('director_name'))
+                    <div style="text-align: center; font-size: 10px; font-weight: bold; margin-top: 4px;">{{ $rc('director_name') }}</div>
+                    @endif
                 </div>
             </div>
         </div><br>
 
         <!-- Pied de page -->
         <div class="footer">
-            Fait à: {{ $school->city ?? 'Abidjan' }}
+            Fait à: {{ $identity('city') ?: 'Abidjan' }}
             Le: {{ now()->format('d/m/Y') }}
+            @if($rc('footer_note'))
+            <div style="font-size: 8px; font-style: italic; margin-top: 6px;">{{ $rc('footer_note') }}</div>
+            @endif
         </div>
 
     </div>

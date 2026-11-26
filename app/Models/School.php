@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\SchoolSettings;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -191,6 +192,12 @@ class School extends Model
     public function activeUserCount(): int
     {
         return $this->users()->where('role', '!=', 'parent')->count();
+    }
+
+    /** Réglage de personnalisation de l'école (voir App\Support\SchoolSettings). */
+    public function setting(string $key): mixed
+    {
+        return SchoolSettings::get($this, $key);
     }
 
     public function hasReachedUserLimit(): bool

@@ -26,6 +26,7 @@ use App\Http\Controllers\App\ParentController;
 use App\Http\Controllers\App\PaymentController;
 use App\Http\Controllers\App\ReportCardController;
 use App\Http\Controllers\App\SchoolClassController;
+use App\Http\Controllers\App\SchoolCustomizationController;
 use App\Http\Controllers\App\SchoolYearController;
 use App\Http\Controllers\App\SmsSettingsController;
 use App\Http\Controllers\App\StaffController;
@@ -159,6 +160,10 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountan
 
         Route::get('/settings/sms', [SmsSettingsController::class, 'index'])->name('settings.sms');
         Route::post('/settings/sms', [SmsSettingsController::class, 'update'])->name('settings.sms.update');
+
+        // Personnalisation de l'école (espace, matricules, bulletins, matières)
+        Route::get('/settings/customization', [SchoolCustomizationController::class, 'edit'])->name('settings.customization');
+        Route::put('/settings/customization', [SchoolCustomizationController::class, 'update'])->name('settings.customization.update');
     });
 
     // Élèves
@@ -254,8 +259,13 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountan
     });
 
     // Matières
-    Route::resource('/subjects', SubjectController::class)->only(['index', 'create', 'store', 'destroy'])
-        ->middleware('permission:subjects.manage');
+    Route::middleware('permission:subjects.manage')->group(function () {
+        // Copier les matières d'un niveau / d'une année vers un niveau de l'année en cours
+        Route::post('/subjects/copy', [SubjectController::class, 'copy'])->name('subjects.copy');
+        // Ordre d'affichage et domaines (enregistrement groupé depuis la liste)
+        Route::put('/subjects/bulk', [SubjectController::class, 'bulkUpdate'])->name('subjects.bulk-update');
+        Route::resource('/subjects', SubjectController::class)->only(['index', 'create', 'store', 'destroy']);
+    });
 
     Route::middleware('permission:financial.view')->group(function () {
         // ==========================================

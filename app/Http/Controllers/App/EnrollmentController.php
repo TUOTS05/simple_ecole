@@ -175,9 +175,8 @@ class EnrollmentController extends Controller
             }
 
             // 1. Générer le Numéro d'Admission
-            $lastStudent = Student::where('school_id', $schoolId)->whereYear('created_at', $year)->orderBy('id', 'desc')->first();
-            $nextAdmissionNum = $lastStudent && $lastStudent->admission_number ? (intval(substr($lastStudent->admission_number, -4)) + 1) : 1;
-            $admissionNumber = 'ADM-'.$year.'-'.str_pad($nextAdmissionNum, 4, '0', STR_PAD_LEFT);
+            // Format personnalisable par l'école (Personnalisation > Matricules)
+            $admissionNumber = Student::generateAdmissionNumber($schoolId);
 
             // 2. Gestion de la photo
             $photoPath = null;

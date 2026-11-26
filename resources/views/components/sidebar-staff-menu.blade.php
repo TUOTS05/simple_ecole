@@ -258,7 +258,8 @@
             @endunless
         @endcan
         @can('settings.manage')
-        <a href="{{ route('app.settings.sms') }}" title="Configuration SMS" class="{{ $subLink(request()->routeIs('app.settings.*')) }}">Configuration SMS</a>
+        <a href="{{ route('app.settings.customization') }}" title="Personnalisation" class="{{ $subLink(request()->routeIs('app.settings.customization*')) }}">Personnalisation</a>
+        <a href="{{ route('app.settings.sms') }}" title="Configuration SMS" class="{{ $subLink(request()->routeIs('app.settings.sms*')) }}">Configuration SMS</a>
         @endcan
     </div>
 </div>

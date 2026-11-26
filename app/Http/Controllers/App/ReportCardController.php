@@ -86,7 +86,7 @@ class ReportCardController extends Controller
                 ->where('cycle', $class->cycle)
                 ->where('level', $class->level)
                 ->where('is_active', true)
-                ->orderBy('name')
+                ->ordered()
                 ->get();
 
             // Aide au diagnostic quand aucune matière ne correspond exactement à la classe :
@@ -396,7 +396,7 @@ class ReportCardController extends Controller
             ->where('cycle', $schoolClass->cycle)
             ->where('level', $schoolClass->level)
             ->where('is_active', true)
-            ->orderBy('name')
+            ->ordered()
             ->get();
 
         // ✅ On passe maintenant $allSubjects à la vue
@@ -439,7 +439,7 @@ class ReportCardController extends Controller
             ->where('cycle', $class->cycle)
             ->where('level', $class->level)
             ->where('is_active', true)
-            ->orderBy('name')
+            ->ordered()
             ->get();
 
         $students = $class->students()->where('status', 'active')->orderBy('last_name')->get();
@@ -566,7 +566,7 @@ class ReportCardController extends Controller
             ->where('cycle', $schoolClass->cycle)
             ->where('level', $schoolClass->level)
             ->where('is_active', true)
-            ->orderBy('name')
+            ->ordered()
             ->get();
 
         $pdf = Pdf::loadView('pdf.report-card', compact(
@@ -659,7 +659,7 @@ class ReportCardController extends Controller
                 ->where('cycle', $schoolClass->cycle)
                 ->where('level', $schoolClass->level)
                 ->where('is_active', true)
-                ->orderBy('name')
+                ->ordered()
                 ->get();
 
             $allData[] = compact('reportCard', 'student', 'school', 'schoolYear', 'schoolClass', 'allSubjects');

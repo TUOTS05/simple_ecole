@@ -4,6 +4,13 @@
 @section('page_title', 'Nouvelle Admission')
 
 @section('content')
+@php
+    // Prochains numéros réels selon le format de l'école (Paramètres › Personnalisation › Matricules).
+    // Indicatifs : le numéro définitif est attribué à l'enregistrement.
+    $nextAdmissionNumber = \App\Models\Student::generateAdmissionNumber(session('current_school_id'));
+    $nextMatricule = \App\Models\Student::generateMatricule(session('current_school_id'));
+@endphp
+
 <div class="max-w-6xl mx-auto">
 
     <!-- En-tête -->
@@ -44,7 +51,7 @@
                         Numéro Admission
                         <span class="text-xs text-gray-500 font-normal ml-1">(Aperçu)</span>
                     </label>
-                    <input type="text" id="admission_number_preview" value="{{ old('admission_number') }}" readonly
+                    <input type="text" id="admission_number_preview" value="{{ $nextAdmissionNumber }}" readonly
                         class="w-full px-4 py-2.5 bg-gray-100 border border-gray-300 text-gray-600 text-sm rounded-lg cursor-not-allowed"
                         placeholder="Généré côté serveur après sauvegarde">
                     <p class="text-xs text-gray-500 mt-1">Numéro d'admission réel généré au serveur</p>
@@ -56,7 +63,7 @@
                         Matricule
                         <span class="text-xs text-gray-500 font-normal ml-1">(Aperçu)</span>
                     </label>
-                    <input type="text" id="matricule_preview" value="{{ old('matricule') }}" readonly
+                    <input type="text" id="matricule_preview" value="{{ $nextMatricule }}" readonly
                            class="w-full px-4 py-2.5 bg-gray-100 border border-gray-300 text-gray-600 text-sm rounded-lg cursor-not-allowed"
                            placeholder="Généré côté serveur après sauvegarde">
                     <p class="text-xs text-gray-500 mt-1">Matricule réel généré au serveur</p>
@@ -206,19 +213,6 @@ function togglePermanentAddressFields() {
 // 4. Initialisation au chargement de la page
 // Les aperçus du numéro d'admission et du matricule sont juste indicatifs.
 document.addEventListener('DOMContentLoaded', function() {
-    const year = new Date().getFullYear();
-
-    const admissionField = document.getElementById('admission_number_preview');
-    if (admissionField && !admissionField.value) {
-        const randomNum = Math.floor(Math.random() * 9000) + 1000;
-        admissionField.value = `ADM-${year}-${randomNum}`;
-    }
-
-    const matriculeField = document.getElementById('matricule_preview');
-    if (matriculeField && !matriculeField.value) {
-        const randomNumMat = Math.floor(Math.random() * 9000) + 1000;
-        matriculeField.value = `MAT-${year}-${randomNumMat}`;
-    }
 
     // 5. Glisser-déposer pour les zones de téléchargement de documents
     document.querySelectorAll('.js-file-dropzone').forEach(function (zone) {

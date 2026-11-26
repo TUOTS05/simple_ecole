@@ -50,11 +50,16 @@
                 <div id="subjects-container" class="hidden">
                     <h3 class="text-lg font-bold text-gray-800 mb-4">Matières à configurer</h3>
                     <div class="grid grid-cols-12 gap-4 mb-2 font-semibold text-sm text-gray-700">
-                        <div class="col-span-5">Matière</div>
+                        <div class="col-span-4">Matière</div>
+                        <div class="col-span-3">Domaine <span class="font-normal text-gray-500">(facultatif)</span></div>
                         <div class="col-span-2">Coefficient</div>
-                        <div class="col-span-3">Notée sur</div>
-                        <div class="col-span-2">Action</div>
+                        <div class="col-span-2">Notée sur</div>
+                        <div class="col-span-1"></div>
                     </div>
+                    <datalist id="subject-domains">
+                        @foreach($domains as $domain)<option value="{{ $domain }}">@endforeach
+                    </datalist>
+                    <p class="text-xs text-gray-500 mb-3">La liste proposée se modifie dans Paramètres › Personnalisation › Matières. Les matières s'affichent sur le bulletin dans cet ordre.</p>
                     <div id="subjects-list" class="space-y-3">
                         <!-- Les matières seront ajoutées dynamiquement -->
                     </div>
@@ -120,7 +125,7 @@
             // Ajouter les matières par défaut avec max_score = 20
             const subjects = defaultSubjects[cycle] || [];
             subjects.forEach((subject, index) => {
-                addSubject(subject, 1, 20); // 20 par défaut
+                addSubject(subject, 1, 20, ''); // 20 par défaut
             });
         }
     });
@@ -129,20 +134,24 @@
         return String(value ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
     }
 
-    function addSubject(name = '', coefficient = 1, maxScore = 20) {
+    function addSubject(name = '', coefficient = 1, maxScore = 20, domain = '') {
         const div = document.createElement('div');
         div.className = 'grid grid-cols-12 gap-4 items-center';
         const index = subjectsList.children.length;
         div.innerHTML = `
-        <div class="col-span-5">
+        <div class="col-span-4">
             <input type="text" name="subjects[${index}][name]" value="${escapeAttr(name)}" placeholder="Nom de la matière" required
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+        </div>
+        <div class="col-span-3">
+            <input type="text" name="subjects[${index}][domain]" value="${escapeAttr(domain)}" placeholder="Ex. Français" list="subject-domains" maxlength="100"
                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
         </div>
         <div class="col-span-2">
             <input type="number" name="subjects[${index}][coefficient]" value="${escapeAttr(coefficient)}" min="1" max="10" step="0.5" required
                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
         </div>
-        <div class="col-span-3">
+        <div class="col-span-2">
             <select name="subjects[${index}][max_score]" required
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
                 <option value="10" ${maxScore == 10 ? 'selected' : ''}>Sur 10</option>
@@ -152,7 +161,7 @@
                 <option value="100" ${maxScore == 100 ? 'selected' : ''}>Sur 100</option>
             </select>
         </div>
-        <div class="col-span-2">
+        <div class="col-span-1">
             <button type="button" onclick="removeSubject(this)" class="text-red-600 hover:text-red-800">
                 🗑️
             </button>
@@ -180,7 +189,7 @@
             if (levelSelect.value === oldLevel) {
                 subjectsContainer.classList.remove('hidden');
                 if (oldSubjects.length) {
-                    oldSubjects.forEach(s => addSubject(s.name ?? '', s.coefficient ?? 1, s.max_score ?? 20));
+                    oldSubjects.forEach(s => addSubject(s.name ?? '', s.coefficient ?? 1, s.max_score ?? 20, s.domain ?? ''));
                 } else {
                     (defaultSubjects[cycleSelect.value] || []).forEach(name => addSubject(name, 1, 20));
                 }

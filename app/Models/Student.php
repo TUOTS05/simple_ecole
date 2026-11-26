@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Traits\BelongsToSchool;
+use App\Support\SchoolNumbering;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -114,29 +115,15 @@ class Student extends Model
         });
     }
 
-    // Méthode pour générer le matricule
+    // Génère le matricule selon le format choisi par l'école (Personnalisation > Matricules)
     public static function generateMatricule(int $schoolId): string
     {
-        $school = School::find($schoolId);
-        $year = date('Y');
-        $schoolCode = strtoupper(substr($school->slug, 0, 3));
+        return SchoolNumbering::next(School::findOrFail($schoolId), 'matricule');
+    }
 
-        $lastStudent = self::where('school_id', $schoolId)
-            ->where('matricule', 'like', "{$year}-{$schoolCode}-%")
-            ->orderBy('matricule', 'desc')
-            ->first();
-
-        if ($lastStudent) {
-            $parts = explode('-', $lastStudent->matricule);
-            $lastNumber = (int) end($parts);
-            $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1;
-        }
-
-        $number = str_pad($newNumber, 3, '0', STR_PAD_LEFT);
-
-        return "{$year}-{$schoolCode}-{$number}";
+    public static function generateAdmissionNumber(int $schoolId): string
+    {
+        return SchoolNumbering::next(School::findOrFail($schoolId), 'admission');
     }
 
     public function scopeByMatricule($query, string $matricule)

@@ -7,9 +7,23 @@
 
     <!-- Logo & Bouton de réduction -->
     <div class="h-16 flex items-center justify-between px-4 border-b border-gray-200 flex-shrink-0">
+        @php
+            $sidebarSchool = auth()->user()->isSuperAdmin() ? null : session('current_school');
+            $sidebarSchoolName = $sidebarSchool ? (\App\Support\SchoolSettings::get($sidebarSchool, 'identity.short_name') ?: $sidebarSchool->name) : null;
+        @endphp
+        @if($sidebarSchool)
+        {{-- Espace personnalisé : logo et nom court de l'école --}}
+        <div x-show="sidebarOpen" x-transition class="flex items-center gap-2 min-w-0" title="{{ $sidebarSchool->name }}">
+            @if($sidebarSchool->logo)
+            <img src="{{ asset('storage/'.$sidebarSchool->logo) }}" alt="" class="h-9 w-9 rounded object-contain flex-shrink-0">
+            @endif
+            <span class="text-lg font-bold text-primary tracking-tight truncate">{{ $sidebarSchoolName }}</span>
+        </div>
+        @else
         <h1 x-show="sidebarOpen" x-transition class="text-xl font-bold text-primary tracking-tight whitespace-nowrap">
             Simple Ecole
         </h1>
+        @endif
         <button @click="sidebarOpen = !sidebarOpen" class="p-2 rounded-lg hover:bg-gray-100 text-gray-600 focus:outline-none transition-colors" title="Réduire/Agrandir le menu">
             <svg x-show="sidebarOpen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>

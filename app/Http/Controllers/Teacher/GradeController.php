@@ -72,7 +72,7 @@ class GradeController extends Controller
             ->where('cycle', $class->cycle)
             ->where('level', $class->level)
             ->where('is_active', true)
-            ->orderBy('name')
+            ->ordered()
             ->get();
 
         // 2. Filtres sélectionnés

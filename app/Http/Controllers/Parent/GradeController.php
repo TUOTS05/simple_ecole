@@ -109,7 +109,7 @@ class GradeController extends Controller
             ->where('cycle', $schoolClass->cycle)
             ->where('level', $schoolClass->level)
             ->where('is_active', true)
-            ->orderBy('name')
+            ->ordered()
             ->get();
 
         // 6. Générer le PDF avec la vue partagée et TOUTES les variables nécessaires

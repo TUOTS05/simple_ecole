@@ -12,10 +12,12 @@ class Subject extends Model
         'school_id',
         'school_year_id',
         'name',
+        'domain',
         'cycle',
         'level',
         'coefficient',
         'max_score',
+        'sort_order',
         'is_active',
     ];
 
@@ -23,7 +25,14 @@ class Subject extends Model
         'is_active' => 'boolean',
         'coefficient' => 'float',
         'max_score' => 'float',
+        'sort_order' => 'integer',
     ];
+
+    /** Ordre d'affichage choisi par l'école (bulletins, saisie des notes), puis alphabétique. */
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('sort_order')->orderBy('name');
+    }
 
     public function school(): BelongsTo
     {

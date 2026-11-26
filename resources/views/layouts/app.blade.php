@@ -11,14 +11,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
-    <!-- Configuration Tailwind avec couleurs pastel -->
+    <!-- Configuration Tailwind : couleur principale personnalisable par école -->
+    @php
+        $currentSchool = session('current_school');
+        $primaryColor = \App\Support\SchoolSettings::get($currentSchool, 'identity.primary_color');
+        $primaryDark = $primaryColor === '#87CEEB' ? '#5FB3D9' : \App\Support\SchoolSettings::darken($primaryColor);
+    @endphp
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'primary': '#87CEEB',      // Bleu ciel
-                        'primary-dark': '#5FB3D9',
+                        'primary': @js($primaryColor),      // Bleu ciel par défaut
+                        'primary-dark': @js($primaryDark),
                         'secondary': '#FFF9C4',    // Jaune pastel
                         'accent': '#A5D6A7',       // Vert pastel
                         'danger': '#EF9A9A',       // Rouge pastel
