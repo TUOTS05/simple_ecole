@@ -225,13 +225,19 @@ class SchoolController extends Controller
             'name' => 'required|string|max:255',
             'school_type' => 'required|in:maternelle,primaire,both,creche',
             'address' => 'nullable|string|max:255',
-            'phone' => 'nullable|number|max:10',
+            // Texte et non nombre : conserve le 0 initial (ex. 0153919175) et accepte +225, espaces...
+            'phone' => ['nullable', 'string', 'max:20', 'regex:/^\+?[0-9][0-9 .\-]{7,19}$/'],
             'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
 
             // Infos du directeur (Admin de l'école)
             'admin_name' => 'required|string|max:255',
             'admin_email' => 'required|email|max:255|unique:users,email',
             'admin_password' => 'required|string|min:8',
+        ], [
+            'phone.regex' => 'Le numéro de téléphone ne doit contenir que des chiffres (8 minimum), éventuellement précédés de +.',
+            'phone.max' => 'Le numéro de téléphone ne doit pas dépasser 20 caractères.',
+            'admin_email.unique' => 'Cet email est déjà utilisé par un autre compte.',
+            'admin_password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
         ]);
 
         // 2. Préparation des données de l'école
@@ -287,10 +293,7 @@ class SchoolController extends Controller
             "A créé l'école '{$school->name}' avec l'admin {$validated['admin_email']}"
         );
 
-        return redirect()->route('superadmin.schools.index')
-            ->with('success', $successMessage);
-
-        // 5. Redirection avec message de succès
+        // 6. Redirection avec message de succès
         $successMessage = "✅ École '{$school->name}' créée avec succès !\n\n"
             ."⏳ Statut : En attente d'abonnement.\n"
             ."👤 Le directeur peut désormais se connecter avec l'email : {$validated['admin_email']}\n"
