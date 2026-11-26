@@ -3,10 +3,10 @@
 use App\Http\Controllers\App\AccountantController;
 use App\Http\Controllers\App\AccountantProfileController;
 use App\Http\Controllers\App\AttendanceController;
-use App\Http\Controllers\App\CrecheAttendanceController;
 use App\Http\Controllers\App\BroadcastMessageController;
 use App\Http\Controllers\App\CanteenController;
 use App\Http\Controllers\App\ClassFeeController;
+use App\Http\Controllers\App\CrecheAttendanceController;
 use App\Http\Controllers\App\DashboardController as AppDashboardController;
 use App\Http\Controllers\App\EndOfYearController;
 use App\Http\Controllers\App\EnrollmentController;
@@ -28,6 +28,7 @@ use App\Http\Controllers\App\ReportCardController;
 use App\Http\Controllers\App\SchoolClassController;
 use App\Http\Controllers\App\SchoolYearController;
 use App\Http\Controllers\App\SmsSettingsController;
+use App\Http\Controllers\App\StaffController;
 use App\Http\Controllers\App\StudentController;
 use App\Http\Controllers\App\StudentInstallmentController;
 use App\Http\Controllers\App\SubjectController;
@@ -45,6 +46,7 @@ use App\Http\Controllers\SuperAdmin\SystemSettingController;
 use App\Http\Controllers\SuperAdmin\UserController;
 use App\Http\Controllers\Teacher\DashboardController;
 use App\Http\Controllers\Teacher\GradeController;
+use App\Http\Controllers\VehicleTrackingController;
 use App\Models\Message;
 use App\Models\SubscriptionPlan;
 use Illuminate\Support\Facades\Route;
@@ -98,33 +100,41 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
 // Routes Admin École
 // --------------------------------------------------------------------------
 
-Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent,accountant', 'tenant'])->prefix('app')->name('app.')->group(function () {
+Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountant,secretary,canteen_manager,transport_manager', 'tenant'])->prefix('app')->name('app.')->group(function () {
 
     // ==========================================================================
-    // Ouvert au personnel comptable (rôle "accountant") : uniquement inscriptions
-    // et paiements, plus les échéances/sélecteurs dont ces écrans dépendent.
+    // Inscriptions et paiements (droits enrollments.manage / payments.manage) :
+    // ouverts par défaut au comptable, avec les échéances/sélecteurs associés.
     // ==========================================================================
 
-    // Route AJAX pour récupérer les élèves par classe (utilisée par le formulaire de paiement)
-    Route::get('/students/by-class', [PaymentController::class, 'getStudentsByClass'])
-        ->name('students.by-class');
+    // Les accès sont accordés par DROITS (App\Support\Permissions, middleware "permission") et
+    // non plus par rôle : chaque rôle a des droits par défaut que le directeur peut ajuster.
+    Route::middleware('permission:enrollments.manage,payments.manage')->group(function () {
+        // Route AJAX pour récupérer les élèves par classe (utilisée par le formulaire de paiement)
+        Route::get('/students/by-class', [PaymentController::class, 'getStudentsByClass'])
+            ->name('students.by-class');
+
+        // Échéances (créées/supprimées depuis les écrans d'inscription et de paiement)
+        Route::resource('/installments', StudentInstallmentController::class)
+            ->only(['store', 'destroy'])
+            ->names([
+                'store' => 'installments.store',
+                'destroy' => 'installments.destroy',
+            ]);
+    });
 
     // Inscriptions
-    Route::get('/enrollments/export', [EnrollmentController::class, 'export'])->name('enrollments.export');
-    Route::resource('/enrollments', EnrollmentController::class);
+    Route::middleware('permission:enrollments.manage')->group(function () {
+        Route::get('/enrollments/export', [EnrollmentController::class, 'export'])->name('enrollments.export');
+        Route::resource('/enrollments', EnrollmentController::class);
+    });
 
     // Paiements
-    Route::get('/payments/export', [PaymentController::class, 'export'])->name('payments.export');
-    Route::resource('/payments', PaymentController::class)->except(['edit', 'update']);
-    Route::get('/payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
-
-    // Échéances (créées/supprimées depuis les écrans d'inscription et de paiement)
-    Route::resource('/installments', StudentInstallmentController::class)
-        ->only(['store', 'destroy'])
-        ->names([
-            'store' => 'installments.store',
-            'destroy' => 'installments.destroy',
-        ]);
+    Route::middleware('permission:payments.manage')->group(function () {
+        Route::get('/payments/export', [PaymentController::class, 'export'])->name('payments.export');
+        Route::resource('/payments', PaymentController::class)->except(['edit', 'update']);
+        Route::get('/payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
+    });
 
     // Profil personnel du comptable (infos + mot de passe uniquement, pas les infos école :
     // ça reste dans ProfileController, réservé plus bas à school_admin/teacher/parent).
@@ -135,21 +145,24 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent,ac
     Route::put('/accountant-profile/password', [AccountantProfileController::class, 'updatePassword'])
         ->name('accountant-profile.password.update');
 
-    // ==========================================================================
-    // Tout le reste : réservé à school_admin, teacher, parent (le personnel
-    // comptable n'y a PAS accès, conformément à son rôle restreint).
-    // ==========================================================================
-    Route::middleware('role:school_admin,teacher,parent')->group(function () {
+    Route::get('/dashboard', [AppDashboardController::class, 'index'])->name('dashboard')
+        ->middleware('permission:dashboard.view');
 
-        Route::get('/dashboard', [AppDashboardController::class, 'index'])->name('dashboard');
-
-        // Années scolaires
+    // Paramètres de l'école : années scolaires, frais, frais par classe, SMS
+    Route::middleware('permission:settings.manage')->group(function () {
         Route::resource('/school-years', SchoolYearController::class);
+        Route::resource('/fees', FeeController::class);
 
-        // Frais
-        Route::resource('/fees', FeeController::class)
-            ->middleware('role:school_admin');
+        Route::get('/class-fees', [ClassFeeController::class, 'index'])->name('class-fees.index');
+        Route::get('/class-fees/{schoolClass}/edit', [ClassFeeController::class, 'edit'])->name('class-fees.edit');
+        Route::put('/class-fees/{schoolClass}', [ClassFeeController::class, 'update'])->name('class-fees.update');
 
+        Route::get('/settings/sms', [SmsSettingsController::class, 'index'])->name('settings.sms');
+        Route::post('/settings/sms', [SmsSettingsController::class, 'update'])->name('settings.sms.update');
+    });
+
+    // Élèves
+    Route::middleware('permission:students.manage')->group(function () {
         Route::resource('/students', StudentController::class);
         Route::get('/students/by-matricule/{matricule}', [StudentController::class, 'getByMatricule'])
             ->name('students.by-matricule');
@@ -166,22 +179,32 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent,ac
 
         Route::get('/students/export/pdf', [StudentController::class, 'exportPdf'])
             ->name('students.export.pdf'); // -> app.students.export.pdf
+    });
 
-        // Parents (annuaire des comptes parents, avec indication des enfants liés).
-        // Réservé à l'admin école : ce sont les coordonnées d'autres familles.
-        Route::get('/parents', [ParentController::class, 'index'])
-            ->name('parents.index')->middleware('role:school_admin');
-        Route::get('/parents/{parentUser}', [ParentController::class, 'show'])
-            ->name('parents.show')->middleware('role:school_admin');
+    // Parents (annuaire des comptes parents, avec indication des enfants liés) :
+    // ce sont les coordonnées d'autres familles, droit dédié.
+    Route::middleware('permission:parents.view')->group(function () {
+        Route::get('/parents', [ParentController::class, 'index'])->name('parents.index');
+        Route::get('/parents/{parentUser}', [ParentController::class, 'show'])->name('parents.show');
+    });
 
-        // Personnel comptable (gestion des comptes) : réservé à l'admin école.
-        Route::resource('/accountants', AccountantController::class)
-            ->except(['show'])
-            ->middleware('role:school_admin');
+    // ==========================================================================
+    // Personnel et droits : réservé au directeur (droit non attribuable).
+    // ==========================================================================
+    Route::middleware('permission:staff.manage')->group(function () {
+        // Écran unifié « Personnel » (tous les rôles, avec droits ajustables)
+        Route::resource('/staff', StaffController::class)->except(['show'])
+            ->parameters(['staff' => 'staffUser']);
 
-        // Personnel Extras à accès restreint (responsable cantine / responsable transport) :
-        // réservé à l'admin école, {type} contraint à canteen|transport (voir ExtraStaffController).
-        Route::middleware('role:school_admin')->where(['type' => 'canteen|transport'])->group(function () {
+        // Anciens écrans par rôle, conservés pour les liens existants
+        Route::resource('/accountants', AccountantController::class)->except(['show']);
+        Route::resource('/teachers', TeacherController::class)->except(['show']);
+
+        // Personnel Enseignant (Assignation aux classes)
+        Route::resource('/teacher-assignments', TeacherAssignmentController::class)
+            ->only(['index', 'create', 'store', 'destroy']);
+
+        Route::where(['type' => 'canteen|transport'])->group(function () {
             Route::get('/extra-staff/{type}', [ExtraStaffController::class, 'index'])->name('extra-staff.index');
             Route::get('/extra-staff/{type}/create', [ExtraStaffController::class, 'create'])->name('extra-staff.create');
             Route::post('/extra-staff/{type}', [ExtraStaffController::class, 'store'])->name('extra-staff.store');
@@ -189,11 +212,13 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent,ac
             Route::put('/extra-staff/{type}/{user}', [ExtraStaffController::class, 'update'])->name('extra-staff.update');
             Route::delete('/extra-staff/{type}/{user}', [ExtraStaffController::class, 'destroy'])->name('extra-staff.destroy');
         });
+    });
 
-        // Classes
-        Route::resource('/classes', SchoolClassController::class);
+    // Classes
+    Route::resource('/classes', SchoolClassController::class)->middleware('permission:classes.manage');
 
-        // 📨 MESSAGERIE ADMIN ÉCOLE
+    // 📨 MESSAGERIE ADMIN ÉCOLE
+    Route::middleware('permission:messages.manage')->group(function () {
         Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
 
         // ✅ IMPORTANT : Les routes spécifiques (sans paramètre dynamique) DOIVENT être placées AVANT les routes avec {message}
@@ -203,11 +228,9 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent,ac
         // Les routes avec paramètres dynamiques {message} viennent ENSUITE
         Route::get('/messages/{message}', [MessageController::class, 'show'])->name('messages.show');
         Route::post('/messages/{message}/reply', [MessageController::class, 'reply'])->name('messages.reply');
+    });
 
-        // Routes pour les sms
-        Route::get('/settings/sms', [SmsSettingsController::class, 'index'])->name('settings.sms');
-        Route::post('/settings/sms', [SmsSettingsController::class, 'update'])->name('settings.sms.update');
-
+    Route::middleware('permission:attendances.view')->group(function () {
         // Présences (lecture seule : l'appel se fait côté enseignant, par QR code ou manuellement)
         Route::get('/attendances', [AttendanceController::class, 'index'])->name('attendances.index');
         Route::get('/attendances/by-date/{date}', [AttendanceController::class, 'showByDate'])->name('attendances.show-by-date');
@@ -215,28 +238,26 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent,ac
         // Pointage crèche (arrivée/départ)
         Route::get('/creche-attendances', [CrecheAttendanceController::class, 'index'])->name('creche-attendances.index');
         Route::post('/creche-attendances', [CrecheAttendanceController::class, 'store'])->name('creche-attendances.store');
+    });
 
+    Route::middleware('permission:report_cards.manage')->group(function () {
         // Notes et Bulletins
         Route::get('/report-cards/bulk-download', [ReportCardController::class, 'downloadClassBulk'])
             ->name('report-cards.bulk-download');
         Route::resource('/report-cards', ReportCardController::class);
         Route::get('/report-cards/{reportCard}/pdf', [ReportCardController::class, 'downloadPdf'])->name('report-cards.pdf');
 
-        // Matières
-        Route::resource('/subjects', SubjectController::class)->only(['index', 'create', 'store', 'destroy']);
+        Route::get('/end-of-year', [EndOfYearController::class, 'index'])->name('end-of-year.index');
+        Route::get('/end-of-year/{class}', [EndOfYearController::class, 'show'])->name('end-of-year.show');
+        Route::post('/end-of-year/student/{student}/decision', [EndOfYearController::class, 'updateDecision'])->name('end-of-year.update-decision');
+        Route::post('/end-of-year/{class}/migrate', [EndOfYearController::class, 'migrateClass'])->name('end-of-year.migrate');
+    });
 
-        // Personnel Enseignant (Assignation aux classes)
-        Route::resource('/teacher-assignments', TeacherAssignmentController::class)
-            ->only(['index', 'create', 'store', 'destroy']);
+    // Matières
+    Route::resource('/subjects', SubjectController::class)->only(['index', 'create', 'store', 'destroy'])
+        ->middleware('permission:subjects.manage');
 
-        // Gestion des Enseignants (CRUD)
-        Route::resource('/teachers', TeacherController::class)->except(['show']);
-
-        // Configuration des frais par classe
-        Route::get('/class-fees', [ClassFeeController::class, 'index'])->name('class-fees.index');
-        Route::get('/class-fees/{schoolClass}/edit', [ClassFeeController::class, 'edit'])->name('class-fees.edit');
-        Route::put('/class-fees/{schoolClass}', [ClassFeeController::class, 'update'])->name('class-fees.update');
-
+    Route::middleware('permission:financial.view')->group(function () {
         // ==========================================
         // ÉTATS FINANCIERS
         // ==========================================
@@ -269,18 +290,14 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,parent,ac
 
         Route::get('/notifications', [NotificationLogController::class, 'index'])
             ->name('notifications.index');
+    });
 
-        Route::get('/end-of-year', [EndOfYearController::class, 'index'])->name('end-of-year.index');
-        Route::get('/end-of-year/{class}', [EndOfYearController::class, 'show'])->name('end-of-year.show');
-        Route::post('/end-of-year/student/{student}/decision', [EndOfYearController::class, 'updateDecision'])->name('end-of-year.update-decision');
-        Route::post('/end-of-year/{class}/migrate', [EndOfYearController::class, 'migrateClass'])->name('end-of-year.migrate');
-
-        // PROFIL ADMIN ÉCOLE (le changement de mot de passe est intégré au formulaire de profil)
+    // PROFIL ADMIN ÉCOLE (infos de l'école + mot de passe) : réservé au directeur
+    Route::middleware('role:school_admin')->group(function () {
         Route::get('/profile', [App\Http\Controllers\App\ProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profile', [App\Http\Controllers\App\ProfileController::class, 'update'])->name('profile.update');
         Route::put('/profile/password', [App\Http\Controllers\App\ProfileController::class, 'updatePassword'])->name('profile.password.update');
-
-    }); // fin du sous-groupe role:school_admin,teacher,parent
+    });
 
 });
 
@@ -372,7 +389,7 @@ Route::middleware(['auth', 'parent', 'school.active', 'tenant'])->prefix('parent
 // ==========================================
 // CANTINE SCOLAIRE
 // ==========================================
-Route::middleware(['auth', 'school.active', 'role:school_admin', 'tenant'])->prefix('canteen')->name('canteen.')->group(function () {
+Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountant,secretary,canteen_manager,transport_manager', 'permission:canteen.manage', 'tenant'])->prefix('canteen')->name('canteen.')->group(function () {
     // Tarifs
     Route::get('/rates', [CanteenController::class, 'ratesIndex'])->name('rates.index');
     Route::get('/rates/create', [CanteenController::class, 'ratesCreate'])->name('rates.create');
@@ -404,7 +421,7 @@ Route::middleware(['auth', 'school.active', 'role:school_admin', 'tenant'])->pre
 // ==========================================
 // GOÛTER MATERNELLE
 // ==========================================
-Route::middleware(['auth', 'school.active', 'role:school_admin', 'tenant'])->prefix('gouter')->name('gouter.')->group(function () {
+Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountant,secretary,canteen_manager,transport_manager', 'permission:gouter.manage', 'tenant'])->prefix('gouter')->name('gouter.')->group(function () {
     // Tarifs
     Route::get('/rates', [GouterController::class, 'ratesIndex'])->name('rates.index');
     Route::get('/rates/create', [GouterController::class, 'ratesCreate'])->name('rates.create');
@@ -435,13 +452,13 @@ Route::middleware(['auth', 'school.active', 'role:school_admin', 'tenant'])->pre
 // ==========================================
 // EXTRAS (Services & prestations scolaires : transport, garderie, activités, sorties, ...)
 // ==========================================
-Route::middleware(['auth', 'school.active', 'role:school_admin,accountant,canteen_manager,transport_manager', 'tenant'])->prefix('extras')->name('extras.')->group(function () {
+Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountant,secretary,canteen_manager,transport_manager', 'tenant'])->prefix('extras')->name('extras.')->group(function () {
 
     // ==========================================================================
     // Configuration du catalogue (catégories, extras, tarifs, planning, stocks) :
     // réservé à l'admin école, comme le reste de la configuration de l'établissement.
     // ==========================================================================
-    Route::middleware('role:school_admin')->group(function () {
+    Route::middleware('permission:extras.manage')->group(function () {
         // Catégories
         Route::get('/categories', [ExtraController::class, 'categoriesIndex'])->name('categories.index');
         Route::post('/categories', [ExtraController::class, 'categoriesStore'])->name('categories.store');
@@ -477,7 +494,7 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,accountant,cantee
     // Inscriptions, paiements, remboursements, factures : admin école + comptable
     // (rôle "accountant", même périmètre financier que côté scolarité classique).
     // ==========================================================================
-    Route::middleware('role:school_admin,accountant')->group(function () {
+    Route::middleware('permission:extras.billing')->group(function () {
         // AJAX (formulaire d'inscription)
         Route::get('/classes-by-cycle', [ExtraController::class, 'classesByCycle'])->name('classes-by-cycle');
         Route::get('/students-by-class', [ExtraController::class, 'studentsByClass'])->name('students-by-class');
@@ -518,7 +535,7 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,accountant,cantee
     // ==========================================================================
     // Cantine : admin école + responsable cantine (rôle "canteen_manager").
     // ==========================================================================
-    Route::middleware('role:school_admin,canteen_manager')->group(function () {
+    Route::middleware('permission:extras.canteen')->group(function () {
         // Présences / consommations + QR de pointage
         Route::get('/attendances', [ExtraAttendanceController::class, 'index'])->name('attendances.index');
         Route::post('/attendances', [ExtraAttendanceController::class, 'store'])->name('attendances.store');
@@ -535,7 +552,7 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,accountant,cantee
     // ==========================================================================
     // Transport : admin école + responsable transport (rôle "transport_manager").
     // ==========================================================================
-    Route::middleware('role:school_admin,transport_manager')->prefix('transport')->name('transport.')->group(function () {
+    Route::middleware('permission:extras.transport')->prefix('transport')->name('transport.')->group(function () {
         Route::get('/vehicles', [ExtraTransportController::class, 'vehiclesIndex'])->name('vehicles.index');
         Route::post('/vehicles', [ExtraTransportController::class, 'vehiclesStore'])->name('vehicles.store');
         Route::put('/vehicles/{id}', [ExtraTransportController::class, 'vehiclesUpdate'])->name('vehicles.update');
@@ -591,7 +608,7 @@ Route::get('/demo-login', [DemoController::class, 'login'])->name('demo.login');
 
 // Page publique de partage de position GPS pour le chauffeur (pas de compte utilisateur,
 // sécurisée par le jeton opaque dans l'URL — voir ExtraVehicle::tracking_token).
-Route::get('/track/{token}', [App\Http\Controllers\VehicleTrackingController::class, 'show'])->name('vehicle-tracking.show');
+Route::get('/track/{token}', [VehicleTrackingController::class, 'show'])->name('vehicle-tracking.show');
 
 Route::get('/', function () {
     $plans = SubscriptionPlan::active()->orderBy('sort_order')->orderBy('monthly_price')->get();

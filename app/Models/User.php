@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Permissions;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -34,6 +35,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'permissions' => 'array',
         ];
     }
 
@@ -78,21 +80,77 @@ class User extends Authenticatable implements MustVerifyEmail
         return strtolower(trim($this->role ?? '')) === 'transport_manager';
     }
 
+    public function isSecretary(): bool
+    {
+        return strtolower(trim($this->role ?? '')) === 'secretary';
+    }
+
+    /** Membre du personnel géré depuis l'écran « Personnel » (hors directeur). */
+    public function isStaff(): bool
+    {
+        return array_key_exists(strtolower(trim($this->role ?? '')), Permissions::ROLES);
+    }
+
+    /**
+     * Droits effectifs : tous pour le directeur, la liste personnalisée si le directeur en a
+     * défini une, sinon les droits par défaut du rôle.
+     *
+     * @return list<string>
+     */
+    public function effectivePermissions(): array
+    {
+        if ($this->isSchoolAdmin()) {
+            return [...Permissions::all(), Permissions::STAFF_MANAGE];
+        }
+
+        if (! $this->isStaff()) {
+            return [];
+        }
+
+        return is_array($this->permissions)
+            ? Permissions::sanitize($this->permissions)
+            : Permissions::defaultsFor(strtolower(trim($this->role)));
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        return in_array($permission, $this->effectivePermissions(), true);
+    }
+
+    public function hasCustomPermissions(): bool
+    {
+        return is_array($this->permissions);
+    }
+
+    public function getRoleLabelAttribute(): string
+    {
+        return Permissions::roleLabel($this->role);
+    }
+
     public function dashboardRouteName(): string
     {
         return match ($this->role) {
             'super_admin' => 'superadmin.dashboard',
             'teacher' => 'teacher.dashboard',
             'parent' => 'parent.dashboard',
-            // Le personnel comptable n'a accès qu'aux inscriptions et paiements : pas de tableau
-            // de bord général à sa disposition, on l'envoie directement sur les inscriptions.
-            'accountant' => 'app.enrollments.index',
-            // Rôles Extras à accès restreint (spec §30) : pas de tableau de bord général non
-            // plus, on envoie directement sur leur écran de travail principal.
-            'canteen_manager' => 'extras.attendances.index',
-            'transport_manager' => 'extras.transport.vehicles.index',
-            default => 'app.dashboard',
+            'school_admin' => 'app.dashboard',
+            default => $this->staffHomeRouteName(),
         };
+    }
+
+    /**
+     * Personnel administratif : premier écran autorisé (comptable → inscriptions, responsable
+     * cantine → présences extras, ...), ou son profil s'il n'a aucun droit.
+     */
+    private function staffHomeRouteName(): string
+    {
+        foreach (Permissions::HOME_ROUTES as $permission => $route) {
+            if ($this->hasPermission($permission)) {
+                return $route;
+            }
+        }
+
+        return 'profile.edit';
     }
 
     public function getFullNameAttribute(): string

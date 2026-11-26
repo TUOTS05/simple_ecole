@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\CheckMaintenanceMode;
+use App\Http\Middleware\CheckPermission;
 use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\CheckTenant;
 use App\Http\Middleware\EnsureSchoolIsActive;
@@ -29,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Alias de middleware pour les rôles
         $middleware->alias([
             'role' => CheckRole::class,
+            'permission' => CheckPermission::class,
             'tenant' => CheckTenant::class,
             'teacher' => EnsureTeacherRole::class,
             'parent' => IsParent::class,

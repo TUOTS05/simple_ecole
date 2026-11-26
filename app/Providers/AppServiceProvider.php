@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Support\Permissions;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -39,6 +41,16 @@ class AppServiceProvider extends ServiceProvider
         // La page chauffeur envoie au plus 4 pings/minute : 20 laisse de la marge.
         RateLimiter::for('vehicle-ping', function (Request $request) {
             return Limit::perMinute(20)->by((string) $request->route('token'));
+        });
+
+        // Droits du personnel : @can('payments.manage') dans les vues s'appuie sur
+        // User::hasPermission(). Les autres capacités suivent le fonctionnement normal.
+        Gate::before(function ($user, string $ability) {
+            if (Permissions::exists($ability) && method_exists($user, 'hasPermission')) {
+                return $user->hasPermission($ability);
+            }
+
+            return null;
         });
 
         // Personnalisation de la redirection après login
