@@ -13,6 +13,7 @@ use App\Models\SchoolYear;
 use App\Models\Student;
 use App\Models\StudentInstallment;
 use App\Models\User;
+use App\Rules\GroupHasRoom;
 use App\Services\StudentCardService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -99,7 +100,7 @@ class StudentController extends Controller
             'last_name' => 'required|string|max:100',
             'gender' => 'required|in:M,F',
             'birth_date' => 'required|date|before_or_equal:today',
-            'class_id' => 'required|exists:school_classes,id',
+            'class_id' => ['required', 'exists:school_classes,id', new GroupHasRoom],
             'section' => 'required|string|max:10',
             'status' => 'required|in:active,inactive,suspended',
             'large_family' => 'required|boolean',
@@ -667,7 +668,7 @@ class StudentController extends Controller
             'last_name' => 'required|string|max:100',
             'gender' => 'required|in:M,F',
             'birth_date' => 'required|date|before_or_equal:today',
-            'class_id' => 'required|exists:school_classes,id',
+            'class_id' => ['required', 'exists:school_classes,id', new GroupHasRoom($student->id)],
             'section' => 'nullable|string|max:10',
             'status' => 'required|in:active,inactive,suspended',
             'large_family' => 'required|boolean',

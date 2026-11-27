@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Models\School;
+
 /**
  * Catalogue des droits du personnel d'une école.
  *
@@ -32,6 +34,14 @@ class Permissions
             'report_cards.manage' => 'Gérer les bulletins et la fin d\'année',
             'attendances.view' => 'Consulter les présences (et le pointage crèche)',
         ],
+        // Visible seulement si l'école a activé la structure crèche (voir groupsFor()).
+        self::CRECHE_GROUP => [
+            'creche.view' => 'Voir les enfants et groupes de la crèche (un auxiliaire : ses groupes seulement)',
+            'creche.attendance' => 'Pointer les arrivées et départs des enfants',
+            'creche.journal' => 'Saisir le journal quotidien (repas, biberons, sommeil, changes, incidents)',
+            'creche.incidents.validate' => 'Valider les incidents déclarés',
+            'creche.manage' => 'Gérer la crèche (tous les groupes, affectations, paramètres)',
+        ],
         'Communication' => [
             'messages.manage' => 'Messagerie avec les parents',
         ],
@@ -58,7 +68,15 @@ class Permissions
         'accountant' => 'Comptable',
         'canteen_manager' => 'Responsable cantine',
         'transport_manager' => 'Responsable transport',
+        'care_manager' => 'Responsable crèche',
+        'care_staff' => 'Auxiliaire de crèche',
+        'reception' => 'Accueil',
     ];
+
+    public const CRECHE_GROUP = 'Crèche';
+
+    /** Rôles propres à la crèche : proposés seulement si l'école a activé la structure crèche. */
+    public const CRECHE_ROLES = ['care_manager', 'care_staff', 'reception'];
 
     /** Droits par défaut de chaque rôle (reprend les accès historiques de chaque rôle). */
     public const ROLE_DEFAULTS = [
@@ -69,6 +87,10 @@ class Permissions
         'accountant' => ['enrollments.manage', 'payments.manage', 'extras.billing'],
         'canteen_manager' => ['extras.canteen'],
         'transport_manager' => ['extras.transport'],
+        'care_manager' => ['creche.view', 'creche.attendance', 'creche.journal', 'creche.incidents.validate', 'creche.manage', 'messages.manage'],
+        // L'auxiliaire travaille sur les seuls groupes auxquels il est affecté.
+        'care_staff' => ['creche.view', 'creche.attendance', 'creche.journal'],
+        'reception' => ['creche.view', 'creche.attendance'],
     ];
 
     /**
@@ -83,6 +105,7 @@ class Permissions
         'extras.canteen' => 'extras.attendances.index',
         'extras.transport' => 'extras.transport.vehicles.index',
         'extras.billing' => 'extras.subscriptions.index',
+        'creche.attendance' => 'app.creche-attendances.index',
         'classes.manage' => 'app.classes.index',
         'report_cards.manage' => 'app.report-cards.index',
         'attendances.view' => 'app.attendances.index',
@@ -105,6 +128,18 @@ class Permissions
     public static function exists(string $permission): bool
     {
         return $permission === self::STAFF_MANAGE || in_array($permission, self::all(), true);
+    }
+
+    /** Groupes de droits affichés pour cette école (sans « Crèche » si elle n'en a pas). */
+    public static function groupsFor(?School $school): array
+    {
+        return $school?->isCreche() ? self::GROUPS : array_diff_key(self::GROUPS, [self::CRECHE_GROUP => true]);
+    }
+
+    /** Rôles proposés pour cette école (sans les rôles crèche si elle n'en a pas). */
+    public static function rolesFor(?School $school): array
+    {
+        return $school?->isCreche() ? self::ROLES : array_diff_key(self::ROLES, array_flip(self::CRECHE_ROLES));
     }
 
     /** @return list<string> */

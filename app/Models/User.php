@@ -122,6 +122,39 @@ class User extends Authenticatable implements MustVerifyEmail
         return is_array($this->permissions);
     }
 
+    /** Groupes de crèche auxquels ce membre du personnel est affecté. */
+    public function careStaffAssignments(): HasMany
+    {
+        return $this->hasMany(CareStaffAssignment::class);
+    }
+
+    /**
+     * Groupes de crèche accessibles : tous ceux de l'école pour le directeur, pour qui a le droit
+     * « Gérer la crèche » et pour qui consulte toutes les présences (accès historique au pointage
+     * crèche) ; sinon uniquement ceux auxquels il est affecté (auxiliaire, accueil).
+     *
+     * @return list<int>
+     */
+    public function accessibleCrecheClassIds(): array
+    {
+        if (! $this->school_id) {
+            return [];
+        }
+
+        $query = SchoolClass::where('school_id', $this->school_id)->where('cycle', 'creche');
+
+        if (! $this->hasPermission('creche.manage') && ! $this->hasPermission('attendances.view')) {
+            $query->whereIn('id', $this->careStaffAssignments()->select('school_class_id'));
+        }
+
+        return $query->pluck('id')->map(fn ($id) => (int) $id)->all();
+    }
+
+    public function canAccessCrecheClass(int $classId): bool
+    {
+        return in_array($classId, $this->accessibleCrecheClassIds(), true);
+    }
+
     public function getRoleLabelAttribute(): string
     {
         return Permissions::roleLabel($this->role);

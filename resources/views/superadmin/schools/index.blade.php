@@ -52,13 +52,12 @@
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
-                <select name="school_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
-                    <option value="">Tous les types</option>
-                    <option value="maternelle" {{ request('school_type') === 'maternelle' ? 'selected' : '' }}>Maternelle</option>
-                    <option value="primaire" {{ request('school_type') === 'primaire' ? 'selected' : '' }}>Primaire</option>
-                    <option value="both" {{ request('school_type') === 'both' ? 'selected' : '' }}>Les deux</option>
-                    <option value="creche" {{ request('school_type') === 'creche' ? 'selected' : '' }}>Crèche</option>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Structure</label>
+                <select name="structure" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                    <option value="">Toutes</option>
+                    @foreach(\App\Models\School::STRUCTURES as $value => $label)
+                        <option value="{{ $value }}" {{ request('structure') === $value ? 'selected' : '' }}>Avec {{ strtolower($label) }}</option>
+                    @endforeach
                 </select>
             </div>
             

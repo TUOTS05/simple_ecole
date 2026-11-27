@@ -45,6 +45,9 @@
                     <option value="">Tous les cycles</option>
                     <option value="maternelle" {{ request('cycle') === 'maternelle' ? 'selected' : '' }}>🧒 Maternelle</option>
                     <option value="primaire" {{ request('cycle') === 'primaire' ? 'selected' : '' }}>📚 Primaire</option>
+                    @if($school?->isCreche())
+                    <option value="creche" {{ request('cycle') === 'creche' ? 'selected' : '' }}>🍼 Crèche</option>
+                    @endif
                 </select>
             </div>
             
@@ -80,8 +83,8 @@
                         <td class="py-3 px-4 font-semibold">{{ $class->name }}</td>
                         <td class="py-3 px-4">
                             <span class="px-3 py-1 rounded-full text-xs font-semibold
-                                {{ $class->cycle === 'maternelle' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800' }}">
-                                {{ $class->cycle === 'maternelle' ? '🧒 Maternelle' : '📚 Primaire' }}
+                                {{ $class->cycle_badge_class }}">
+                                {{ $class->cycle_label }}
                             </span>
                         </td>
                         <td class="py-3 px-4">

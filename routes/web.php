@@ -5,7 +5,9 @@ use App\Http\Controllers\App\AttendanceController;
 use App\Http\Controllers\App\BroadcastMessageController;
 use App\Http\Controllers\App\CanteenController;
 use App\Http\Controllers\App\ClassFeeController;
+use App\Http\Controllers\App\CrecheAssignmentController;
 use App\Http\Controllers\App\CrecheAttendanceController;
+use App\Http\Controllers\App\CrecheSettingsController;
 use App\Http\Controllers\App\DashboardController as AppDashboardController;
 use App\Http\Controllers\App\EndOfYearController;
 use App\Http\Controllers\App\EnrollmentController;
@@ -98,7 +100,7 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
 // Routes Admin École
 // --------------------------------------------------------------------------
 
-Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountant,secretary,canteen_manager,transport_manager', 'tenant'])->prefix('app')->name('app.')->group(function () {
+Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountant,secretary,canteen_manager,transport_manager,care_manager,care_staff,reception', 'tenant'])->prefix('app')->name('app.')->group(function () {
 
     // ==========================================================================
     // Inscriptions et paiements (droits enrollments.manage / payments.manage) :
@@ -230,10 +232,25 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountan
         // Présences (lecture seule : l'appel se fait côté enseignant, par QR code ou manuellement)
         Route::get('/attendances', [AttendanceController::class, 'index'])->name('attendances.index');
         Route::get('/attendances/by-date/{date}', [AttendanceController::class, 'showByDate'])->name('attendances.show-by-date');
+    });
 
-        // Pointage crèche (arrivée/départ)
+    // ==========================================================================
+    // CRÈCHE
+    // ==========================================================================
+    // Pointage (arrivée/départ) : personnel de crèche, ou accès historique via les présences.
+    // Les groupes visibles sont ensuite limités par User::accessibleCrecheClassIds().
+    Route::middleware('permission:creche.attendance,attendances.view')->group(function () {
         Route::get('/creche-attendances', [CrecheAttendanceController::class, 'index'])->name('creche-attendances.index');
         Route::post('/creche-attendances', [CrecheAttendanceController::class, 'store'])->name('creche-attendances.store');
+    });
+
+    Route::middleware('permission:creche.manage')->prefix('creche')->name('creche.')->group(function () {
+        Route::get('/assignments', [CrecheAssignmentController::class, 'index'])->name('assignments.index');
+        Route::post('/assignments', [CrecheAssignmentController::class, 'store'])->name('assignments.store');
+        Route::delete('/assignments/{assignment}', [CrecheAssignmentController::class, 'destroy'])->name('assignments.destroy');
+
+        Route::get('/settings', [CrecheSettingsController::class, 'edit'])->name('settings.edit');
+        Route::put('/settings', [CrecheSettingsController::class, 'update'])->name('settings.update');
     });
 
     Route::middleware('permission:report_cards.manage')->group(function () {
@@ -390,7 +407,7 @@ Route::middleware(['auth', 'parent', 'school.active', 'tenant'])->prefix('parent
 // ==========================================
 // CANTINE SCOLAIRE
 // ==========================================
-Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountant,secretary,canteen_manager,transport_manager', 'permission:canteen.manage', 'tenant'])->prefix('canteen')->name('canteen.')->group(function () {
+Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountant,secretary,canteen_manager,transport_manager,care_manager,care_staff,reception', 'permission:canteen.manage', 'tenant'])->prefix('canteen')->name('canteen.')->group(function () {
     // Tarifs
     Route::get('/rates', [CanteenController::class, 'ratesIndex'])->name('rates.index');
     Route::get('/rates/create', [CanteenController::class, 'ratesCreate'])->name('rates.create');
@@ -422,7 +439,7 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountan
 // ==========================================
 // GOÛTER MATERNELLE
 // ==========================================
-Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountant,secretary,canteen_manager,transport_manager', 'permission:gouter.manage', 'tenant'])->prefix('gouter')->name('gouter.')->group(function () {
+Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountant,secretary,canteen_manager,transport_manager,care_manager,care_staff,reception', 'permission:gouter.manage', 'tenant'])->prefix('gouter')->name('gouter.')->group(function () {
     // Tarifs
     Route::get('/rates', [GouterController::class, 'ratesIndex'])->name('rates.index');
     Route::get('/rates/create', [GouterController::class, 'ratesCreate'])->name('rates.create');
@@ -453,7 +470,7 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountan
 // ==========================================
 // EXTRAS (Services & prestations scolaires : transport, garderie, activités, sorties, ...)
 // ==========================================
-Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountant,secretary,canteen_manager,transport_manager', 'tenant'])->prefix('extras')->name('extras.')->group(function () {
+Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountant,secretary,canteen_manager,transport_manager,care_manager,care_staff,reception', 'tenant'])->prefix('extras')->name('extras.')->group(function () {
 
     // ==========================================================================
     // Configuration du catalogue (catégories, extras, tarifs, planning, stocks) :

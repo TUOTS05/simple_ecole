@@ -44,12 +44,12 @@ class ProfileController extends Controller
         // Validation des données de l'ÉCOLE
         $validatedSchool = $request->validate([
             'school_name' => 'required|string|max:255',
-            'school_type' => 'required|in:maternelle,primaire,both,creche',
+            ...School::structureRules(),
             'school_address' => 'nullable|string|max:500',
             'school_email' => 'nullable|email|max:255',
             'school_phone' => 'nullable|string|max:20',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-        ]);
+        ], School::structureMessages());
 
         // Mise à jour de l'Utilisateur
         $user->update([
@@ -63,7 +63,7 @@ class ProfileController extends Controller
         if ($school) {
             $schoolData = [
                 'name' => $validatedSchool['school_name'],
-                'school_type' => $validatedSchool['school_type'],
+                'structures' => School::structuresFromInput($validatedSchool),
                 'address' => $validatedSchool['school_address'],
                 'email' => $validatedSchool['school_email'],
                 'phone' => $validatedSchool['school_phone'],

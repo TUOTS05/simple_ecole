@@ -74,6 +74,13 @@ class SchoolSettings
             'maternelle' => self::DEFAULT_SUBJECTS,
             'primaire' => self::DEFAULT_SUBJECTS,
         ],
+        // Crèche (Crèche > Paramètres)
+        'creche' => [
+            'levels' => ['Bébés (0-1 an)', 'Moyens (1-2 ans)', 'Grands (2-3 ans)'],
+            'enforce_capacity' => false,   // Refuser une inscription dans un groupe complet
+            'opening_time' => '07:00',     // Horaires par défaut (un groupe peut avoir les siens)
+            'closing_time' => '18:00',
+        ],
     ];
 
     public const TOKENS = [

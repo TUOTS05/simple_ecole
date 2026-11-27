@@ -11,6 +11,7 @@ use App\Models\SchoolYear;
 use App\Models\Student;
 use App\Models\StudentInstallment;
 use App\Models\User;
+use App\Rules\GroupHasRoom;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -100,7 +101,7 @@ class EnrollmentController extends Controller
             'last_name' => 'required|string|max:100',
             'gender' => 'required|in:M,F',
             'birth_date' => 'required|date|before_or_equal:today',
-            'class_id' => 'required|exists:school_classes,id',
+            'class_id' => ['required', 'exists:school_classes,id', new GroupHasRoom],
             'section' => 'nullable|string|max:10',
             'status' => 'required|in:active,inactive,suspended',
             'large_family' => 'nullable|boolean',

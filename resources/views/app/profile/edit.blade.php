@@ -108,15 +108,8 @@
                     @error('school_name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">Type d'école *</label>
-                    <select name="school_type" required class="w-full px-4 py-3 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition @error('school_type') border-red-500 @enderror">
-                        <option value="maternelle" {{ old('school_type', $school->school_type ?? '') == 'maternelle' ? 'selected' : '' }}>Maternelle</option>
-                        <option value="primaire" {{ old('school_type', $school->school_type ?? '') == 'primaire' ? 'selected' : '' }}>Primaire</option>
-                        <option value="both" {{ old('school_type', $school->school_type ?? '') == 'both' ? 'selected' : '' }}>Maternelle & Primaire</option>
-                        <option value="creche" {{ old('school_type', $school->school_type ?? '') == 'creche' ? 'selected' : '' }}>Crèche (0-3 ans)</option>
-                    </select>
-                    @error('school_type') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                <div class="md:col-span-2">
+                    <x-structures-field :selected="$school?->structureList() ?? []" />
                 </div>
 
                 <div>

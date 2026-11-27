@@ -81,10 +81,13 @@ class PaymentController extends Controller
 
         // 2. Définir les cycles
         $cycles = [];
-        if ($school && ($school->isMaternelle() || $school->isBoth())) {
+        if ($school && $school->isCreche()) {
+            $cycles['creche'] = 'Crèche';
+        }
+        if ($school && $school->isMaternelle()) {
             $cycles['maternelle'] = 'Maternelle';
         }
-        if ($school && ($school->isPrimaire() || $school->isBoth())) {
+        if ($school && $school->isPrimaire()) {
             $cycles['primaire'] = 'Primaire';
         }
 

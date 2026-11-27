@@ -9,10 +9,10 @@ use App\Models\SubscriptionPlan;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class SchoolController extends Controller
 {
@@ -44,8 +44,8 @@ class SchoolController extends Controller
         }
 
         // Filtre par type d'école
-        if ($request->filled('school_type')) {
-            $query->where('school_type', $request->school_type);
+        if ($request->filled('structure') && isset(School::STRUCTURES[$request->structure])) {
+            $query->whereJsonContains('structures', $request->structure);
         }
 
         // Recherche par nom
@@ -225,7 +225,7 @@ class SchoolController extends Controller
         $validated = $request->validate([
             // Infos de l'école
             'name' => 'required|string|max:255',
-            'school_type' => 'required|in:maternelle,primaire,both,creche',
+            ...School::structureRules(),
             'address' => 'nullable|string|max:255',
             // Texte et non nombre : conserve le 0 initial (ex. 0153919175) et accepte +225, espaces...
             'phone' => ['nullable', 'string', 'max:20', 'regex:/^\+?[0-9][0-9 .\-]{7,19}$/'],
@@ -240,6 +240,7 @@ class SchoolController extends Controller
             'phone.max' => 'Le numéro de téléphone ne doit pas dépasser 20 caractères.',
             'admin_email.unique' => 'Cet email est déjà utilisé par un autre compte.',
             'admin_password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
+            ...School::structureMessages(),
         ]);
 
         // 2. Préparation des données de l'école
@@ -256,7 +257,7 @@ class SchoolController extends Controller
         $schoolData = [
             'name' => $validated['name'],
             'slug' => $slug,
-            'school_type' => $validated['school_type'],
+            'structures' => School::structuresFromInput($validated),
             'address' => $validated['address'] ?? null,
             'phone' => $validated['phone'] ?? null,
             'status' => 'suspended', // ✅ FORCÉ À SUSPENDED (En attente d'abonnement)
@@ -333,7 +334,7 @@ class SchoolController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:schools,slug,'.$school->id,
-            'school_type' => 'required|in:maternelle,primaire,both,creche',
+            ...School::structureRules(),
             'status' => 'required|in:active,suspended,expired', // ✅ UNIFORMISÉ (suppression de 'trial')
             // Forfait = un plan géré par le super admin (stocké par son nom, comme lors de
             // l'approbation d'un abonnement). L'ancienne valeur reste acceptée si le plan a
@@ -349,6 +350,7 @@ class SchoolController extends Controller
             'subscription_start_date.required_with' => 'La date de début est obligatoire quand un forfait est choisi.',
             'subscription_end_date.required_with' => 'La date d\'expiration est obligatoire quand un forfait est choisi.',
             'subscription_end_date.after_or_equal' => 'La date d\'expiration doit être postérieure à la date de début.',
+            ...School::structureMessages(),
         ]);
 
         // Les plafonds viennent du forfait choisi (et non d'une saisie libre) : le plan est respecté.
@@ -377,6 +379,9 @@ class SchoolController extends Controller
             }
             $validated['logo'] = $request->file('logo')->store('schools/logos', 'public');
         }
+
+        $validated['structures'] = School::structuresFromInput($validated);
+        unset($validated['school_type']);
 
         $school->update($validated);
 

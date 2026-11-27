@@ -284,9 +284,9 @@ class SubjectController extends Controller
         $school = session('current_school');
         $levels = self::LEVELS_BY_CYCLE;
 
-        if ($school && $school->school_type === 'maternelle') {
+        if ($school && ! $school->isPrimaire()) {
             unset($levels['primaire']);
-        } elseif ($school && $school->school_type === 'primaire') {
+        } elseif ($school && ! $school->isMaternelle()) {
             unset($levels['maternelle']);
         }
 

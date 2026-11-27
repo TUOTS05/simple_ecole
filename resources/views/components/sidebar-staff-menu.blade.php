@@ -2,7 +2,9 @@
      avec droits supplémentaires). Chaque entrée n'apparaît que si l'utilisateur a le droit
      correspondant (voir App\Support\Permissions) : le même menu sert à tous les rôles. --}}
 @php
-    $isCreche = session('current_school')?->school_type === 'creche';
+    // Crèche seule : pas de bulletins ni de matières. Crèche active (seule ou non) : menu Crèche.
+    $isCrecheOnly = (bool) session('current_school')?->isCrecheOnly();
+    $hasCreche = (bool) session('current_school')?->isCreche();
     // Les rapports « Listes de classe » et « Présences » ouvrent les mêmes pages qu'Élèves / Présences :
     // ?menu=rapports indique d'où l'on vient, pour garder le groupe Rapports ouvert (et pas Vie Scolaire).
     $fromReports = request('menu') === 'rapports';
@@ -64,7 +66,7 @@
         <a href="{{ route('app.attendances.index') }}" title="Présences" class="{{ $subLink(! $fromReports && request()->routeIs('app.attendances.*')) }}">Présences</a>
         @endcan
         @can('report_cards.manage')
-            @unless($isCreche)
+            @unless($isCrecheOnly)
             <a href="{{ route('app.report-cards.index') }}" title="Bulletins" class="{{ $subLink(request()->routeIs('app.report-cards.*')) }}">Bulletins</a>
             @endunless
             <a href="{{ route('app.end-of-year.index') }}" title="Fin d'année & Passage" class="{{ $subLink(request()->routeIs('app.end-of-year.*')) }}">Fin d'année & Passage</a>
@@ -73,10 +75,10 @@
 </div>
 @endcanany
 
-@if($isCreche)
-@can('attendances.view')
+@if($hasCreche)
+@canany(['creche.view', 'creche.attendance', 'creche.manage', 'attendances.view'])
 <!-- Groupe : Crèche -->
-<div x-data="{ open: {{ request()->routeIs('app.creche-attendances.*') ? 'true' : 'false' }} }" class="space-y-1">
+<div x-data="{ open: {{ request()->routeIs('app.creche-attendances.*') || request()->routeIs('app.creche.*') ? 'true' : 'false' }} }" class="space-y-1">
     <button @click="if(!sidebarOpen) sidebarOpen = true; open = !open" title="Crèche"
         class="w-full flex items-center justify-between px-3 py-3 rounded-lg transition text-gray-700 hover:bg-gray-100 focus:outline-none">
         <div class="flex items-center">
@@ -88,10 +90,19 @@
         </svg>
     </button>
     <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
+        @canany(['creche.attendance', 'attendances.view'])
         <a href="{{ route('app.creche-attendances.index') }}" title="Pointage" class="{{ $subLink(request()->routeIs('app.creche-attendances.*')) }}">Pointage</a>
+        @endcanany
+        @can('classes.manage')
+        <a href="{{ route('app.classes.index', ['cycle' => 'creche']) }}" title="Groupes" class="{{ $subLink(false) }}">Groupes</a>
+        @endcan
+        @can('creche.manage')
+        <a href="{{ route('app.creche.assignments.index') }}" title="Affectations du personnel" class="{{ $subLink(request()->routeIs('app.creche.assignments.*')) }}">Affectations</a>
+        <a href="{{ route('app.creche.settings.edit') }}" title="Paramètres de la crèche" class="{{ $subLink(request()->routeIs('app.creche.settings.*')) }}">Paramètres</a>
+        @endcan
     </div>
 </div>
-@endcan
+@endcanany
 @endif
 
 @can('staff.manage')
@@ -256,7 +267,7 @@
         <a href="{{ route('app.classes.index') }}" title="Classes" class="{{ $subLink(request()->routeIs('app.classes.*')) }}">Classes</a>
         @endcan
         @can('subjects.manage')
-            @unless($isCreche)
+            @unless($isCrecheOnly)
             <a href="{{ route('app.subjects.index') }}" title="Matières" class="{{ $subLink(request()->routeIs('app.subjects.*')) }}">Matières</a>
             @endunless
         @endcan

@@ -50,7 +50,7 @@ class StaffController extends Controller
 
         return view('app.staff.index', [
             'staff' => $staff,
-            'roles' => Permissions::ROLES,
+            'roles' => Permissions::rolesFor($school),
             'countsByRole' => $countsByRole,
             'school' => $school,
         ]);
@@ -58,7 +58,8 @@ class StaffController extends Controller
 
     public function create(Request $request)
     {
-        $role = array_key_exists($request->query('role'), Permissions::ROLES) ? $request->query('role') : 'teacher';
+        $roles = Permissions::rolesFor(School::find(session('current_school_id')));
+        $role = array_key_exists($request->query('role'), $roles) ? $request->query('role') : 'teacher';
 
         return view('app.staff.create', $this->formData(new User, $role));
     }
@@ -167,7 +168,7 @@ class StaffController extends Controller
             'password' => [$user ? 'nullable' : 'required', 'string', 'min:6', 'confirmed'],
             'phone' => 'nullable|string|max:20',
             'gender' => 'required|in:M,F',
-            'role' => ['required', Rule::in(array_keys(Permissions::ROLES))],
+            'role' => ['required', Rule::in(array_keys($this->availableRoles($user)))],
             'permissions_mode' => 'required|in:default,custom',
             'permissions' => 'nullable|array',
             'permissions.*' => ['string', Rule::in(Permissions::all())],
@@ -179,6 +180,18 @@ class StaffController extends Controller
             'password.confirmed' => 'Les deux mots de passe ne correspondent pas.',
             'password.min' => 'Le mot de passe doit contenir au moins 6 caractères.',
         ]);
+    }
+
+    /** Rôles proposés pour l'école courante, plus le rôle actuel de la personne modifiée. */
+    private function availableRoles(?User $user = null): array
+    {
+        $roles = Permissions::rolesFor(School::find(session('current_school_id')));
+
+        if ($user?->role && isset(Permissions::ROLES[$user->role])) {
+            $roles[$user->role] = Permissions::ROLES[$user->role];
+        }
+
+        return $roles;
     }
 
     /** NULL = droits du rôle ; sinon la liste cochée (éventuellement vide). */
@@ -196,8 +209,8 @@ class StaffController extends Controller
         return [
             'staffUser' => $user,
             'selectedRole' => old('role', $role),
-            'roles' => Permissions::ROLES,
-            'groups' => Permissions::GROUPS,
+            'roles' => $this->availableRoles($user),
+            'groups' => Permissions::groupsFor(School::find(session('current_school_id'))),
             'roleDefaults' => Permissions::ROLE_DEFAULTS,
             'permissionsMode' => old('permissions_mode', $user->hasCustomPermissions() ? 'custom' : 'default'),
             // Après une erreur de validation, on réaffiche exactement les cases cochées (même aucune).
