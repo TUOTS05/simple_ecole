@@ -43,6 +43,7 @@
             </div>
         </div>
         <div class="flex sm:flex-col gap-2">
+            <a href="{{ route('app.creche.journal.child', $student) }}" class="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white text-sm font-semibold rounded-lg text-center">📒 Journée</a>
             @if($canEdit)
             <a href="{{ route('app.creche.children.edit', $student) }}" class="px-4 py-2 bg-primary hover:bg-primary-dark text-white text-sm font-semibold rounded-lg text-center">Modifier le dossier</a>
             @endif

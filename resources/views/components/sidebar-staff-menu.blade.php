@@ -90,6 +90,9 @@
         </svg>
     </button>
     <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
+        @canany(['creche.view', 'creche.journal', 'creche.manage'])
+        <a href="{{ route('app.creche.journal') }}" title="Journal du groupe" class="{{ $subLink(request()->routeIs('app.creche.journal*')) }}">Journal du groupe</a>
+        @endcanany
         @canany(['creche.attendance', 'creche.manage', 'attendances.view'])
         <a href="{{ route('app.creche.today') }}" title="Présences du jour" class="{{ $subLink(request()->routeIs('app.creche.today')) }}">Présences du jour</a>
         <a href="{{ route('app.creche.departure.index') }}" title="Départ enfant" class="{{ $subLink(request()->routeIs('app.creche.departure.*')) }}">Départ enfant</a>

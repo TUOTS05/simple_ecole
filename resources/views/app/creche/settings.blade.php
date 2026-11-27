@@ -60,6 +60,35 @@
             </label>
         </div>
 
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 space-y-4">
+            <h2 class="text-lg font-semibold text-gray-800">📒 Journal quotidien</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Catégories d'activités (une par ligne)</label>
+                    <textarea name="activity_categories" rows="8" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm">{{ $activityCategories }}</textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Soins d'hygiène (un par ligne)</label>
+                    <textarea name="hygiene_types" rows="8" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm">{{ $hygieneTypes }}</textarea>
+                </div>
+            </div>
+            <p class="text-sm text-gray-600">Repères de la liste « À faire » des auxiliaires :</p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Repas à renseigner après</label>
+                    <input type="time" name="meal_time" value="{{ $mealTime }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Goûter à renseigner après</label>
+                    <input type="time" name="snack_time" value="{{ $snackTime }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Change à prévoir toutes les (heures)</label>
+                    <input type="number" name="diaper_interval_hours" value="{{ $diaperInterval }}" min="1" max="8" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                </div>
+            </div>
+        </div>
+
         <div>
             <button type="submit" class="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg font-semibold transition">Enregistrer</button>
         </div>

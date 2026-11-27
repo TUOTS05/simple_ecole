@@ -24,6 +24,11 @@ class CrecheSettingsController extends Controller
             'openingTime' => old('opening_time', $school->setting('creche.opening_time')),
             'closingTime' => old('closing_time', $school->setting('creche.closing_time')),
             'enforceCapacity' => (bool) old('enforce_capacity', $school->setting('creche.enforce_capacity')),
+            'activityCategories' => old('activity_categories', implode("\n", (array) $school->setting('creche.activity_categories'))),
+            'hygieneTypes' => old('hygiene_types', implode("\n", (array) $school->setting('creche.hygiene_types'))),
+            'mealTime' => old('meal_time', $school->setting('creche.meal_time')),
+            'snackTime' => old('snack_time', $school->setting('creche.snack_time')),
+            'diaperInterval' => old('diaper_interval_hours', $school->setting('creche.diaper_interval_hours')),
             // Niveaux encore portés par des groupes : on prévient avant qu'ils disparaissent de la liste.
             'levelsInUse' => SchoolClass::where('school_id', $school->id)->creche()->distinct()->pluck('level')->all(),
         ]);
@@ -38,30 +43,52 @@ class CrecheSettingsController extends Controller
             'opening_time' => 'required|date_format:H:i',
             'closing_time' => 'required|date_format:H:i|after:opening_time',
             'enforce_capacity' => 'nullable|boolean',
+            // Journal quotidien (champs absents du formulaire : valeur actuelle conservée)
+            'activity_categories' => 'nullable|string|max:2000',
+            'hygiene_types' => 'nullable|string|max:2000',
+            'meal_time' => 'nullable|date_format:H:i',
+            'snack_time' => 'nullable|date_format:H:i',
+            'diaper_interval_hours' => 'nullable|integer|min:1|max:8',
         ], [
             'levels.required' => 'Indiquez au moins un groupe d\'âge.',
             'closing_time.after' => 'L\'heure de fermeture doit être après l\'heure d\'ouverture.',
+            'diaper_interval_hours.max' => 'Le délai entre deux changes doit être de 8 heures au plus.',
         ]);
 
-        $levels = collect(preg_split('/\r\n|\r|\n/', $v['levels']))
-            ->map(fn ($line) => trim($line))
-            ->filter()
-            ->unique()
-            ->values();
+        $lists = [
+            'levels' => ['Indiquez au moins un groupe d\'âge.', 30, 20],
+            'activity_categories' => ['Indiquez au moins une catégorie d\'activité.', 40, 30],
+            'hygiene_types' => ['Indiquez au moins un type de soin d\'hygiène.', 40, 30],
+        ];
+        $parsed = [];
+        foreach ($lists as $field => [$emptyMessage, $maxLength, $maxItems]) {
+            if (! array_key_exists($field, $v) || $v[$field] === null) {
+                $parsed[$field] = (array) $school->setting("creche.{$field}");
 
-        if ($levels->isEmpty()) {
-            return back()->withErrors(['levels' => 'Indiquez au moins un groupe d\'âge.'])->withInput();
-        }
-        if ($levels->contains(fn ($level) => mb_strlen($level) > 30)) {
-            return back()->withErrors(['levels' => 'Chaque groupe d\'âge doit faire 30 caractères au maximum.'])->withInput();
+                continue;
+            }
+
+            $items = $this->lines($v[$field]);
+            if ($items->isEmpty()) {
+                return back()->withErrors([$field => $emptyMessage])->withInput();
+            }
+            if ($items->contains(fn ($item) => mb_strlen($item) > $maxLength)) {
+                return back()->withErrors([$field => "Chaque ligne doit faire {$maxLength} caractères au maximum."])->withInput();
+            }
+            $parsed[$field] = $items->take($maxItems)->all();
         }
 
         $settings = $school->settings ?? [];
         $settings['creche'] = [
-            'levels' => $levels->take(20)->all(),
+            'levels' => $parsed['levels'],
             'opening_time' => $v['opening_time'],
             'closing_time' => $v['closing_time'],
             'enforce_capacity' => $request->boolean('enforce_capacity'),
+            'activity_categories' => $parsed['activity_categories'],
+            'hygiene_types' => $parsed['hygiene_types'],
+            'meal_time' => $v['meal_time'] ?? $school->setting('creche.meal_time'),
+            'snack_time' => $v['snack_time'] ?? $school->setting('creche.snack_time'),
+            'diaper_interval_hours' => (int) ($v['diaper_interval_hours'] ?? $school->setting('creche.diaper_interval_hours')),
         ];
         $school->settings = $settings;
         $school->save();
@@ -70,6 +97,16 @@ class CrecheSettingsController extends Controller
 
         return redirect()->route('app.creche.settings.edit')
             ->with('success', '✅ Paramètres de la crèche enregistrés.');
+    }
+
+    /** Une valeur par ligne, sans doublons ni lignes vides. */
+    private function lines(string $text)
+    {
+        return collect(preg_split('/\r\n|\r|\n/', $text))
+            ->map(fn ($line) => trim($line))
+            ->filter()
+            ->unique()
+            ->values();
     }
 
     private function school(): School

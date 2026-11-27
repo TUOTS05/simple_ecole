@@ -80,6 +80,13 @@ class SchoolSettings
             'enforce_capacity' => false,   // Refuser une inscription dans un groupe complet
             'opening_time' => '07:00',     // Horaires par défaut (un groupe peut avoir les siens)
             'closing_time' => '18:00',
+            // Journal quotidien
+            'activity_categories' => ['Motricité', 'Langage', 'Éveil sensoriel', 'Musique', 'Comptine', 'Manipulation', 'Jeux', 'Socialisation', 'Créativité', 'Autonomie'],
+            'hygiene_types' => ['Lavage des mains', 'Toilette', 'Nettoyage', 'Soin d\'hygiène', 'Autre'],
+            // Repères de la liste « À faire » de l'auxiliaire
+            'meal_time' => '12:00',        // après cette heure, repas à renseigner
+            'snack_time' => '16:00',       // après cette heure, goûter à renseigner
+            'diaper_interval_hours' => 3,  // change à prévoir au-delà de ce délai
         ],
     ];
 

@@ -50,6 +50,13 @@ class StudentPolicy
             && ($user->hasPermission('creche.attendance') || $user->hasPermission('creche.manage') || $user->hasPermission('attendances.view'));
     }
 
+    /** Saisir le journal quotidien (biberons, repas, sommeil, changes, ...) d'un enfant de ses groupes. */
+    public function recordCrecheJournal(User $user, Student $student): bool
+    {
+        return $this->viewCrecheRecord($user, $student)
+            && ($user->hasPermission('creche.journal') || $user->hasPermission('creche.manage'));
+    }
+
     /** Modifier le dossier crèche et les personnes autorisées : direction, responsable crèche, secrétariat. */
     public function updateCrecheRecord(User $user, Student $student): bool
     {

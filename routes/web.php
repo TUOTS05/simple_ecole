@@ -11,6 +11,7 @@ use App\Http\Controllers\App\CrecheAttendanceController;
 use App\Http\Controllers\App\CrecheChildController;
 use App\Http\Controllers\App\CrecheDayController;
 use App\Http\Controllers\App\CrecheDepartureController;
+use App\Http\Controllers\App\CrecheJournalController;
 use App\Http\Controllers\App\CrecheSettingsController;
 use App\Http\Controllers\App\DashboardController as AppDashboardController;
 use App\Http\Controllers\App\EndOfYearController;
@@ -261,6 +262,19 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountan
         Route::get('/departure', [CrecheDepartureController::class, 'index'])->name('departure.index');
         Route::get('/departure/{student}', [CrecheDepartureController::class, 'show'])->name('departure.show');
         Route::post('/departure/{student}', [CrecheDepartureController::class, 'store'])->name('departure.store');
+    });
+
+    // Journal quotidien (espace auxiliaire) : chaque saisie vérifie l'accès à l'enfant et le droit
+    // creche.journal (StudentPolicy::recordCrecheJournal) ; la consultation suit le dossier crèche.
+    Route::middleware('permission:creche.view,creche.journal,creche.manage,students.manage')->prefix('creche')->name('creche.')->group(function () {
+        Route::get('/journal', [CrecheJournalController::class, 'board'])->name('journal');
+        Route::get('/journal/new', [CrecheJournalController::class, 'create'])->name('journal.create');
+        Route::post('/journal', [CrecheJournalController::class, 'store'])->name('journal.store');
+        Route::get('/children/{student}/journal', [CrecheJournalController::class, 'child'])->name('journal.child');
+        Route::get('/journal/events/{event}/edit', [CrecheJournalController::class, 'edit'])->name('journal.edit');
+        Route::put('/journal/events/{event}', [CrecheJournalController::class, 'update'])->name('journal.update');
+        Route::delete('/journal/events/{event}', [CrecheJournalController::class, 'destroy'])->name('journal.destroy');
+        Route::post('/journal/events/{event}/wake', [CrecheJournalController::class, 'wake'])->name('journal.wake');
     });
 
     // Enfants et dossier crèche : chaque action vérifie en plus l'accès à l'enfant (StudentPolicy) —

@@ -101,6 +101,12 @@ class Student extends Model
         return $this->hasMany(AuthorizedPickup::class);
     }
 
+    /** Journal quotidien (biberons, repas, sommeil, changes, ...). */
+    public function careEvents(): HasMany
+    {
+        return $this->hasMany(CareEvent::class);
+    }
+
     /** Groupe de crèche actuel de l'enfant, s'il en a un. */
     public function crecheClass(): ?SchoolClass
     {

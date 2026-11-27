@@ -220,7 +220,7 @@ class CrecheFoundationTest extends TestCase
         ])->assertSessionHasNoErrors();
         $auxiliary = User::where('email', 'awa@example.test')->firstOrFail();
         $this->assertSame(Permissions::ROLE_DEFAULTS['care_staff'], $auxiliary->effectivePermissions());
-        $this->assertSame('app.creche.today', $auxiliary->dashboardRouteName());
+        $this->assertSame('app.creche.journal', $auxiliary->dashboardRouteName());
 
         $other = School::create(['name' => 'Sans crèche', 'slug' => 'sans-creche', 'status' => 'active', 'school_type' => 'both']);
         $director = $this->makeUser('school_admin', 'dir2@example.test', $other);
