@@ -152,8 +152,8 @@
                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">Photo de l'élève</label>
                     @if($student->photo)
                     <div class="mb-2 flex items-center gap-2">
-                        <img src="{{ asset('storage/' . $student->photo) }}" class="w-10 h-10 rounded-full object-cover border">
-                        <a href="{{ asset('storage/' . $student->photo) }}" target="_blank" class="text-xs text-blue-600 hover:underline flex items-center">
+                        <img src="{{ route('app.students.photo', $student) }}" class="w-10 h-10 rounded-full object-cover border">
+                        <a href="{{ route('app.students.photo', $student) }}" target="_blank" class="text-xs text-blue-600 hover:underline flex items-center">
                             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
@@ -386,6 +386,9 @@
                                 </div>
                                 <input type="file" name="documents[{{ $i }}]" accept=".pdf,.doc,.docx,.jpg,.png" class="hidden">
                             </label>
+                            @if($docPath)
+                            <a href="{{ route('app.students.document', [$student, $i]) }}" target="_blank" rel="noopener" class="text-xs text-blue-600 hover:underline mt-1 inline-block">Ouvrir le document actuel</a>
+                            @endif
                             <p class="js-file-dropzone-error text-xs text-red-500 mt-1 hidden"></p>
                             @error('documents.' . $i)
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>

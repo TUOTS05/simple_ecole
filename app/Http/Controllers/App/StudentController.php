@@ -15,6 +15,8 @@ use App\Models\StudentInstallment;
 use App\Models\User;
 use App\Rules\GroupHasRoom;
 use App\Services\StudentCardService;
+use App\Support\CrecheEnrollment;
+use App\Support\PrivateFiles;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -189,7 +191,7 @@ class StudentController extends Controller
             $documentsData = [];
             for ($i = 1; $i <= 4; $i++) {
                 if ($request->hasFile("documents.$i") && $request->file("documents.$i")->isValid()) {
-                    $path = $request->file("documents.$i")->store('students/documents', 'public');
+                    $path = PrivateFiles::store($request->file("documents.$i"), 'students/documents');
                     $documentsData["doc_$i"] = $path;
                 }
             }
@@ -201,7 +203,7 @@ class StudentController extends Controller
             // 2. Gestion de la photo
             $photoPath = null;
             if ($request->hasFile('student_photo')) {
-                $photoPath = $request->file('student_photo')->store('students/photos', 'public');
+                $photoPath = PrivateFiles::store($request->file('student_photo'), 'students/photos');
             }
 
             // 3. Création de l'élève
@@ -300,6 +302,7 @@ class StudentController extends Controller
             ]);
 
             $student->classes()->attach($validated['class_id']);
+            $isCrecheChild = CrecheEnrollment::start($student, (int) $validated['class_id'], $validated['admission_date']);
 
             // 6. GÉNÉRATION AUTOMATIQUE DES ÉCHÉANCES
             $this->generateFeeSchedule($enrollment, $validated['class_id']);
@@ -347,8 +350,12 @@ class StudentController extends Controller
                     ->withInput();
             }
 
-            return redirect()->route('app.students.index')
-                ->with('success', "✅ Inscription réussie ! Matricule : {$student->matricule}. Un compte parent a été créé/lié.");
+            $success = "✅ Inscription réussie ! Matricule : {$student->matricule}. Un compte parent a été créé/lié.";
+            if ($isCrecheChild && $redirect = CrecheEnrollment::redirectAfterEnrollment($student, $success)) {
+                return $redirect;
+            }
+
+            return redirect()->route('app.students.index')->with('success', $success);
         } catch (\Throwable $e) {
             DB::rollBack();
 
@@ -725,9 +732,9 @@ class StudentController extends Controller
             $photoPath = $student->photo;
             if ($request->hasFile('student_photo')) {
                 if ($photoPath) {
-                    \Storage::disk('public')->delete($photoPath);
+                    PrivateFiles::delete($photoPath);
                 }
-                $photoPath = $request->file('student_photo')->store('students/photos', 'public');
+                $photoPath = PrivateFiles::store($request->file('student_photo'), 'students/photos');
             }
 
             // 2. ✅ Gestion intelligente des 4 documents (HORS du bloc photo, bien indenté)
@@ -738,10 +745,10 @@ class StudentController extends Controller
                     // Supprimer l'ancien fichier s'il existe
                     $oldPath = $documentsData["doc_$i"] ?? null;
                     if ($oldPath) {
-                        \Storage::disk('public')->delete($oldPath);
+                        PrivateFiles::delete($oldPath);
                     }
                     // Sauvegarder le nouveau
-                    $documentsData["doc_$i"] = $request->file("documents.$i")->store('students/documents', 'public');
+                    $documentsData["doc_$i"] = PrivateFiles::store($request->file("documents.$i"), 'students/documents');
                 }
             }
 
@@ -784,6 +791,7 @@ class StudentController extends Controller
 
             // 4. Mise à jour de la classe (via la table pivot)
             $student->classes()->sync([$validated['class_id']]);
+            CrecheEnrollment::start($student, (int) $validated['class_id'], $validated['admission_date']);
 
             // Mise à jour de l'inscription active
             $activeYear = SchoolYear::where('school_id', $schoolId)->where('is_active', true)->first();

@@ -29,6 +29,13 @@
             </div>
         </div>
         <div class="flex gap-2">
+            @if($student->crecheClass() && session('current_school')?->isCreche())
+            @can('viewCrecheRecord', $student)
+            <a href="{{ route('app.creche.children.show', $student) }}" class="inline-flex items-center px-4 py-2 bg-pink-500 text-white text-sm font-semibold rounded-lg hover:bg-pink-600 transition shadow-sm">
+                🍼 Dossier crèche
+            </a>
+            @endcan
+            @endif
             <a href="{{ route('app.students.edit', $student->id) }}" class="inline-flex items-center px-4 py-2 bg-yellow-500 text-white text-sm font-semibold rounded-lg hover:bg-yellow-600 transition shadow-sm">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                 Modifier
@@ -43,7 +50,7 @@
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
                 <div class="w-32 h-32 mx-auto rounded-full bg-gray-200 flex items-center justify-center mb-4 overflow-hidden border-4 border-white shadow-md">
                     @if($student->photo)
-                        <img src="{{ asset('storage/' . $student->photo) }}" alt="Photo" class="w-full h-full object-cover">
+                        <img src="{{ route('app.students.photo', $student) }}" alt="Photo" class="w-full h-full object-cover">
                     @else
                         <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                     @endif

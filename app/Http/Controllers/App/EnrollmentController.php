@@ -12,6 +12,8 @@ use App\Models\Student;
 use App\Models\StudentInstallment;
 use App\Models\User;
 use App\Rules\GroupHasRoom;
+use App\Support\CrecheEnrollment;
+use App\Support\PrivateFiles;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -171,7 +173,7 @@ class EnrollmentController extends Controller
             $documentsData = [];
             for ($i = 1; $i <= 4; $i++) {
                 if ($request->hasFile("documents.$i") && $request->file("documents.$i")->isValid()) {
-                    $path = $request->file("documents.$i")->store('students/documents', 'public');
+                    $path = PrivateFiles::store($request->file("documents.$i"), 'students/documents');
                     $documentsData["doc_$i"] = $path;
                 }
             }
@@ -183,7 +185,7 @@ class EnrollmentController extends Controller
             // 2. Gestion de la photo
             $photoPath = null;
             if ($request->hasFile('student_photo')) {
-                $photoPath = $request->file('student_photo')->store('students/photos', 'public');
+                $photoPath = PrivateFiles::store($request->file('student_photo'), 'students/photos');
             }
 
             // 3. Création de l'élève
@@ -284,6 +286,7 @@ class EnrollmentController extends Controller
             ]);
 
             $student->classes()->attach($validated['class_id']);
+            $isCrecheChild = CrecheEnrollment::start($student, (int) $validated['class_id'], $validated['admission_date']);
 
             // 6. GÉNÉRATION AUTOMATIQUE DES ÉCHÉANCES
             $this->generateFeeSchedule($enrollment, $validated['class_id'], $validated['admission_date']);
@@ -332,8 +335,12 @@ class EnrollmentController extends Controller
                     ->withInput();
             }
 
-            return redirect()->route('app.students.index')
-                ->with('success', "✅ Inscription réussie ! Matricule : {$student->matricule}. Un compte parent a été créé/lié.");
+            $success = "✅ Inscription réussie ! Matricule : {$student->matricule}. Un compte parent a été créé/lié.";
+            if ($isCrecheChild && $redirect = CrecheEnrollment::redirectAfterEnrollment($student, $success)) {
+                return $redirect;
+            }
+
+            return redirect()->route('app.students.index')->with('success', $success);
 
         } catch (\Throwable $e) {
             DB::rollBack();

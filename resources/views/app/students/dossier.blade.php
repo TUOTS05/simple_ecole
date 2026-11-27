@@ -16,8 +16,8 @@
     <div class="bg-white rounded-lg shadow p-6 mb-6">
         <div class="flex items-start space-x-6">
             <div>
-                @if($student->photo_url)
-                <img src="{{ asset('storage/' . $student->photo_url) }}" alt="{{ $student->first_name }}" class="w-32 h-32 rounded-lg object-cover">
+                @if($student->photo)
+                <img src="{{ route('app.students.photo', $student) }}" alt="{{ $student->first_name }}" class="w-32 h-32 rounded-lg object-cover">
                 @else
                 <div class="w-32 h-32 rounded-lg bg-gray-200 flex items-center justify-center text-5xl text-gray-500">
                     👨‍🎓

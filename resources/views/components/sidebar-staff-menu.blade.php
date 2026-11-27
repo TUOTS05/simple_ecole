@@ -76,7 +76,7 @@
 @endcanany
 
 @if($hasCreche)
-@canany(['creche.view', 'creche.attendance', 'creche.manage', 'attendances.view'])
+@canany(['creche.view', 'creche.attendance', 'creche.manage', 'attendances.view', 'students.manage'])
 <!-- Groupe : Crèche -->
 <div x-data="{ open: {{ request()->routeIs('app.creche-attendances.*') || request()->routeIs('app.creche.*') ? 'true' : 'false' }} }" class="space-y-1">
     <button @click="if(!sidebarOpen) sidebarOpen = true; open = !open" title="Crèche"
@@ -90,6 +90,9 @@
         </svg>
     </button>
     <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
+        @canany(['creche.view', 'creche.attendance', 'creche.manage', 'students.manage'])
+        <a href="{{ route('app.creche.children.index') }}" title="Enfants et dossiers crèche" class="{{ $subLink(request()->routeIs('app.creche.children.*')) }}">Enfants</a>
+        @endcanany
         @canany(['creche.attendance', 'attendances.view'])
         <a href="{{ route('app.creche-attendances.index') }}" title="Pointage" class="{{ $subLink(request()->routeIs('app.creche-attendances.*')) }}">Pointage</a>
         @endcanany

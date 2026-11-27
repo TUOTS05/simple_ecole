@@ -2,11 +2,13 @@
 
 use App\Http\Controllers\App\AccountantProfileController;
 use App\Http\Controllers\App\AttendanceController;
+use App\Http\Controllers\App\AuthorizedPickupController;
 use App\Http\Controllers\App\BroadcastMessageController;
 use App\Http\Controllers\App\CanteenController;
 use App\Http\Controllers\App\ClassFeeController;
 use App\Http\Controllers\App\CrecheAssignmentController;
 use App\Http\Controllers\App\CrecheAttendanceController;
+use App\Http\Controllers\App\CrecheChildController;
 use App\Http\Controllers\App\CrecheSettingsController;
 use App\Http\Controllers\App\DashboardController as AppDashboardController;
 use App\Http\Controllers\App\EndOfYearController;
@@ -31,6 +33,7 @@ use App\Http\Controllers\App\SchoolYearController;
 use App\Http\Controllers\App\SmsSettingsController;
 use App\Http\Controllers\App\StaffController;
 use App\Http\Controllers\App\StudentController;
+use App\Http\Controllers\App\StudentFileController;
 use App\Http\Controllers\App\StudentInstallmentController;
 use App\Http\Controllers\App\SubjectController;
 use App\Http\Controllers\App\TeacherAssignmentController;
@@ -243,6 +246,25 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountan
         Route::get('/creche-attendances', [CrecheAttendanceController::class, 'index'])->name('creche-attendances.index');
         Route::post('/creche-attendances', [CrecheAttendanceController::class, 'store'])->name('creche-attendances.store');
     });
+
+    // Enfants et dossier crèche : chaque action vérifie en plus l'accès à l'enfant (StudentPolicy) —
+    // une auxiliaire ne consulte que les enfants de ses groupes, sans pouvoir modifier.
+    Route::middleware('permission:creche.view,creche.attendance,creche.manage,students.manage')->prefix('creche')->name('creche.')->group(function () {
+        Route::get('/children', [CrecheChildController::class, 'index'])->name('children.index');
+        Route::get('/children/{student}', [CrecheChildController::class, 'show'])->name('children.show');
+        Route::get('/children/{student}/edit', [CrecheChildController::class, 'edit'])->name('children.edit');
+        Route::put('/children/{student}', [CrecheChildController::class, 'update'])->name('children.update');
+
+        Route::post('/children/{student}/pickups', [AuthorizedPickupController::class, 'store'])->name('pickups.store');
+        Route::put('/pickups/{pickup}', [AuthorizedPickupController::class, 'update'])->name('pickups.update');
+        Route::delete('/pickups/{pickup}', [AuthorizedPickupController::class, 'destroy'])->name('pickups.destroy');
+        Route::get('/pickups/{pickup}/photo', [AuthorizedPickupController::class, 'photo'])->name('pickups.photo');
+    });
+
+    // Photo et documents d'un élève, servis depuis le stockage privé (droits vérifiés par StudentPolicy)
+    Route::get('/students/{student}/photo', [StudentFileController::class, 'photo'])->name('students.photo');
+    Route::get('/students/{student}/documents/{number}', [StudentFileController::class, 'document'])
+        ->whereNumber('number')->name('students.document');
 
     Route::middleware('permission:creche.manage')->prefix('creche')->name('creche.')->group(function () {
         Route::get('/assignments', [CrecheAssignmentController::class, 'index'])->name('assignments.index');

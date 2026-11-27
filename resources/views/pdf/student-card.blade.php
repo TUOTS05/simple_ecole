@@ -45,9 +45,8 @@
 </head>
 <body>
     @php
-        $photoPath = $student->photo && file_exists(storage_path('app/public/' . $student->photo))
-            ? storage_path('app/public/' . $student->photo)
-            : null;
+        // Photo lue depuis le stockage privé (jamais par URL publique)
+        $photoPath = \App\Support\PrivateFiles::absolutePath($student->photo);
         $schoolYear = now()->format('Y') . '-' . now()->addYear()->format('Y');
         $studentName = trim(($student->last_name ?? '') . ' ' . ($student->first_name ?? ''));
     @endphp

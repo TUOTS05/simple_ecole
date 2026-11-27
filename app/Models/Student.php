@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Student extends Model
@@ -29,7 +30,7 @@ class Student extends Model
         'staff_child',
         'religion',
         'admission_date',
-        'student_photo',
+        'photo', // chemin sur le disque privé (la colonne s'appelle « photo », pas « student_photo »)
         'receipt_number',
         'father_name',
         'father_phone',
@@ -86,6 +87,24 @@ class Student extends Model
     public function crecheAttendances(): HasMany
     {
         return $this->hasMany(CrecheAttendance::class);
+    }
+
+    /** Dossier crèche (profil de prise en charge). */
+    public function careProfile(): HasOne
+    {
+        return $this->hasOne(ChildCareProfile::class);
+    }
+
+    /** Personnes autorisées ou interdites à récupérer l'enfant. */
+    public function authorizedPickups(): HasMany
+    {
+        return $this->hasMany(AuthorizedPickup::class);
+    }
+
+    /** Groupe de crèche actuel de l'enfant, s'il en a un. */
+    public function crecheClass(): ?SchoolClass
+    {
+        return $this->classes->firstWhere('cycle', 'creche');
     }
 
     public function enrollments(): HasMany
