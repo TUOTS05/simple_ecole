@@ -143,7 +143,10 @@ class User extends Authenticatable implements MustVerifyEmail
 
         $query = SchoolClass::where('school_id', $this->school_id)->where('cycle', 'creche');
 
-        if (! $this->hasPermission('creche.manage') && ! $this->hasPermission('attendances.view')) {
+        // L'accueil reçoit les familles de tous les groupes à l'entrée : pas d'affectation requise.
+        $seesAllGroups = $this->hasPermission('creche.manage') || $this->hasPermission('attendances.view') || $this->role === 'reception';
+
+        if (! $seesAllGroups) {
             $query->whereIn('id', $this->careStaffAssignments()->select('school_class_id'));
         }
 

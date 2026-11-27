@@ -9,6 +9,8 @@ use App\Http\Controllers\App\ClassFeeController;
 use App\Http\Controllers\App\CrecheAssignmentController;
 use App\Http\Controllers\App\CrecheAttendanceController;
 use App\Http\Controllers\App\CrecheChildController;
+use App\Http\Controllers\App\CrecheDayController;
+use App\Http\Controllers\App\CrecheDepartureController;
 use App\Http\Controllers\App\CrecheSettingsController;
 use App\Http\Controllers\App\DashboardController as AppDashboardController;
 use App\Http\Controllers\App\EndOfYearController;
@@ -240,11 +242,25 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountan
     // ==========================================================================
     // CRÈCHE
     // ==========================================================================
-    // Pointage (arrivée/départ) : personnel de crèche, ou accès historique via les présences.
-    // Les groupes visibles sont ensuite limités par User::accessibleCrecheClassIds().
-    Route::middleware('permission:creche.attendance,attendances.view')->group(function () {
+    // Historique du pointage par groupe et par date (consultation) ; la correction de la grille
+    // est réservée à la responsable, car elle contourne la vérification au départ (journalisée).
+    // Les groupes visibles sont limités par User::accessibleCrecheClassIds().
+    Route::middleware('permission:creche.attendance,creche.manage,attendances.view')->group(function () {
         Route::get('/creche-attendances', [CrecheAttendanceController::class, 'index'])->name('creche-attendances.index');
-        Route::post('/creche-attendances', [CrecheAttendanceController::class, 'store'])->name('creche-attendances.store');
+    });
+    Route::post('/creche-attendances', [CrecheAttendanceController::class, 'store'])->name('creche-attendances.store')
+        ->middleware('permission:creche.manage');
+
+    // Présences du jour (arrivée, absence) et départ sécurisé : chaque action vérifie en plus
+    // l'accès à l'enfant et le droit de pointage (StudentPolicy::recordCrecheAttendance).
+    Route::middleware('permission:creche.attendance,creche.manage,attendances.view')->prefix('creche')->name('creche.')->group(function () {
+        Route::get('/today', [CrecheDayController::class, 'index'])->name('today');
+        Route::post('/children/{student}/arrival', [CrecheDayController::class, 'arrival'])->name('arrival');
+        Route::post('/children/{student}/absence', [CrecheDayController::class, 'absence'])->name('absence');
+
+        Route::get('/departure', [CrecheDepartureController::class, 'index'])->name('departure.index');
+        Route::get('/departure/{student}', [CrecheDepartureController::class, 'show'])->name('departure.show');
+        Route::post('/departure/{student}', [CrecheDepartureController::class, 'store'])->name('departure.store');
     });
 
     // Enfants et dossier crèche : chaque action vérifie en plus l'accès à l'enfant (StudentPolicy) —

@@ -220,7 +220,7 @@ class CrecheFoundationTest extends TestCase
         ])->assertSessionHasNoErrors();
         $auxiliary = User::where('email', 'awa@example.test')->firstOrFail();
         $this->assertSame(Permissions::ROLE_DEFAULTS['care_staff'], $auxiliary->effectivePermissions());
-        $this->assertSame('app.creche-attendances.index', $auxiliary->dashboardRouteName());
+        $this->assertSame('app.creche.today', $auxiliary->dashboardRouteName());
 
         $other = School::create(['name' => 'Sans crèche', 'slug' => 'sans-creche', 'status' => 'active', 'school_type' => 'both']);
         $director = $this->makeUser('school_admin', 'dir2@example.test', $other);
@@ -265,26 +265,33 @@ class CrecheFoundationTest extends TestCase
         $this->actingAs($auxiliary)->get(route('app.creche-attendances.index', ['class_id' => $toddlers->id]))
             ->assertForbidden();
 
-        // Pointage d'un groupe non affecté : refusé
-        $this->actingAs($auxiliary)->post(route('app.creche-attendances.store'), [
-            'class_id' => $toddlers->id, 'date' => '2026-11-27', 'records' => [$sarah->id => ['status' => 'present']],
-        ])->assertForbidden();
-
-        // Pointage de son groupe : un enfant d'un autre groupe glissé dans la requête est ignoré
-        $this->actingAs($auxiliary)->post(route('app.creche-attendances.store'), [
-            'class_id' => $babies->id, 'date' => '2026-11-27',
-            'records' => [$adam->id => ['status' => 'present', 'checked_in_at' => '07:42'], $sarah->id => ['status' => 'present']],
-        ])->assertRedirect();
+        // Arrivée : enfant de son groupe accepté, enfant d'un autre groupe refusé
+        $this->actingAs($auxiliary)->post(route('app.creche.arrival', $adam), ['time' => '07:42'])->assertRedirect();
+        $this->actingAs($auxiliary)->post(route('app.creche.arrival', $sarah))->assertForbidden();
         $this->assertDatabaseHas('creche_attendances', ['student_id' => $adam->id, 'status' => 'present']);
         $this->assertDatabaseMissing('creche_attendances', ['student_id' => $sarah->id]);
 
-        // Journal d'audit rattaché à l'école et au groupe
-        $log = ActivityLog::where('action', 'creche.attendance.saved')->firstOrFail();
+        // La grille de correction est réservée à la responsable
+        $this->actingAs($auxiliary)->post(route('app.creche-attendances.store'), [
+            'class_id' => $babies->id, 'date' => today()->toDateString(), 'records' => [$adam->id => ['status' => 'absent']],
+        ])->assertForbidden();
+
+        // Correction par la responsable : un enfant d'un autre groupe glissé dans la requête est ignoré
+        $this->actingAs($manager)->post(route('app.creche-attendances.store'), [
+            'class_id' => $babies->id, 'date' => today()->toDateString(),
+            'records' => [$adam->id => ['status' => 'present', 'checked_in_at' => '07:45'], $sarah->id => ['status' => 'present', 'checked_in_at' => '08:00']],
+        ])->assertRedirect();
+        $this->assertDatabaseMissing('creche_attendances', ['student_id' => $sarah->id]);
+
+        // Journal d'audit rattaché à l'école, à l'utilisateur et au groupe
+        $log = ActivityLog::where('action', 'creche.attendance.corrected')->firstOrFail();
         $this->assertSame($this->school->id, $log->school_id);
-        $this->assertSame($auxiliary->id, $log->user_id);
+        $this->assertSame($manager->id, $log->user_id);
         $this->assertSame('SchoolClass', $log->subject_type);
         $this->assertSame($babies->id, $log->subject_id);
         $this->assertSame(1, $log->meta['children']);
+        $this->assertSame('07:42', $log->meta['changes'][0]['before']['in']);
+        $this->assertSame('07:45', $log->meta['changes'][0]['after']['in']);
     }
 
     public function test_assignments_refuse_people_without_creche_rights_and_other_schools_groups(): void

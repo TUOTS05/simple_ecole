@@ -105,7 +105,7 @@ class Permissions
         'extras.canteen' => 'extras.attendances.index',
         'extras.transport' => 'extras.transport.vehicles.index',
         'extras.billing' => 'extras.subscriptions.index',
-        'creche.attendance' => 'app.creche-attendances.index',
+        'creche.attendance' => 'app.creche.today',
         'classes.manage' => 'app.classes.index',
         'report_cards.manage' => 'app.report-cards.index',
         'attendances.view' => 'app.attendances.index',

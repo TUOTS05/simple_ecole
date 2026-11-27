@@ -18,7 +18,7 @@
     @endif
 
     <div class="bg-blue-50 border border-blue-100 text-blue-800 text-sm rounded-lg px-4 py-3">
-        Un auxiliaire ou l'accueil ne voit que les enfants des groupes auxquels il est affecté.
+        Une auxiliaire ne voit que les enfants des groupes auxquels elle est affectée. L'accueil voit tous les groupes.
         Le directeur et le responsable crèche voient tous les groupes.
     </div>
 

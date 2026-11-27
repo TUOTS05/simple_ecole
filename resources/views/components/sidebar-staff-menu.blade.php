@@ -90,11 +90,15 @@
         </svg>
     </button>
     <div x-show="open && sidebarOpen" x-transition class="pl-11 space-y-1">
+        @canany(['creche.attendance', 'creche.manage', 'attendances.view'])
+        <a href="{{ route('app.creche.today') }}" title="Présences du jour" class="{{ $subLink(request()->routeIs('app.creche.today')) }}">Présences du jour</a>
+        <a href="{{ route('app.creche.departure.index') }}" title="Départ enfant" class="{{ $subLink(request()->routeIs('app.creche.departure.*')) }}">Départ enfant</a>
+        @endcanany
         @canany(['creche.view', 'creche.attendance', 'creche.manage', 'students.manage'])
         <a href="{{ route('app.creche.children.index') }}" title="Enfants et dossiers crèche" class="{{ $subLink(request()->routeIs('app.creche.children.*')) }}">Enfants</a>
         @endcanany
-        @canany(['creche.attendance', 'attendances.view'])
-        <a href="{{ route('app.creche-attendances.index') }}" title="Pointage" class="{{ $subLink(request()->routeIs('app.creche-attendances.*')) }}">Pointage</a>
+        @canany(['creche.attendance', 'creche.manage', 'attendances.view'])
+        <a href="{{ route('app.creche-attendances.index') }}" title="Historique du pointage" class="{{ $subLink(request()->routeIs('app.creche-attendances.*')) }}">Historique du pointage</a>
         @endcanany
         @can('classes.manage')
         <a href="{{ route('app.classes.index', ['cycle' => 'creche']) }}" title="Groupes" class="{{ $subLink(false) }}">Groupes</a>

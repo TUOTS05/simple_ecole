@@ -40,6 +40,16 @@ class StudentPolicy
         return (bool) array_intersect($groupIds, $user->accessibleCrecheClassIds());
     }
 
+    /**
+     * Enregistrer l'arrivée, l'absence ou le départ de l'enfant : accès à l'enfant + droit de
+     * pointage (« attendances.view » donnait historiquement accès au pointage crèche).
+     */
+    public function recordCrecheAttendance(User $user, Student $student): bool
+    {
+        return $this->viewCrecheRecord($user, $student)
+            && ($user->hasPermission('creche.attendance') || $user->hasPermission('creche.manage') || $user->hasPermission('attendances.view'));
+    }
+
     /** Modifier le dossier crèche et les personnes autorisées : direction, responsable crèche, secrétariat. */
     public function updateCrecheRecord(User $user, Student $student): bool
     {
