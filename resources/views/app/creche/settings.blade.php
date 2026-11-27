@@ -89,6 +89,24 @@
             </div>
         </div>
 
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 space-y-4">
+            <h2 class="text-lg font-semibold text-gray-800">⚠️ Incidents et 🌱 développement</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Domaines du suivi du développement (un par ligne)</label>
+                    <textarea name="development_domains" rows="7" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm">{{ $developmentDomains }}</textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Incidents visibles par les parents</label>
+                    <select name="incidents_parent_visibility" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white">
+                        <option value="validated" {{ $incidentsVisibility === 'validated' ? 'selected' : '' }}>Oui, une fois validés par la responsable</option>
+                        <option value="none" {{ $incidentsVisibility === 'none' ? 'selected' : '' }}>Non, communication directe par la direction</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">S'appliquera à l'espace parent.</p>
+                </div>
+            </div>
+        </div>
+
         <div>
             <button type="submit" class="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg font-semibold transition">Enregistrer</button>
         </div>

@@ -56,7 +56,10 @@
         </a>
         @endforeach
     </div>
-    <a href="{{ route('app.creche.departure.index') }}" class="block text-center bg-pink-600 hover:bg-pink-700 text-white rounded-lg py-3 font-semibold">🚸 Départ enfant</a>
+    <div class="grid grid-cols-2 gap-2">
+        <a href="{{ route('app.creche.incidents.create') }}" class="block text-center bg-white border-2 border-red-300 text-red-700 hover:bg-red-50 rounded-lg py-3 font-semibold">⚠ Incident</a>
+        <a href="{{ route('app.creche.departure.index') }}" class="block text-center bg-pink-600 hover:bg-pink-700 text-white rounded-lg py-3 font-semibold">🚸 Départ enfant</a>
+    </div>
     @endif
 
     <!-- À faire -->

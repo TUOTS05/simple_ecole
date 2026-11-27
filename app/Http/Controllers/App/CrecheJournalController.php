@@ -4,6 +4,7 @@ namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
 use App\Models\CareEvent;
+use App\Models\CareIncident;
 use App\Models\CrecheAttendance;
 use App\Models\ExtraMenu;
 use App\Models\School;
@@ -143,6 +144,8 @@ class CrecheJournalController extends Controller
         $attendance = CrecheAttendance::where('student_id', $student->id)->whereDate('date', $date)->first();
         $events = CareEvent::where('student_id', $student->id)->whereDate('event_date', $date)
             ->with('staff')->orderBy('start_time')->get();
+        $incidents = CareIncident::where('student_id', $student->id)->whereDate('occurred_on', $date)
+            ->where('status', '!=', 'cancelled')->get();
 
         $sleepMinutes = $events->where('event_type', 'sleep')->sum(fn (CareEvent $e) => $e->durationMinutes() ?? 0);
 
@@ -150,7 +153,7 @@ class CrecheJournalController extends Controller
             'student' => $student->load(['classes', 'careProfile']),
             'date' => $date,
             'attendance' => $attendance,
-            'timeline' => $this->timeline($attendance, $events),
+            'timeline' => $this->timeline($attendance, $events, $incidents),
             'totals' => [
                 'bottle' => $events->where('event_type', 'bottle')->count(),
                 'meal' => $events->where('event_type', 'meal')->count(),
@@ -258,10 +261,11 @@ class CrecheJournalController extends Controller
         return null;
     }
 
-    /** Arrivée, événements et départ fusionnés, dans l'ordre chronologique. */
-    private function timeline(?CrecheAttendance $attendance, Collection $events): Collection
+    /** Arrivée, événements, incidents et départ fusionnés, dans l'ordre chronologique. */
+    private function timeline(?CrecheAttendance $attendance, Collection $events, Collection $incidents): Collection
     {
-        $items = $events->map(fn (CareEvent $e) => ['time' => $e->startLabel(), 'kind' => 'event', 'event' => $e]);
+        $items = $events->map(fn (CareEvent $e) => ['time' => $e->startLabel(), 'kind' => 'event', 'event' => $e])
+            ->concat($incidents->map(fn (CareIncident $i) => ['time' => $i->timeLabel(), 'kind' => 'incident', 'incident' => $i]));
 
         if ($attendance?->checked_in_at) {
             $items->push(['time' => $attendance->checked_in_at->format('H:i'), 'kind' => 'arrival', 'attendance' => $attendance]);
@@ -271,7 +275,7 @@ class CrecheJournalController extends Controller
         }
 
         // À heure égale : arrivée d'abord, départ en dernier.
-        $order = ['arrival' => 0, 'event' => 1, 'departure' => 2];
+        $order = ['arrival' => 0, 'event' => 1, 'incident' => 1, 'departure' => 2];
 
         return $items->sortBy([['time', 'asc'], fn ($a, $b) => $order[$a['kind']] <=> $order[$b['kind']]])->values();
     }

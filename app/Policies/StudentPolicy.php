@@ -57,6 +57,12 @@ class StudentPolicy
             && ($user->hasPermission('creche.journal') || $user->hasPermission('creche.manage'));
     }
 
+    /** Valider, annuler ou compléter les incidents d'un enfant : responsable crèche / direction. */
+    public function validateCrecheIncident(User $user, Student $student): bool
+    {
+        return $this->viewCrecheRecord($user, $student) && $user->hasPermission('creche.incidents.validate');
+    }
+
     /** Modifier le dossier crèche et les personnes autorisées : direction, responsable crèche, secrétariat. */
     public function updateCrecheRecord(User $user, Student $student): bool
     {

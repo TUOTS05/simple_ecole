@@ -87,6 +87,10 @@ class SchoolSettings
             'meal_time' => '12:00',        // après cette heure, repas à renseigner
             'snack_time' => '16:00',       // après cette heure, goûter à renseigner
             'diaper_interval_hours' => 3,  // change à prévoir au-delà de ce délai
+            // Suivi du développement
+            'development_domains' => ['Motricité', 'Langage', 'Socialisation', 'Autonomie', 'Coordination', 'Communication', 'Éveil sensoriel'],
+            // Incidents montrés aux parents : 'validated' (une fois validés) ou 'none' (jamais)
+            'incidents_parent_visibility' => 'validated',
         ],
     ];
 

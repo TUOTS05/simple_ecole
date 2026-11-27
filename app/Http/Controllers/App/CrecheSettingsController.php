@@ -29,6 +29,8 @@ class CrecheSettingsController extends Controller
             'mealTime' => old('meal_time', $school->setting('creche.meal_time')),
             'snackTime' => old('snack_time', $school->setting('creche.snack_time')),
             'diaperInterval' => old('diaper_interval_hours', $school->setting('creche.diaper_interval_hours')),
+            'developmentDomains' => old('development_domains', implode("\n", (array) $school->setting('creche.development_domains'))),
+            'incidentsVisibility' => old('incidents_parent_visibility', $school->setting('creche.incidents_parent_visibility')),
             // Niveaux encore portés par des groupes : on prévient avant qu'ils disparaissent de la liste.
             'levelsInUse' => SchoolClass::where('school_id', $school->id)->creche()->distinct()->pluck('level')->all(),
         ]);
@@ -49,6 +51,8 @@ class CrecheSettingsController extends Controller
             'meal_time' => 'nullable|date_format:H:i',
             'snack_time' => 'nullable|date_format:H:i',
             'diaper_interval_hours' => 'nullable|integer|min:1|max:8',
+            'development_domains' => 'nullable|string|max:2000',
+            'incidents_parent_visibility' => 'nullable|in:validated,none',
         ], [
             'levels.required' => 'Indiquez au moins un groupe d\'âge.',
             'closing_time.after' => 'L\'heure de fermeture doit être après l\'heure d\'ouverture.',
@@ -59,6 +63,7 @@ class CrecheSettingsController extends Controller
             'levels' => ['Indiquez au moins un groupe d\'âge.', 30, 20],
             'activity_categories' => ['Indiquez au moins une catégorie d\'activité.', 40, 30],
             'hygiene_types' => ['Indiquez au moins un type de soin d\'hygiène.', 40, 30],
+            'development_domains' => ['Indiquez au moins un domaine de développement.', 50, 20],
         ];
         $parsed = [];
         foreach ($lists as $field => [$emptyMessage, $maxLength, $maxItems]) {
@@ -79,7 +84,8 @@ class CrecheSettingsController extends Controller
         }
 
         $settings = $school->settings ?? [];
-        $settings['creche'] = [
+        // Fusion : un réglage crèche absent de ce formulaire n'est jamais effacé.
+        $settings['creche'] = array_merge($settings['creche'] ?? [], [
             'levels' => $parsed['levels'],
             'opening_time' => $v['opening_time'],
             'closing_time' => $v['closing_time'],
@@ -89,7 +95,9 @@ class CrecheSettingsController extends Controller
             'meal_time' => $v['meal_time'] ?? $school->setting('creche.meal_time'),
             'snack_time' => $v['snack_time'] ?? $school->setting('creche.snack_time'),
             'diaper_interval_hours' => (int) ($v['diaper_interval_hours'] ?? $school->setting('creche.diaper_interval_hours')),
-        ];
+            'development_domains' => $parsed['development_domains'],
+            'incidents_parent_visibility' => $v['incidents_parent_visibility'] ?? $school->setting('creche.incidents_parent_visibility'),
+        ]);
         $school->settings = $settings;
         $school->save();
 

@@ -11,6 +11,8 @@ use App\Http\Controllers\App\CrecheAttendanceController;
 use App\Http\Controllers\App\CrecheChildController;
 use App\Http\Controllers\App\CrecheDayController;
 use App\Http\Controllers\App\CrecheDepartureController;
+use App\Http\Controllers\App\CrecheDevelopmentController;
+use App\Http\Controllers\App\CrecheIncidentController;
 use App\Http\Controllers\App\CrecheJournalController;
 use App\Http\Controllers\App\CrecheSettingsController;
 use App\Http\Controllers\App\DashboardController as AppDashboardController;
@@ -275,6 +277,22 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountan
         Route::put('/journal/events/{event}', [CrecheJournalController::class, 'update'])->name('journal.update');
         Route::delete('/journal/events/{event}', [CrecheJournalController::class, 'destroy'])->name('journal.destroy');
         Route::post('/journal/events/{event}/wake', [CrecheJournalController::class, 'wake'])->name('journal.wake');
+
+        // Incidents : déclaration (creche.journal), validation / annulation (creche.incidents.validate)
+        Route::get('/incidents', [CrecheIncidentController::class, 'index'])->name('incidents.index');
+        Route::get('/incidents/new', [CrecheIncidentController::class, 'create'])->name('incidents.create');
+        Route::post('/incidents', [CrecheIncidentController::class, 'store'])->name('incidents.store');
+        Route::get('/incidents/{incident}', [CrecheIncidentController::class, 'show'])->name('incidents.show');
+        Route::get('/incidents/{incident}/edit', [CrecheIncidentController::class, 'edit'])->name('incidents.edit');
+        Route::put('/incidents/{incident}', [CrecheIncidentController::class, 'update'])->name('incidents.update');
+        Route::post('/incidents/{incident}/validate', [CrecheIncidentController::class, 'approve'])->name('incidents.validate');
+        Route::post('/incidents/{incident}/cancel', [CrecheIncidentController::class, 'cancel'])->name('incidents.cancel');
+        Route::post('/incidents/{incident}/follow-up', [CrecheIncidentController::class, 'followUp'])->name('incidents.follow-up');
+
+        // Suivi du développement
+        Route::get('/children/{student}/development', [CrecheDevelopmentController::class, 'index'])->name('development');
+        Route::post('/children/{student}/development', [CrecheDevelopmentController::class, 'store'])->name('development.store');
+        Route::delete('/development/{observation}', [CrecheDevelopmentController::class, 'destroy'])->name('development.destroy');
     });
 
     // Enfants et dossier crèche : chaque action vérifie en plus l'accès à l'enfant (StudentPolicy) —

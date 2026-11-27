@@ -97,6 +97,19 @@
         <a href="{{ route('app.creche.today') }}" title="Présences du jour" class="{{ $subLink(request()->routeIs('app.creche.today')) }}">Présences du jour</a>
         <a href="{{ route('app.creche.departure.index') }}" title="Départ enfant" class="{{ $subLink(request()->routeIs('app.creche.departure.*')) }}">Départ enfant</a>
         @endcanany
+        @canany(['creche.view', 'creche.journal', 'creche.manage'])
+        @php
+            $pendingIncidents = auth()->user()->can('creche.incidents.validate')
+                ? \App\Models\CareIncident::where('school_id', session('current_school_id'))->where('status', 'declared')->count()
+                : 0;
+        @endphp
+        <a href="{{ route('app.creche.incidents.index') }}" title="Incidents" class="{{ $subLink(request()->routeIs('app.creche.incidents.*')) }} flex items-center justify-between">
+            <span>Incidents</span>
+            @if($pendingIncidents > 0)
+            <span class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">{{ $pendingIncidents }}</span>
+            @endif
+        </a>
+        @endcanany
         @canany(['creche.view', 'creche.attendance', 'creche.manage', 'students.manage'])
         <a href="{{ route('app.creche.children.index') }}" title="Enfants et dossiers crèche" class="{{ $subLink(request()->routeIs('app.creche.children.*')) }}">Enfants</a>
         @endcanany

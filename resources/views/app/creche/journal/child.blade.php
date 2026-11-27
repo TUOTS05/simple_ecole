@@ -54,8 +54,12 @@
         <a href="{{ route('app.creche.journal.create', ['type' => $type, 'group' => $group?->id, 'student' => $student->id]) }}"
            class="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:border-primary">{{ \App\Models\CareEvent::TYPES[$type]['icon'] }} {{ \App\Models\CareEvent::TYPES[$type]['label'] }}</a>
         @endforeach
+        <a href="{{ route('app.creche.incidents.create', ['student' => $student->id]) }}" class="px-3 py-2 bg-white border border-red-200 text-red-700 rounded-lg text-sm hover:border-red-500">⚠ Incident</a>
     </div>
     @endif
+    <div class="text-right">
+        <a href="{{ route('app.creche.development', $student) }}" class="text-sm text-primary hover:underline">🌱 Suivi du développement →</a>
+    </div>
 
     <!-- Chronologie -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
@@ -65,7 +69,7 @@
         <ol class="relative border-l-2 border-gray-200 ml-3 space-y-4">
             @foreach($timeline as $item)
             <li class="ml-5">
-                <span class="absolute -left-[9px] mt-1 w-4 h-4 rounded-full border-2 border-white {{ $item['kind'] === 'event' ? 'bg-primary' : 'bg-gray-700' }}"></span>
+                <span class="absolute -left-[9px] mt-1 w-4 h-4 rounded-full border-2 border-white {{ match ($item['kind']) { 'event' => 'bg-primary', 'incident' => 'bg-red-600', default => 'bg-gray-700' } }}"></span>
                 <div class="flex items-start justify-between gap-3">
                     <div>
                         <span class="font-mono font-semibold text-gray-700">{{ str_replace(':', 'h', $item['time']) }}</span>
@@ -74,6 +78,11 @@
                             @if($item['attendance']->dropped_off_by)<span class="text-gray-500"> · avec {{ $item['attendance']->dropped_off_by }}</span>@endif
                             @if($item['attendance']->is_late)<span class="ml-1 px-1.5 py-0.5 text-xs rounded bg-yellow-100 text-yellow-800">retard</span>@endif
                             @if($item['attendance']->notes)<p class="text-sm text-gray-600 italic">« {{ $item['attendance']->notes }} »</p>@endif
+                        @elseif($item['kind'] === 'incident')
+                            @php $incident = $item['incident']; @endphp
+                            <a href="{{ route('app.creche.incidents.show', $incident) }}" class="ml-1 text-red-700 font-semibold hover:underline">⚠ Incident : {{ $incident->type_label }}</a>
+                            <span class="ml-1 px-1.5 py-0.5 text-xs rounded {{ $incident->status === 'validated' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800' }}">{{ $incident->status_label }}</span>
+                            <p class="text-sm text-gray-600">{{ \Illuminate\Support\Str::limit($incident->description, 140) }}</p>
                         @elseif($item['kind'] === 'departure')
                             <span class="ml-1">🚸 Départ</span>
                             <span class="text-gray-500"> · avec {{ $item['attendance']->picked_up_by }}</span>
