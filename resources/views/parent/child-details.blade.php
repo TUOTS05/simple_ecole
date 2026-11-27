@@ -148,6 +148,19 @@
         @endpush
     @endif
 
+    @if($student->classes()->where('cycle', 'creche')->exists())
+    <!-- Crèche : carnet de vie -->
+    <a href="{{ route('parent.creche.day', $student->id) }}" class="block bg-pink-50 border border-pink-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
+        <div class="flex items-center gap-4">
+            <div class="text-4xl">📒</div>
+            <div>
+                <h3 class="font-bold text-gray-800">La journée de {{ $student->first_name }}</h3>
+                <p class="text-sm text-gray-600">Arrivée, repas, sieste, changes, activités et le message de l'équipe.</p>
+            </div>
+        </div>
+    </a>
+    @endif
+
     <!-- Menu d'actions -->
     <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
         <a href="{{ route('parent.grades.index', $student->id) }}" class="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm hover:shadow-md transition">

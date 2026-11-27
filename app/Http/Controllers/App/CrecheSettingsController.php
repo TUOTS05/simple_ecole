@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\School;
 use App\Models\SchoolClass;
+use App\Services\CrecheParentNotifier;
 use Illuminate\Http\Request;
 
 /**
@@ -31,6 +32,11 @@ class CrecheSettingsController extends Controller
             'diaperInterval' => old('diaper_interval_hours', $school->setting('creche.diaper_interval_hours')),
             'developmentDomains' => old('development_domains', implode("\n", (array) $school->setting('creche.development_domains'))),
             'incidentsVisibility' => old('incidents_parent_visibility', $school->setting('creche.incidents_parent_visibility')),
+            'notifyEvents' => collect(CrecheParentNotifier::EVENTS)->map(fn ($label, $event) => [
+                'label' => $label,
+                'checked' => (bool) old("notify_{$event}", $school->setting("creche.notify_{$event}")),
+            ])->all(),
+            'smsEnabled' => (bool) $school->sms_enabled,
             // Niveaux encore portés par des groupes : on prévient avant qu'ils disparaissent de la liste.
             'levelsInUse' => SchoolClass::where('school_id', $school->id)->creche()->distinct()->pluck('level')->all(),
         ]);
@@ -97,7 +103,7 @@ class CrecheSettingsController extends Controller
             'diaper_interval_hours' => (int) ($v['diaper_interval_hours'] ?? $school->setting('creche.diaper_interval_hours')),
             'development_domains' => $parsed['development_domains'],
             'incidents_parent_visibility' => $v['incidents_parent_visibility'] ?? $school->setting('creche.incidents_parent_visibility'),
-        ]);
+        ], $this->notificationSettings($request, $school));
         $school->settings = $settings;
         $school->save();
 
@@ -105,6 +111,19 @@ class CrecheSettingsController extends Controller
 
         return redirect()->route('app.creche.settings.edit')
             ->with('success', '✅ Paramètres de la crèche enregistrés.');
+    }
+
+    /** Cases des notifications : prises en compte seulement si la section était dans le formulaire. */
+    private function notificationSettings(Request $request, School $school): array
+    {
+        $settings = [];
+        foreach (array_keys(CrecheParentNotifier::EVENTS) as $event) {
+            $settings["notify_{$event}"] = $request->has('notifications_form')
+                ? $request->boolean("notify_{$event}")
+                : (bool) $school->setting("creche.notify_{$event}");
+        }
+
+        return $settings;
     }
 
     /** Une valeur par ligne, sans doublons ni lignes vides. */

@@ -91,6 +91,11 @@ class SchoolSettings
             'development_domains' => ['Motricité', 'Langage', 'Socialisation', 'Autonomie', 'Coordination', 'Communication', 'Éveil sensoriel'],
             // Incidents montrés aux parents : 'validated' (une fois validés) ou 'none' (jamais)
             'incidents_parent_visibility' => 'validated',
+            // Notifications SMS aux parents (si les SMS sont activés pour l'école)
+            'notify_arrival' => false,
+            'notify_departure' => false,
+            'notify_incident' => true,
+            'notify_summary' => false,
         ],
     ];
 

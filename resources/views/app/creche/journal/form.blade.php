@@ -187,6 +187,7 @@
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">{{ in_array($type, ['observation', 'other'], true) ? 'Observation *' : 'Observation (facultatif)' }}</label>
             <textarea name="notes" rows="{{ in_array($type, ['observation', 'other'], true) ? 4 : 2 }}" maxlength="1000" class="{{ $input }}" @required(in_array($type, ['observation', 'other'], true))>{{ $val('notes', $event->notes) }}</textarea>
+            <p class="text-xs text-gray-500 mt-1">Visible par les parents dans le carnet du jour.</p>
         </div>
 
         <button type="submit" class="w-full py-4 bg-primary hover:bg-primary-dark text-white rounded-lg text-lg font-bold">Enregistrer</button>

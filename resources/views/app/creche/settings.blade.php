@@ -107,6 +107,26 @@
             </div>
         </div>
 
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 space-y-3">
+            <h2 class="text-lg font-semibold text-gray-800">📱 Notifications SMS aux parents</h2>
+            <input type="hidden" name="notifications_form" value="1">
+            @unless($smsEnabled)
+            <p class="text-sm bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg px-3 py-2">
+                Les SMS sont désactivés pour votre école : aucune notification ne partira tant qu'ils ne sont pas activés dans
+                <a href="{{ route('app.settings.sms') }}" class="underline font-semibold">Configuration SMS</a>.
+            </p>
+            @endunless
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                @foreach($notifyEvents as $event => $config)
+                <label class="flex items-center gap-2 text-sm text-gray-700">
+                    <input type="checkbox" name="notify_{{ $event }}" value="1" {{ $config['checked'] ? 'checked' : '' }} class="rounded border-gray-300 text-primary focus:ring-primary">
+                    {{ $config['label'] }}
+                </label>
+                @endforeach
+            </div>
+            <p class="text-xs text-gray-500">Chaque SMS est facturé par l'opérateur. Les messages ne mentionnent que le prénom de l'enfant.</p>
+        </div>
+
         <div>
             <button type="submit" class="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg font-semibold transition">Enregistrer</button>
         </div>

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
+use App\Models\CareDailySummary;
 use App\Models\CareEvent;
 use App\Models\CareIncident;
 use App\Models\CrecheAttendance;
@@ -11,10 +13,12 @@ use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Services\CareJournalService;
+use App\Services\CrecheParentNotifier;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 /**
  * Journal quotidien de la crèche — l'espace de travail de l'auxiliaire :
@@ -163,7 +167,54 @@ class CrecheJournalController extends Controller
                 'activity' => $events->where('event_type', 'activity')->count(),
             ],
             'canWrite' => Gate::allows('recordCrecheJournal', $student),
+            'summary' => CareDailySummary::where('student_id', $student->id)->whereDate('summary_date', $date)->with('publisher')->first(),
         ]);
+    }
+
+    /**
+     * Carnet du jour : l'auxiliaire publie l'humeur et un message aux parents (modifiable ensuite,
+     * chaque publication est journalisée). Le jour même, ou un jour passé pour la responsable.
+     */
+    public function publishSummary(Request $request, Student $student, CrecheParentNotifier $notifier)
+    {
+        $this->school();
+        Gate::authorize('recordCrecheJournal', $student);
+
+        $data = $request->validate([
+            'date' => 'required|date|before_or_equal:today',
+            'mood' => ['required', Rule::in(array_keys(CareDailySummary::MOODS))],
+            'message' => 'nullable|string|max:1000',
+        ], [
+            'mood.required' => 'Choisissez l\'humeur de la journée.',
+        ]);
+        $date = Carbon::parse($data['date']);
+        abort_unless($date->isToday() || $request->user()->hasPermission('creche.manage'), 403,
+            'Seule la responsable peut publier le carnet d\'un jour passé.');
+
+        $summary = CareDailySummary::where('student_id', $student->id)->whereDate('summary_date', $date)->first()
+            ?? new CareDailySummary(['summary_date' => $date->toDateString()]);
+        $isFirstPublication = ! $summary->exists;
+
+        $summary->fill(['mood' => $data['mood'], 'message' => $data['message'] ?? null]);
+        $summary->school_id = $student->school_id;
+        $summary->student_id = $student->id;
+        $summary->published_by = $request->user()->id;
+        $summary->published_at = now();
+        $summary->save();
+
+        ActivityLog::audit(
+            $isFirstPublication ? 'creche.summary.published' : 'creche.summary.updated',
+            "Carnet du {$date->format('d/m/Y')} de {$student->first_name} {$student->last_name} ".($isFirstPublication ? 'publié' : 'modifié')." ({$summary->mood_label})",
+            $student,
+            ['summary_id' => $summary->id, 'date' => $date->toDateString(), 'mood' => $summary->mood, 'message' => $summary->message]
+        );
+
+        if ($isFirstPublication) {
+            $notifier->summary($student);
+        }
+
+        return redirect()->route('app.creche.journal.child', ['student' => $student, 'date' => $date->toDateString()])
+            ->with('success', "📒 Carnet du jour de {$student->first_name} ".($isFirstPublication ? 'publié aux parents.' : 'mis à jour.'));
     }
 
     public function edit(CareEvent $event)

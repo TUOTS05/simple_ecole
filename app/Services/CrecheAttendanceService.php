@@ -22,6 +22,8 @@ use DomainException;
  */
 class CrecheAttendanceService
 {
+    public function __construct(private CrecheParentNotifier $notifier) {}
+
     public function today(Student $student): ?CrecheAttendance
     {
         return CrecheAttendance::where('student_id', $student->id)->whereDate('date', today())->first();
@@ -70,6 +72,8 @@ class CrecheAttendanceService
             $student,
             ['attendance_id' => $attendance->id, 'time' => $arrivedAt->format('H:i'), 'dropped_off_by' => $attendance->dropped_off_by, 'is_late' => $attendance->is_late]
         );
+
+        $this->notifier->arrival($student, $arrivedAt->format('H:i'));
 
         return $attendance;
     }
@@ -183,6 +187,8 @@ class CrecheAttendanceService
                 'verification_mode' => $attendance->verification_mode, 'late_pickup' => $attendance->late_pickup,
             ]
         );
+
+        $this->notifier->departure($student, $leftAt->format('H:i'), $pickup->full_name);
 
         return ['allowed' => true, 'reason' => null, 'attendance' => $attendance];
     }

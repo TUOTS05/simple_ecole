@@ -277,6 +277,7 @@ Route::middleware(['auth', 'school.active', 'role:school_admin,teacher,accountan
         Route::put('/journal/events/{event}', [CrecheJournalController::class, 'update'])->name('journal.update');
         Route::delete('/journal/events/{event}', [CrecheJournalController::class, 'destroy'])->name('journal.destroy');
         Route::post('/journal/events/{event}/wake', [CrecheJournalController::class, 'wake'])->name('journal.wake');
+        Route::post('/children/{student}/summary', [CrecheJournalController::class, 'publishSummary'])->name('journal.summary');
 
         // Incidents : déclaration (creche.journal), validation / annulation (creche.incidents.validate)
         Route::get('/incidents', [CrecheIncidentController::class, 'index'])->name('incidents.index');
@@ -448,6 +449,8 @@ Route::middleware(['auth', 'parent', 'school.active', 'tenant'])->prefix('parent
     Route::get('/messages/{message}', [App\Http\Controllers\Parent\MessageController::class, 'show'])->name('messages.show');
 
     Route::get('/{student}', [App\Http\Controllers\Parent\DashboardController::class, 'childDetails'])->name('child.details');
+    // Crèche : « La journée de mon enfant » (carnet de vie)
+    Route::get('/{student}/journee', [App\Http\Controllers\Parent\CrecheDayController::class, 'show'])->name('creche.day');
     Route::get('/{student}/grades', [App\Http\Controllers\Parent\GradeController::class, 'index'])->name('grades.index');
     Route::get('/{student}/grades/{reportCard}/pdf', [App\Http\Controllers\Parent\GradeController::class, 'downloadPdf'])->name('grades.pdf');
     Route::get('/attendance/{studentId}', [App\Http\Controllers\Parent\AttendanceController::class, 'index'])

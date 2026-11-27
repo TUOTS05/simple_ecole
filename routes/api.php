@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ParentCrecheController;
 use App\Http\Controllers\Api\ParentExtraController;
 use App\Http\Controllers\CinetPayWebhookController;
 use App\Http\Controllers\VehicleTrackingController;
@@ -47,6 +48,8 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
         Route::get('/extras/{subscription}/installments', [ParentExtraController::class, 'installments'])->name('api.extras.installments');
         Route::get('/extras/{subscription}/payments', [ParentExtraController::class, 'payments'])->name('api.extras.payments');
         Route::get('/extras/{subscription}/bus', [ParentExtraController::class, 'busPosition'])->name('api.extras.bus');
+        // Crèche : carnet de vie du jour (?date=AAAA-MM-JJ, par défaut aujourd'hui)
+        Route::get('/creche/day', [ParentCrecheController::class, 'day'])->name('api.creche.day');
     });
 });
 

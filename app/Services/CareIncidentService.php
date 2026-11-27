@@ -15,6 +15,8 @@ use DomainException;
  */
 class CareIncidentService
 {
+    public function __construct(private CrecheParentNotifier $notifier) {}
+
     public function declare(Student $student, User $user, array $data): CareIncident
     {
         $incident = new CareIncident($data);
@@ -60,6 +62,9 @@ class CareIncidentService
         $this->log($incident, 'creche.incident.validated',
             "Incident validé ({$incident->type_label}) pour {$incident->student->first_name} {$incident->student->last_name}",
             ['comment' => $comment, 'validated' => $incident->auditSnapshot()]);
+
+        // Les parents sont prévenus une fois l'incident validé (jamais sur une simple déclaration).
+        $this->notifier->incident($incident->student);
 
         return $incident;
     }
